@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events';
 import WebSocket from 'ws';
 import { agentFor } from './net';
+import { authHeaders } from './auth';
 import {
   ServerMessage,
   type AgentInfo,
@@ -30,8 +31,14 @@ interface Pending {
  */
 export class HubClient extends EventEmitter {
   name = '';
+  self?: AgentInfo;
   ref: string;
   connected = false;
+  reliable = false;
+  superseded = false;
+  unauthorized = false;
+  private reconnectTimer?: NodeJS.Timeout;
+  private awaitingPong = false;
   /** set when the hub says the room does not exist / expired; no reconnects after that */
   roomGone = false;
   private ws: WebSocket | null = null;
@@ -50,26 +57,36 @@ export class HubClient extends EventEmitter {
   }
 
   connect() {
-    if (this.closed) return;
+    if (this.closed || this.roomGone) return;
     const url = new URL('/ws', this.opts.hub);
     url.searchParams.set('room', this.opts.room);
     const agent = agentFor(url);
     if (agent) this.opts.log('connecting via proxy');
-    const ws = new WebSocket(url, { agent });
+    const ws = new WebSocket(url, { agent, headers: authHeaders(), handshakeTimeout: 10_000 });
     this.ws = ws;
 
     ws.on('open', () => {
+      if (this.ws !== ws || this.closed) return;
+      this.awaitingPong = false;
       this.opts.log('connected, sending hello');
-      this.raw({ type: 'hello', ...this.opts.hello, status: this.status, visible: this.visible });
-      this.pingTimer = setInterval(() => this.raw({ type: 'ping' }), 30_000);
+      this.raw({ type: 'hello', ...this.opts.hello, reliable: 1, status: this.status, visible: this.visible });
+      this.pingTimer = setInterval(() => {
+        if (this.awaitingPong) { ws.terminate(); return; }
+        this.awaitingPong = true;
+        this.raw({ type: 'ping' });
+      }, 30_000);
     });
-    ws.on('message', (data) => this.onMessage(data.toString()));
+    ws.on('message', (data) => { if (this.ws === ws && !this.closed) this.onMessage(data.toString()); });
     ws.on('close', (code, reason) => {
+      if (this.ws !== ws) return;
       this.connected = false;
+      this.reliable = false;
+      this.rejectPending('connection closed; delivery receipt may have been lost');
       if (this.pingTimer) clearInterval(this.pingTimer);
       this.pingTimer = null;
       this.emit('disconnected');
-      if (code === 4000) return; // superseded by a newer socket of ours
+      if (code === 4000) { this.superseded = true; return; } // superseded by a newer socket of ours
+      if (code === 4003) { this.unauthorized = true; return; }
       if (code === 4004) {
         this.roomGone = true;
         this.opts.log('room expired, giving up');
@@ -77,23 +94,37 @@ export class HubClient extends EventEmitter {
       }
       if (!this.closed) {
         this.opts.log(`closed (${code} ${reason}), reconnecting in ${this.backoff}ms`);
-        setTimeout(() => this.connect(), this.backoff);
+        this.reconnectTimer = setTimeout(() => this.connect(), this.backoff);
         this.backoff = Math.min(this.backoff * 2, 30_000);
       }
     });
+    // Bun's ws shim warns at registration and never emits this Node-only event.
+    // Its failed handshakes use error/close; keep those handlers active below.
+    if (!process.versions.bun) {
     ws.on('unexpected-response', (_req, res) => {
-      if (res.statusCode === 404) {
-        this.roomGone = true;
-        this.closed = true;
-        this.opts.log(`room ${this.opts.room} does not exist or has expired`);
+      if (res.statusCode === 401 || res.statusCode === 403 || res.statusCode === 409) {
+        this.unauthorized = true; this.closed = true;
+        this.opts.log('access denied: sign in, choose your @handle, and join an account-owned room');
       }
-    });
+        if (res.statusCode === 404) {
+          this.roomGone = true;
+          this.closed = true;
+          this.opts.log(`room ${this.opts.room} does not exist or has expired`);
+        }
+        res.resume();
+        ws.terminate();
+      });
+    }
     ws.on('error', (e) => this.opts.log('ws error', e.message));
   }
 
   close() {
     this.closed = true;
-    this.ws?.close();
+    this.connected = false;
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    if (this.pingTimer) clearInterval(this.pingTimer);
+    this.rejectPending('connection closed');
+    this.ws?.terminate();
   }
 
   setStatus(status: SessionStatus) {
@@ -106,14 +137,28 @@ export class HubClient extends EventEmitter {
     this.raw({ type: 'visibility', visible });
   }
 
+  setName(name: string) { this.opts.hello.name = name; }
+
+  async rename(name: string) {
+    const res = await this.request({ type: 'rename', name });
+    if (res.type !== 'renamed') throw new Error(res.type === 'error' ? res.message : 'unexpected reply');
+    this.name = res.name;
+    if (this.self) this.self.name = res.name;
+    this.setName(res.name);
+    return res.name;
+  }
+
   async list(): Promise<AgentInfo[]> {
     const res = await this.request({ type: 'list' });
-    if (res.type === 'agents') return res.agents;
+    if (res.type === 'agents') {
+      this.self = res.agents.find(a => a.ref === this.ref) ?? this.self;
+      return res.agents;
+    }
     throw new Error(res.type === 'error' ? res.message : 'unexpected reply');
   }
 
-  async send(to: string, body: string, notifyWhenIdle?: boolean) {
-    const res = await this.request({ type: 'send', to, body, notifyWhenIdle });
+  async send(to: string, body: string, notifyWhenIdle?: boolean, messageId?: string) {
+    const res = await this.request({ type: 'send', to, body, notifyWhenIdle, messageId });
     if (res.type === 'sent') return res;
     if (res.type === 'error') {
       const e = new Error(res.message) as Error & { code?: string; candidates?: AgentInfo[] };
@@ -122,6 +167,13 @@ export class HubClient extends EventEmitter {
       throw e;
     }
     throw new Error('unexpected reply');
+  }
+
+  ack(id: string) { if (this.reliable) this.raw({ type: 'ack', ids: [id] }); }
+
+  private rejectPending(reason: string) {
+    for (const p of this.pending.values()) { clearTimeout(p.timer); p.reject(new Error(reason)); }
+    this.pending.clear();
   }
 
   // ---- internals ----------------------------------------------------------
@@ -144,13 +196,17 @@ export class HubClient extends EventEmitter {
   }
 
   private onMessage(text: string) {
-    const parsed = ServerMessage.safeParse(JSON.parse(text));
+    let value: unknown;
+    try { value = JSON.parse(text); } catch { return this.opts.log('invalid server JSON'); }
+    const parsed = ServerMessage.safeParse(value);
     if (!parsed.success) return this.opts.log('bad server message', parsed.error.message);
     const m = parsed.data;
     switch (m.type) {
       case 'welcome':
         this.name = m.name;
+        this.self = m.self;
         this.connected = true;
+        this.reliable = m.reliable === 1;
         this.backoff = 1000;
         this.emit('welcome', m);
         for (const msg of m.pending) this.emit('message', msg as InboundMessage);
@@ -160,6 +216,7 @@ export class HubClient extends EventEmitter {
       case 'idle-notice':
         return void this.emit('idle-notice', m);
       case 'pong':
+        this.awaitingPong = false;
         return;
       default: {
         const p = 'reqId' in m && m.reqId ? this.pending.get(m.reqId) : undefined;
