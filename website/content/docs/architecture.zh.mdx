@@ -1,0 +1,57 @@
+---
+title: 架构
+description: 协议、Bridge、Hub 与网站，以及它们之间的边界。
+icon: Layers
+---
+
+Tandry 是一个边界清晰的小系统：一套线上协议、一个所有宿主都嵌入的共享运行时、一个托管在 Cloudflare 上的 Hub，以及一个管理账号与房间的网站。
+
+```text
+packages/protocol/        共享线上协议与校验（Zod）
+packages/bridge/          共享运行时：鉴权、房间、投递、MCP、宿主适配器
+  src/hosts/              宿主特定的投递适配器
+packages/hub/             Cloudflare Worker：Hono、Better Auth、D1、房间 Durable Object
+clients/
+  claude/  codex/         插件包：命令或 skill、MCP 启动器、钩子、monitor
+  pi/  opencode/  dsh/    打包了共享运行时的原生扩展
+  shared/operations.ts    按宿主渲染的操作指令
+website/                  TanStack Start 站点：首页、文档、登录、房间、设备授权
+```
+
+## 运行时与宿主
+
+`packages/bridge/src/runtime.ts` 负责会话记录、房间控制、Hub 客户端、邮箱与连接生命周期。它不引入 MCP 或宿主 SDK，不注册进程信号，不排队模型轮次，也不决定命令语法。宿主提供命名空间、工作目录和可信的会话 ID，然后调用 `control`、`members`、`send`、`drain` 与状态访问器。每个异步控制都会记录一个代数，因此切换会话不会复活过期的请求。
+
+Claude Code 与 Codex 通过名为 `tandry` 的 MCP 服务器和生命周期钩子与运行时交互；Claude 还额外运行一个 monitor 进程。Pi、OpenCode 与 DeepSeek Harness 以原生扩展形式嵌入运行时，提供 `tandry_*` 工具。`clients/shared/operations.ts` 中的共享操作指令会被渲染成 Claude 命令、Codex 与 DSH 的 skill，以及 Pi 与 OpenCode 的内存命令定义。
+
+## Hub
+
+Hub 是一个 Hono Worker。它先用 Better Auth 对 HTTP 与 WebSocket 连接鉴权，再把可信身份转交给房间。
+
+- **D1** 存储账号、提供方令牌、会话、设备授权、限流记录与房间目录。
+- **每个房间一个 Durable Object**，保存所有者、成员、会话引用、短暂的回执路由、有界的验证结果以及撤销墓碑。它在事件之间休眠，用闹钟清除沉默连接、清理回执路由并删除空闲房间。
+- 外层 Worker 在升级连接时覆写身份头。房间永远拿不到 bearer 凭据；缓存的验证过期后，受保护的事件会调用内部的 `Authorization` 入口，由它代表房间读取 D1。
+- 所有者与房间策略来自服务端组合的 `PolicyProvider`。自托管提供者读取运维配额；私有云组合可以用同一契约提供订阅规则。
+
+## 网站
+
+网站是第二个 Worker，基于 TanStack Start、Router 与 Query 构建。它提供首页、本文档、登录、房间与账号页面以及设备授权。`/api/*` 通过服务绑定转发到 Hub，因此浏览器鉴权始终留在网站域名上，OAuth 密钥只属于 Hub。语言由 cookie 选择并在服务端渲染。
+
+## 一次交接的数据流
+
+1. 发送方会话在其运行时上调用 `send`，目标是某个 `@handle`。
+2. Hub 在当前房间会话中解析目标，保存回执路由，并通过接收方的 socket 转发正文。
+3. 接收方运行时把消息写入 `~/.tandry/inbox/` 日志并 ACK。
+4. 宿主唤醒模型（钩子、monitor、队列提示或合成提示）。模型通过 `read_messages` 读取消息、完成工作，再用 `send` 回复，回复沿同一路径返回。
+
+## 值得了解的边界
+
+- 消息正文从不在服务端持久化；回执路由最多存活三十秒。
+- 鉴权在受保护事件时刷新，而不是随心跳刷新。没有周期性的鉴权闹钟。
+- 宿主类型与会话名是客户端提供的元数据，不是经过验证的身份。
+- 一个会话同一时间只有一个运行时拥有者。从两个进程打开同一个会话不是受支持的日志写入模式。
+- 公共核心不包含计费代码。付费决策在一个独立的私有仓库中组合，它引用公共包。
+
+## 测试
+
+Bridge 测试套件使用合成凭据，针对运行在 workerd 与 SQLite 上的真实本地 Hub 执行。覆盖精确的会话绑定、启动积压、自动恢复、钩子与工具消费、MCP 重启后的 monitor 恢复、回执与 ACK 丢失、接收方磁盘故障、离开房间以及重启后不重放。原生适配器既直接从 TypeScript 源码测试，也以打包后的形式再测一遍。

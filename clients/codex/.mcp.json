@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "tandry": {
+      "command": "node",
+      "env_vars": ["CODEX_HOME", "TANDRY_HUB", "TANDRY_HOME"],
+      "args": ["./dist/tandry.cjs", "mcp"],
+      "cwd": "."
+    }
+  }
+}

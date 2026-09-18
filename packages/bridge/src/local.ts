@@ -1,166 +1,94 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+// The only module that knows the layout of ~/.tandry. Hooks and monitors
+// import this entry alone, so it must stay free of network and SDK imports:
+// a hook runs on every tool call and its startup has to be cheap.
+
+export const DEFAULT_HUB = "https://hub.tandry.io";
+
+export function home(): string {
+  return process.env.TANDRY_HOME ?? path.join(os.homedir(), ".tandry");
+}
+
+export function hubUrl(): string {
+  return (process.env.TANDRY_HUB ?? DEFAULT_HUB).replace(/^ws/, "http").replace(/\/+$/, "");
+}
+
+const safe = (id: string) => encodeURIComponent(id);
+export const credentialsPath = () => path.join(home(), "credentials.json");
+export const markerPath = (host: string, hostConversationId: string) => path.join(home(), "joined", safe(host), safe(hostConversationId));
+export const runPath = (hostConversationId: string) => path.join(home(), "run", safe(hostConversationId));
+export const byPidPath = (pid: number) => path.join(home(), "run", "by-pid", String(pid));
+
+export function readJson<T>(file: string): T | null {
+  try { return JSON.parse(fs.readFileSync(file, "utf8")) as T; } catch { return null; }
+}
+
+/** Atomic, so a hook never reads a half-written file. */
+export function writeJson(file: string, value: unknown, mode = 0o600): void {
+  fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
+  const temporary = `${file}.${process.pid}.tmp`;
+  fs.writeFileSync(temporary, JSON.stringify(value), { mode });
+  fs.renameSync(temporary, file);
+}
+
+export function remove(file: string): void {
+  fs.rmSync(file, { force: true });
+}
+
 /**
- * Local IPC between the hook handler (short-lived, runs every tool round) and
- * the MCP process (long-lived, owns the WebSocket). Unix socket, one JSON
- * line per request/response. Hooks never touch the network.
+ * Written when this conversation's own join succeeds. Its presence alone
+ * decides whether a starting process goes online, and which room it links to.
  */
-import fs from 'node:fs';
-import net from 'node:net';
-import path from 'node:path';
-import { execFileSync } from 'node:child_process';
-import { DIRS, ensureDirs } from './config';
-
-export interface SockMeta {
-  pid: number;
-  ppid: number;
-  cwd: string;
-  startedAt: number;
-  sessionId?: string;
-  /** Claude exports this non-secret address to its children. Never store the token. */
-  messagingSocket?: string;
-  sock: string;
+export interface JoinedMarker {
+  room: string;
+  roomName: string;
+  /** Normalized code the conversation joined with; lets a repeated join of the same room through. */
+  code: string;
+  member: string;
 }
+export const readMarker = (host: string, id: string) => readJson<JoinedMarker>(markerPath(host, id));
+export const writeMarker = (host: string, id: string, marker: JoinedMarker) => writeJson(markerPath(host, id), marker);
+export const deleteMarker = (host: string, id: string) => remove(markerPath(host, id));
 
-export interface WaitResult {
-  message: { id: string; from: string; preview: string } | null;
-  cursor: number;
-  pending: number;
+/**
+ * For hosts whose hooks are separate short-lived commands. Written by the
+ * process holding the link, read by hooks and the monitor.
+ */
+export interface RunFile {
+  unread: number;
+  upTo: number;
+  /** Names the unread state. A hook that injects `notice` reports this key back through `bridge.announced`. */
+  key: string | null;
+  /** What a turn-boundary hook should inject now: null when nothing is unread, or this state was already announced. */
+  notice: string | null;
+  /** Incremented each time the idle conversation should be woken; the monitor prints `wakeNotice` when it sees that. */
+  wake: number;
+  wakeNotice: string | null;
+  wakeAt: number;
 }
+export const readRun = (id: string) => readJson<RunFile>(runPath(id));
+export const writeRun = (id: string, run: RunFile) => writeJson(runPath(id), run);
 
-export type LocalRequest =
-  | { op: 'control'; sessionId: string; action: 'join' | 'create' | 'leave' | 'on' | 'off' | 'dnd' | 'visible' | 'invisible'; room?: string; name?: string }
-  | { op: 'info' }
-  | { op: 'bind'; sessionId: string }
-  | { op: 'status'; status: 'busy' | 'idle' | 'shell' }
-  | { op: 'drain' }
-  | { op: 'peek' }
-  /** long-poll: resolves when a new message arrives (preview only, nothing consumed) or after timeoutMs */
-  | { op: 'wait'; timeoutMs: number; after?: number };
-
-export function sockPath(pid: number) {
-  return path.join(DIRS.sock, `${pid}.sock`);
-}
-export function metaPath(pid: number) {
-  return path.join(DIRS.sock, `${pid}.json`);
-}
-
-export function writeMeta(meta: SockMeta) {
-  fs.writeFileSync(metaPath(meta.pid), JSON.stringify(meta));
-}
-
-export function removeMeta(pid: number) {
-  for (const p of [sockPath(pid), metaPath(pid)]) {
-    try { fs.unlinkSync(p); } catch { /* gone */ }
-  }
-}
-
-export function listMeta(): SockMeta[] {
-  ensureDirs();
-  const out: SockMeta[] = [];
-  for (const f of fs.readdirSync(DIRS.sock)) {
-    if (!f.endsWith('.json')) continue;
-    try {
-      const m = JSON.parse(fs.readFileSync(path.join(DIRS.sock, f), 'utf8')) as SockMeta;
-      if (isAlive(m.pid)) out.push(m);
-      else removeMeta(m.pid);
-    } catch { /* partial write, skip */ }
-  }
-  return out;
-}
-
-/** Walk through shell wrappers without confusing sibling Claude sessions. */
-export function parentPids(): number[] {
-  const out = [process.ppid];
-  try {
-    const rows = execFileSync('ps', ['-A', '-o', 'pid=,ppid='], {
-      encoding: 'utf8', timeout: 1000, maxBuffer: 1024 * 1024,
-    });
-    const parents = new Map(rows.trim().split('\n').map((row) => {
-      const [pid, ppid] = row.trim().split(/\s+/).map(Number);
-      return [pid!, ppid!] as const;
-    }));
-    while (out.length < 32) {
-      const next = parents.get(out[out.length - 1]!);
-      if (!next || next <= 1 || out.includes(next)) break;
-      out.push(next);
-    }
-  } catch { /* direct parent still works without ps */ }
-  return out.filter((pid) => pid > 1);
-}
-
-/** Exact session/socket first, then a shared parent. Never guess from cwd/time. */
-export function findSessionBridge(cwd: string, sessionId?: string, parents = parentPids()): SockMeta | null {
-  try { cwd = fs.realpathSync(cwd); } catch { /* deleted directory */ }
-  const metas = listMeta();
-  if (sessionId) {
-    const bound = metas.filter((m) => m.sessionId === sessionId);
-    if (bound.length) return bound.length === 1 ? bound[0]! : null;
-  }
-  const socket = process.env.CLAUDE_CODE_MESSAGING_SOCKET;
-  if (socket) {
-    const exact = metas.filter((m) => m.messagingSocket === socket && (!sessionId || !m.sessionId || m.sessionId === sessionId));
-    if (exact.length) return exact.length === 1 ? exact[0]! : null;
-  }
-  const eligible = metas.filter((m) => m.cwd === cwd && (!sessionId || !m.sessionId || m.sessionId === sessionId)
-    && (!socket || !m.messagingSocket || m.messagingSocket === socket));
-  for (const pid of parents) {
-    const siblings = eligible.filter((m) => m.ppid === pid);
-    if (siblings.length) return siblings.length === 1 ? siblings[0]! : null;
-  }
-  return null;
-}
-
-export function isAlive(pid: number) {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function startLocalServer(
-  pid: number,
-  handle: (req: LocalRequest) => Promise<unknown> | unknown,
-): net.Server {
-  ensureDirs();
-  const p = sockPath(pid);
-  try { fs.unlinkSync(p); } catch { /* fresh */ }
-  const server = net.createServer((conn) => {
-    let buf = '';
-    conn.on('data', async (chunk) => {
-      buf += chunk.toString();
-      const nl = buf.indexOf('\n');
-      if (nl < 0) return;
-      const line = buf.slice(0, nl);
-      buf = buf.slice(nl + 1);
-      let res: unknown;
+/** Repository and branch, read from the environment. Attested: never supplied by the agent. */
+export function readWorkspace(cwd: string): { repo: string; branch: string } {
+  let directory = path.resolve(cwd);
+  for (;;) {
+    const git = path.join(directory, ".git");
+    if (fs.existsSync(git)) {
+      let head = "";
       try {
-        res = await handle(JSON.parse(line) as LocalRequest);
-      } catch (e) {
-        res = { error: String(e) };
-      }
-      conn.end(JSON.stringify(res ?? {}) + '\n');
-    });
-    conn.on('error', () => { /* client went away */ });
-  });
-  server.on('error', (e) => {
-    console.error('[agent-room] local socket failed:', e.message);
-  });
-  server.listen(p);
-  return server;
-}
-
-export function localRequest<T = any>(sock: string, req: LocalRequest, timeoutMs = 1500): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const conn = net.createConnection(sock);
-    let buf = '';
-    const timer = setTimeout(() => { conn.destroy(); reject(new Error('local timeout')); }, timeoutMs);
-    conn.on('connect', () => conn.write(JSON.stringify(req) + '\n'));
-    conn.on('data', (c) => { buf += c.toString(); });
-    conn.on('end', () => {
-      clearTimeout(timer);
-      try { resolve(JSON.parse(buf.trim() || '{}')); } catch (e) { reject(e); }
-    });
-    conn.on('error', (e) => { clearTimeout(timer); reject(e); });
-  });
+        const stat = fs.statSync(git);
+        // A worktree's .git is a file pointing at the real directory.
+        const gitDir = stat.isFile() ? path.resolve(directory, fs.readFileSync(git, "utf8").replace(/^gitdir:\s*/, "").trim()) : git;
+        head = fs.readFileSync(path.join(gitDir, "HEAD"), "utf8").trim();
+      } catch { /* not readable: report the repository without a branch */ }
+      return { repo: path.basename(directory).slice(0, 200), branch: head.startsWith("ref: refs/heads/") ? head.slice(16, 216) : "" };
+    }
+    const parent = path.dirname(directory);
+    if (parent === directory) return { repo: path.basename(path.resolve(cwd)).slice(0, 200), branch: "" };
+    directory = parent;
+  }
 }

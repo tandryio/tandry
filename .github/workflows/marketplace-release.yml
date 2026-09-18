@@ -1,0 +1,73 @@
+name: release marketplace
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Plugin version to publish (e.g. 0.5.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: marketplace-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: source/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: source/pnpm-lock.yaml
+      - name: validate source and build installable packages
+        working-directory: source
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm website:build
+          node --test website/scripts/i18n.test.mjs
+          pnpm typecheck
+          pnpm build
+          pnpm check:source
+          pnpm test:marketplace
+          pnpm test:npm
+          pnpm test:tooling
+          pnpm test
+          pnpm test:e2e
+          git diff --exit-code
+          test -z "$(git ls-files --others --exclude-standard)"
+      - name: clone marketplace (also supports its first release)
+        env:
+          GH_TOKEN: ${{ secrets.MARKETPLACE_TOKEN }}
+        run: |
+          gh auth setup-git
+          gh repo clone tandryio/tandry-marketplace marketplace
+          git -C marketplace checkout -B main
+      - name: export validated distribution
+        working-directory: source
+        run: rsync -a --delete --exclude=.git .local/marketplace/ ../marketplace/
+      - name: publish marketplace commit and immutable version tag
+        working-directory: marketplace
+        env:
+          GH_TOKEN: ${{ secrets.MARKETPLACE_TOKEN }}
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          node -e 'if (require("./release.json").source.dirty) throw new Error("Source checkout must be clean")'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- clients .claude-plugin .agents README.md LICENSE NOTICE THIRD_PARTY_NOTICES.md release.json
+          git commit -m "Release ${RELEASE_VERSION} from ${SOURCE_COMMIT}"
+          git tag "v$RELEASE_VERSION"
+          git push --atomic origin HEAD:refs/heads/main "refs/tags/v$RELEASE_VERSION"

@@ -8,6 +8,4 @@ CREATE TABLE verification (id TEXT PRIMARY KEY, identifier TEXT NOT NULL, value 
 CREATE INDEX verification_identifier ON verification(identifier);
 CREATE TABLE deviceCode (id TEXT PRIMARY KEY, deviceCode TEXT NOT NULL UNIQUE, userCode TEXT NOT NULL UNIQUE, userId TEXT, clientId TEXT, scope TEXT, status TEXT NOT NULL, expiresAt INTEGER NOT NULL, lastPolledAt INTEGER, pollingInterval INTEGER);
 CREATE TABLE rateLimit (id TEXT PRIMARY KEY, key TEXT NOT NULL UNIQUE, count INTEGER NOT NULL, lastRequest INTEGER NOT NULL);
--- Directory only. Room membership and authorization are authoritative inside the room DO.
-CREATE TABLE roomDirectory (code TEXT NOT NULL, userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE, name TEXT NOT NULL, createdAt INTEGER NOT NULL, PRIMARY KEY (userId, code));
 CREATE TABLE usageWindow (key TEXT PRIMARY KEY, count INTEGER NOT NULL, resetsAt INTEGER NOT NULL);

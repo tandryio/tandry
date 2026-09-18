@@ -1,20 +1,21 @@
+import { Button, Input, Status } from "./ui";
 import { m } from "../paraglide/messages";
-import { useI18n } from "../lib/i18n";
 import { useEffect, useState } from "react";
-import { authClient } from "../lib/auth-client";
+import { authClient, unwrap } from "../lib/auth-client";
+import { useAction } from "../lib/action";
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 export function EmailLogin({
   next,
-  busy,
-  setBusy,
-  onError,
+  disabled,
+  onBusy,
 }: {
   next: string;
-  busy: boolean;
-  setBusy: (value: boolean) => void;
-  onError: (value: string) => void;
+  /** Another sign-in method is in flight. */
+  disabled: boolean;
+  onBusy: (busy: boolean) => void;
 }) {
-  const { errorText } = useI18n();
   const [email, setEmail] = useState("");
   const [sentTo, setSentTo] = useState("");
   const [otp, setOtp] = useState("");
@@ -27,64 +28,48 @@ export function EmailLogin({
     );
     return () => window.clearTimeout(timer);
   }, [cooldown]);
-  async function send() {
-    setBusy(true);
-    onError("");
-    try {
+
+  const send = useAction(
+    async () => {
       const address = email.trim().toLowerCase();
-      const result = await authClient.emailOtp.sendVerificationOtp({
-        email: address,
-        type: "sign-in",
-      });
-      if (result.error)
-        throw new Error(
-          errorText(result.error.message) || m.could_not_send_the_code(),
-        );
-      setSentTo(address);
-      setOtp("");
-      setCooldown(60);
-    } catch (error) {
-      onError(
-        error instanceof Error
-          ? errorText(error.message)
-          : m.could_not_send_the_code_please_try_again(),
+      unwrap(
+        await authClient.emailOtp.sendVerificationOtp({
+          email: address,
+          type: "sign-in",
+        }),
       );
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function verify() {
-    setBusy(true);
-    onError("");
-    try {
+      return address;
+    },
+    {
+      onSuccess: (address) => {
+        setSentTo(address);
+        setOtp("");
+        setCooldown(RESEND_COOLDOWN_SECONDS);
+      },
+    },
+  );
+  const verify = useAction(
+    async () => {
       // No display name is sent: a new account's name defaults to its handle.
-      const result = await authClient.signIn.emailOtp({ email: sentTo, otp });
-      if (result.error) {
-        throw new Error(
-          errorText(result.error.message) ||
-            m.this_code_is_invalid_or_has_expired_please_check(),
-        );
-      }
-      window.location.assign(next);
-    } catch (error) {
-      onError(
-        error instanceof Error
-          ? errorText(error.message)
-          : m.sign_in_failed_please_try_again(),
-      );
-      setBusy(false);
-    }
-  }
+      unwrap(await authClient.signIn.emailOtp({ email: sentTo, otp }));
+    },
+    { onSuccess: () => window.location.assign(next) },
+  );
+  const busy = send.busy || verify.busy;
+  useEffect(() => onBusy(busy), [busy, onBusy]);
+  const error = verify.error || send.error;
+
   return (
     <form
       className="email-login"
       onSubmit={(event) => {
         event.preventDefault();
-        void (sentTo ? verify() : send());
+        if (sentTo) verify.run();
+        else send.run();
       }}
     >
-      <label htmlFor="login-email">{m.sign_in_with_email()}</label>
-      <input
+      <label htmlFor="login-email">{m.login_email_label()}</label>
+      <Input
         id="login-email"
         type="email"
         autoComplete="email"
@@ -92,15 +77,16 @@ export function EmailLogin({
         maxLength={254}
         placeholder="you@example.com"
         value={email}
-        disabled={busy || !!sentTo}
+        disabled={busy || disabled || !!sentTo}
         onChange={(event) => setEmail(event.target.value)}
       />
       {sentTo && (
         <>
-          <p role="status">{m.email_code_sent({ email: sentTo })}</p>
-          <label htmlFor="login-otp">{m.msg_6_digit_code()}</label>
-          <input
+          <p role="status">{m.login_email_code_sent({ email: sentTo })}</p>
+          <label htmlFor="login-otp">{m.login_otp_label()}</label>
+          <Input
             id="login-otp"
+            className="otp-input"
             inputMode="numeric"
             autoComplete="one-time-code"
             pattern="[0-9]{6}"
@@ -108,50 +94,53 @@ export function EmailLogin({
             required
             autoFocus
             value={otp}
-            disabled={busy}
+            disabled={busy || disabled}
             onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))}
           />
         </>
       )}
-      <button
-        className="button yellow"
+      <Button
+        variant="primary"
+        busy={busy}
         type="submit"
-        disabled={busy || (!sentTo && cooldown > 0)}
+        disabled={busy || disabled || (!sentTo && cooldown > 0)}
       >
         {busy
-          ? m.please_wait()
+          ? m.common_please_wait()
           : sentTo
-            ? m.verify_and_sign_in()
+            ? m.login_email_verify()
             : cooldown
-              ? m.send_again_in_seconds_s({ seconds: cooldown })
-              : m.send_code()}
-      </button>
+              ? m.login_email_send_wait({ seconds: cooldown })
+              : m.login_email_send()}
+      </Button>
       {sentTo && (
         <>
-          <button
-            className="button"
+          <Button
+            variant="secondary"
             type="button"
-            disabled={busy || cooldown > 0}
-            onClick={() => void send()}
+            disabled={busy || disabled || cooldown > 0}
+            onClick={() => send.run()}
           >
             {cooldown
-              ? m.resend_in_seconds_s({ seconds: cooldown })
-              : m.resend_code()}
-          </button>
-          <button
-            className="button"
+              ? m.login_email_resend_wait({ seconds: cooldown })
+              : m.login_email_resend()}
+          </Button>
+          <Button
+            variant="secondary"
             type="button"
-            disabled={busy}
+            disabled={busy || disabled}
             onClick={() => {
               setSentTo("");
               setOtp("");
-              onError("");
+              send.reset();
+              verify.reset();
             }}
           >
-            {m.use_another_email()}
-          </button>
+            {m.login_email_change()}
+          </Button>
         </>
       )}
+      {error && <Status error>{error}</Status>}
     </form>
   );
 }

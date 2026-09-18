@@ -1,0 +1,10 @@
+{
+  "en": {
+    "subject": "Your Tandry sign-in code",
+    "text": "Your Tandry sign-in code is: {otp}\n\nIt expires in 10 minutes. Do not share it with anyone. If you did not request this email, you can ignore it."
+  },
+  "zh": {
+    "subject": "Tandry 登录验证码",
+    "text": "你的 Tandry 登录验证码是：{otp}\n\n10 分钟内有效，请勿分享给他人。如果不是你本人操作，请忽略此邮件。"
+  }
+}

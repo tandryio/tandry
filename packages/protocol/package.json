@@ -1,15 +1,40 @@
 {
-  "name": "@agent-room/protocol",
+  "name": "@tandryio/protocol",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
     "build": "tsc --noEmit",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepack": "node ../../scripts/prepare-package.mjs",
+    "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
-    "zod": "^3.23.8"
+    "zod": "^4.6.4"
+  },
+  "license": "Apache-2.0",
+  "files": [
+    "src",
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md",
+    "README.md"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": "./src/index.ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tandryio/tandry.git",
+    "directory": "packages/protocol"
+  },
+  "devDependencies": {
+    "tsx": "4.23.13",
+    "@types/node": "^22.0.0"
   }
 }

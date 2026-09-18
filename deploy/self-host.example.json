@@ -1,0 +1,12 @@
+{
+  "workerPrefix": "my-tandry",
+  "accountId": "REPLACE_WITH_YOUR_CLOUDFLARE_ACCOUNT_ID",
+  "databaseName": "my-tandry-accounts",
+  "databaseId": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
+  "websiteOrigin": "https://rooms.example.com",
+  "hubOrigin": "https://hub.example.com",
+  "policyRevision": 1,
+  "roomLimit": 100,
+  "conversationLimit": 50,
+  "roomIdleDays": 7
+}

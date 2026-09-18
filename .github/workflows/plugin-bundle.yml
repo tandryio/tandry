@@ -1,16 +1,33 @@
-name: plugin bundle is current
-on: [push, pull_request]
+name: source and plugin validation
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+concurrency:
+  group: validation-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4   # version comes from package.json packageManager
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
+      - run: pnpm notices:check
+      - run: pnpm website:build
+      - run: node --test website/scripts/i18n.test.mjs
       - run: pnpm typecheck
       - run: pnpm build
-      - run: pnpm --filter @agent-room/bridge test
-      - name: committed bundle must match a fresh build
-        run: git diff --exit-code -- plugins/claude/agent-room/dist/agent-room.cjs plugins/codex/agent-room/dist/agent-room.cjs
+      - run: pnpm check:source
+      - run: pnpm test:marketplace
+      - run: pnpm test:npm
+      - run: pnpm test:tooling
+      - run: pnpm test
+      - run: pnpm test:e2e
+      - run: pnpm --filter @tandryio/hub exec wrangler deploy --dry-run
+      - run: pnpm --filter @tandryio/website exec wrangler deploy --dry-run
+      - run: pnpm check:packages
+      - name: builds must not modify plugin source
+        run: git diff --exit-code -- clients deploy/marketplace

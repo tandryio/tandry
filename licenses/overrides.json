@@ -1,0 +1,270 @@
+{
+  "@better-auth/utils@0.4.2": [
+    {
+      "file": "upstream/better-auth-utils-MIT.txt",
+      "source": "https://raw.githubusercontent.com/better-auth/utils/main/LICENSE"
+    }
+  ],
+  "@better-auth/utils@0.5.0": [
+    {
+      "file": "upstream/better-auth-utils-MIT.txt",
+      "source": "https://raw.githubusercontent.com/better-auth/utils/main/LICENSE"
+    }
+  ],
+  "@opencode-ai/plugin@1.18.30": [
+    {
+      "file": "upstream/opencode-MIT.txt",
+      "source": "https://raw.githubusercontent.com/anomalyco/opencode/v1.18.30/LICENSE"
+    }
+  ],
+  "@opencode-ai/sdk@1.18.30": [
+    {
+      "file": "upstream/opencode-MIT.txt",
+      "source": "https://raw.githubusercontent.com/anomalyco/opencode/v1.18.30/LICENSE"
+    }
+  ],
+  "drizzle-orm@0.45.2": [
+    {
+      "file": "upstream/drizzle-Apache.txt",
+      "source": "https://raw.githubusercontent.com/drizzle-team/drizzle-orm/0.45.2/LICENSE"
+    }
+  ],
+  "workerd@1.20260908.1": [
+    {
+      "file": "upstream/workerd-Apache.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workerd/main/LICENSE"
+    }
+  ],
+  "workerd@1.20260911.1": [
+    {
+      "file": "upstream/workerd-Apache.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workerd/main/LICENSE"
+    }
+  ],
+  "@cloudflare/workers-types@5.20260911.1": [
+    {
+      "file": "upstream/workerd-Apache.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workerd/main/LICENSE"
+    }
+  ],
+  "@cloudflare/vite-plugin@1.54.8": [
+    {
+      "file": "upstream/cloudflare-MIT.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
+    }
+  ],
+  "miniflare@5.20260908.0-alpha": [
+    {
+      "file": "upstream/cloudflare-MIT.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
+    }
+  ],
+  "miniflare@5.20260911.0-alpha": [
+    {
+      "file": "upstream/cloudflare-MIT.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
+    }
+  ],
+  "@cloudflare/kv-asset-handler@0.5.0": [
+    {
+      "file": "upstream/cloudflare-MIT.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
+    },
+    {
+      "file": "upstream/cloudflare-Apache.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-APACHE"
+    }
+  ],
+  "@cloudflare/unenv-preset@2.16.1": [
+    {
+      "file": "upstream/cloudflare-MIT.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
+    },
+    {
+      "file": "upstream/cloudflare-Apache.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-APACHE"
+    }
+  ],
+  "wrangler@4.130.0": [
+    {
+      "file": "upstream/cloudflare-MIT.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
+    },
+    {
+      "file": "upstream/cloudflare-Apache.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-APACHE"
+    }
+  ],
+  "wrangler@4.131.1": [
+    {
+      "file": "upstream/cloudflare-MIT.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
+    },
+    {
+      "file": "upstream/cloudflare-Apache.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-APACHE"
+    }
+  ],
+  "@lix-js/sdk@0.16.1": [
+    {
+      "file": "upstream/lix-MIT.txt",
+      "source": "https://raw.githubusercontent.com/opral/lix/main/LICENSE"
+    }
+  ],
+  "mprocs@0.9.6": [
+    {
+      "file": "upstream/mprocs-MIT.txt",
+      "source": "https://raw.githubusercontent.com/pvolok/mprocs/v0.9.6/LICENSE"
+    }
+  ],
+  "kubernetes-types@1.30.0": [
+    {
+      "file": "upstream/Apache-2.0.txt",
+      "source": "https://registry.npmjs.org/kubernetes-types/1.30.0",
+      "note": "Package declares Apache-2.0; its published package and repository do not include a license file. Standard license text supplied."
+    }
+  ],
+  "@earendil-works/chord@0.85.1": [
+    {
+      "file": "upstream/pi-MIT.txt",
+      "source": "https://raw.githubusercontent.com/earendil-works/pi/v0.85.1/LICENSE"
+    }
+  ],
+  "@earendil-works/pi-agent-core@0.85.1": [
+    {
+      "file": "upstream/pi-MIT.txt",
+      "source": "https://raw.githubusercontent.com/earendil-works/pi/v0.85.1/LICENSE"
+    }
+  ],
+  "@earendil-works/pi-ai@0.85.1": [
+    {
+      "file": "upstream/pi-MIT.txt",
+      "source": "https://raw.githubusercontent.com/earendil-works/pi/v0.85.1/LICENSE"
+    }
+  ],
+  "@earendil-works/pi-coding-agent@0.85.1": [
+    {
+      "file": "upstream/pi-MIT.txt",
+      "source": "https://raw.githubusercontent.com/earendil-works/pi/v0.85.1/LICENSE"
+    }
+  ],
+  "@earendil-works/pi-telemetry@0.85.1": [
+    {
+      "file": "upstream/pi-MIT.txt",
+      "source": "https://raw.githubusercontent.com/earendil-works/pi/v0.85.1/LICENSE"
+    }
+  ],
+  "@earendil-works/pi-tui@0.85.1": [
+    {
+      "file": "upstream/pi-MIT.txt",
+      "source": "https://raw.githubusercontent.com/earendil-works/pi/v0.85.1/LICENSE"
+    }
+  ],
+  "@aws-sdk/credential-provider-http@3.972.73": [
+    {
+      "file": "upstream/aws-sdk-Apache.txt",
+      "source": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/main/LICENSE"
+    }
+  ],
+  "@aws-sdk/credential-provider-login@3.972.78": [
+    {
+      "file": "upstream/aws-sdk-Apache.txt",
+      "source": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/main/LICENSE"
+    }
+  ],
+  "@aws-sdk/nested-clients@3.997.45": [
+    {
+      "file": "upstream/aws-sdk-Apache.txt",
+      "source": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/main/LICENSE"
+    }
+  ],
+  "standardwebhooks@1.1.1": [
+    {
+      "file": "upstream/standardwebhooks-MIT.txt",
+      "source": "https://raw.githubusercontent.com/standard-webhooks/standard-webhooks/main/libraries/LICENSE"
+    }
+  ],
+  "data-uri-to-buffer@4.0.1": [
+    {
+      "file": "upstream/data-uri-MIT.txt",
+      "source": "https://raw.githubusercontent.com/TooTallNate/node-data-uri-to-buffer/4.0.1/README.md",
+      "note": "License section extracted from the upstream README."
+    }
+  ],
+  "@mariozechner/clipboard@0.3.9": [
+    {
+      "file": "upstream/MIT-terms.txt",
+      "source": "https://registry.npmjs.org/@mariozechner/clipboard/0.3.9",
+      "note": "Package declares MIT; its published package and repository have no license file or copyright notice. Standard MIT terms supplied without invented attribution."
+    }
+  ],
+  "react-remove-scroll-bar@2.3.8": [
+    {
+      "file": "upstream/react-remove-scroll-bar-MIT.txt",
+      "source": "https://raw.githubusercontent.com/theKashey/react-remove-scroll-bar/master/LICENSE",
+      "note": "The published package omits the MIT license text; reviewed the upstream repository license."
+    }
+  ],
+  "@yuku-toolchain/types@0.9.5": [
+    {
+      "file": "upstream/yuku-MIT.txt",
+      "source": "https://raw.githubusercontent.com/yuku-toolchain/yuku/main/LICENSE",
+      "note": "The published package omits the MIT license text; reviewed the upstream repository license."
+    }
+  ],
+  "yuku-analyzer@0.9.5": [
+    {
+      "file": "upstream/yuku-MIT.txt",
+      "source": "https://raw.githubusercontent.com/yuku-toolchain/yuku/main/LICENSE",
+      "note": "The published package omits the MIT license text; reviewed the upstream repository license."
+    }
+  ],
+  "yuku-ast@0.9.5": [
+    {
+      "file": "upstream/yuku-MIT.txt",
+      "source": "https://raw.githubusercontent.com/yuku-toolchain/yuku/main/LICENSE",
+      "note": "The published package omits the MIT license text; reviewed the upstream repository license."
+    }
+  ],
+  "@cloudflare/vitest-plugin@1.1.11": [
+    {
+      "file": "upstream/cloudflare-MIT.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
+    }
+  ],
+  "miniflare@5.20260916.0-alpha": [
+    {
+      "file": "upstream/cloudflare-MIT.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
+    }
+  ],
+  "wrangler@4.133.0": [
+    {
+      "file": "upstream/cloudflare-MIT.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
+    },
+    {
+      "file": "upstream/cloudflare-Apache.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-APACHE"
+    }
+  ],
+  "@cloudflare/workers-types@5.20260917.1": [
+    {
+      "file": "upstream/workerd-Apache.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workerd/main/LICENSE"
+    }
+  ],
+  "workerd@1.20260916.1": [
+    {
+      "file": "upstream/workerd-Apache.txt",
+      "source": "https://raw.githubusercontent.com/cloudflare/workerd/main/LICENSE"
+    }
+  ],
+  "stackback@0.0.2": [
+    {
+      "file": "upstream/MIT-terms.txt",
+      "source": "https://registry.npmjs.org/stackback/0.0.2",
+      "note": "Published package declares MIT and names Roman Shtylman as author, but omits a license file; its linked upstream repository is unavailable. Standard MIT terms supplied without inventing a copyright notice."
+    }
+  ]
+}

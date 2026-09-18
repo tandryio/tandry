@@ -1,0 +1,34 @@
+{
+  "name": "@tandryio/client-claude",
+  "version": "0.5.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node ../../scripts/package-plugins.mjs client claude",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm build && tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@tandryio/bridge": "workspace:*"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@tandryio/hub": "workspace:*",
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.27.0",
+    "tsx": "4.23.13"
+  },
+  "license": "Apache-2.0",
+  "files": [
+    "dist",
+    ".claude-plugin",
+    ".mcp.json",
+    "hooks",
+    "commands",
+    "monitors",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md"
+  ]
+}

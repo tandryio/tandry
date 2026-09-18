@@ -1,124 +1,118 @@
+import { Button, Icon, Status } from "../components/ui";
 import { m } from "../paraglide/messages";
-import { useI18n } from "../lib/i18n";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { authClient } from "../lib/auth-client";
-import { api } from "../lib/api";
+import { authClient, unwrap } from "../lib/auth-client";
+import { useAction } from "../lib/action";
+import { PROVIDER_LABELS, SOCIAL_PROVIDERS, useConfig } from "../lib/config";
 import { Shell } from "../components/shell";
 import { EmailLogin } from "../components/email-login";
 
 export const Route = createFileRoute("/login")({
   ssr: false,
+  head: () => ({
+    meta: [{ title: m.meta_page_title({ page: m.common_sign_in() }) }],
+  }),
   component: Login,
 });
+
+/** Only same-site app pages may be used as a post-login destination. */
+function safeNext(raw: string | null): string {
+  return raw &&
+    (/^\/(rooms|account|device|connect)(\?|$)/.test(raw) ||
+      /^\/api\/extensions\/[a-z0-9-]+$/.test(raw))
+    ? raw
+    : "/rooms";
+}
+
 // Sign-in and registration are the same action: the provider proves identity,
 // and a first-time account picks its @handle on the next page.
 function Login() {
-  const { errorText } = useI18n();
   const { data: session, isPending } = authClient.useSession();
+  // Keep the OTP form mounted during focus-triggered session refreshes.
   const [sessionChecked, setSessionChecked] = useState(false);
   useEffect(() => {
     if (!isPending) setSessionChecked(true);
   }, [isPending]);
-  const config = useQuery({
-    queryKey: ["config"],
-    queryFn: () => api<{ providers: string[] }>("/config"),
-  });
+  const config = useConfig();
   const params = new URLSearchParams(window.location.search);
-  const [error, setError] = useState(() =>
-    params.get("error") ? m.sign_in_failed_please_try_again() : "",
-  );
-  const [busy, setBusy] = useState(false);
-  const raw = params.get("next");
-  const next =
-    raw && /^\/(rooms|account|device)(\?|$)/.test(raw) ? raw : "/rooms";
-  async function signIn(provider: "github" | "google") {
-    setBusy(true);
-    setError("");
-    try {
-      const result = await authClient.signIn.social({
+  const next = safeNext(params.get("next"));
+  const callbackError = params.get("error") ? m.login_failed() : "";
+
+  const [emailBusy, setEmailBusy] = useState(false);
+  const social = useAction(async (provider: "github" | "google") => {
+    unwrap(
+      await authClient.signIn.social({
         provider,
         callbackURL: next,
         errorCallbackURL: `/login?next=${encodeURIComponent(next)}`,
-      });
-      if (result.error) throw new Error(errorText(result.error.message));
-    } catch (e) {
-      setError(
-        e instanceof Error
-          ? errorText(e.message)
-          : m.sign_in_failed_please_try_again(),
-      );
-      setBusy(false);
-    }
-  }
+      }),
+    );
+  });
+  const busy = social.busy || emailBusy;
+  const error = social.error || callbackError;
+  const providers = config.data?.providers ?? [];
+
   return (
     <Shell>
-      <section className="account-card narrow">
-        <span className="kicker">YOUR TEAM STARTS HERE</span>
-        <h1>{m.sign_in_start_collaborating()}</h1>
-        <p>{m.sign_in_for_free_with_email_or_an_existing()}</p>
-        {/* Keep the OTP form mounted during focus-triggered session refreshes. */}
+      <section className="account-card narrow login-card">
+        <div className="auth-icon">
+          <Icon name="link" />
+        </div>
+        <span className="kicker">{m.login_kicker()}</span>
+        <h1>{m.login_title()}</h1>
+        <p>{m.login_lead()}</p>
         {isPending && !sessionChecked ? (
-          <p role="status">{m.checking_your_session()}</p>
+          <p role="status">{m.common_checking_session()}</p>
         ) : session ? (
           <>
             <p>
-              {m.signed_in_as()}
-              {session.user.name || session.user.email}
+              {m.login_signed_in_as({
+                name: session.user.name || session.user.email,
+              })}
             </p>
-            <a className="button yellow" href={next}>
-              {m.continue()}
-            </a>
+            <Button asChild variant="primary">
+              <a href={next}>{m.common_continue()}</a>
+            </Button>
           </>
         ) : (
           <div className="login-options">
-            {config.data?.providers.includes("email") && (
+            {providers.includes("email") && (
               <EmailLogin
                 next={next}
-                busy={busy}
-                setBusy={setBusy}
-                onError={setError}
+                disabled={social.busy}
+                onBusy={setEmailBusy}
               />
             )}
-            {(["github", "google"] as const).map((provider) => (
-              <button
-                className="button"
+            {SOCIAL_PROVIDERS.filter((provider) =>
+              providers.includes(provider),
+            ).map((provider) => (
+              <Button
+                variant="secondary"
+                className="provider-button"
                 key={provider}
-                disabled={busy || !config.data?.providers.includes(provider)}
-                onClick={() => signIn(provider)}
+                disabled={busy || !providers.includes(provider)}
+                onClick={() => social.run(provider)}
               >
-                {m.sign_in_with_provider({
-                  provider: provider === "github" ? "GitHub" : "Google",
-                })}
-              </button>
+                <span className="provider-symbol" aria-hidden="true">
+                  {provider === "github" ? <Icon name="code" /> : "G"}
+                </span>
+                {m.login_with_provider({ provider: PROVIDER_LABELS[provider] })}
+                <Icon name="arrow" />
+              </Button>
             ))}
             {config.isPending && (
-              <p role="status">{m.loading_sign_in_methods()}</p>
+              <p role="status">{m.login_loading_methods()}</p>
             )}
-            {config.error && (
-              <p role="alert">
-                {m.could_not_reach_the_sign_in_service_please_try()}
-              </p>
-            )}
-            {config.data && !config.data.providers.length && (
-              <p role="status">
-                {m.sign_in_is_being_configured_please_check_back_soon()}
-              </p>
+            {config.error && <p role="alert">{m.login_config_error()}</p>}
+            {config.data && !providers.length && (
+              <p role="status">{m.login_no_providers()}</p>
             )}
           </div>
         )}
-        {error && (
-          <p role="alert" className="error">
-            {error}
-          </p>
-        )}
-        <p className="muted">
-          {m.new_accounts_pick_a_handle_after_signing_in()}
-        </p>
-        <p className="muted">
-          {m.we_only_request_basic_account_information_not_access_to()}
-        </p>
+        {error && <Status error>{error}</Status>}
+        <p className="muted">{m.login_handle_note()}</p>
+        <p className="muted">{m.login_scope_note()}</p>
       </section>
     </Shell>
   );

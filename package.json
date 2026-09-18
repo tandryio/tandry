@@ -1,16 +1,44 @@
 {
-  "name": "agent-room",
+  "name": "tandry",
   "private": true,
   "packageManager": "pnpm@10.28.0",
   "scripts": {
-    "build": "pnpm -r --filter ./packages/protocol run build && pnpm -r --filter ./packages/bridge run build && node scripts/package-plugins.mjs",
-    "typecheck": "pnpm -r run typecheck",
-    "hub:dev": "pnpm --filter @agent-room/hub dev",
-    "hub:deploy": "pnpm --filter @agent-room/hub run deploy",
-    "website:dev": "python3 -m http.server 4173 --directory website/dist",
-    "website:deploy": "pnpm --filter @agent-room/hub exec wrangler deploy --config ../../wrangler.website.jsonc"
+    "dev": "node scripts/dev.mjs",
+    "mcp:setup": "node scripts/mcp-dev.mjs setup",
+    "dev:mcp": "node scripts/mcp-dev.mjs start",
+    "build": "pnpm notices:check && pnpm --filter @tandryio/protocol build && node scripts/package-plugins.mjs",
+    "typecheck": "tsc --noEmit -p scripts/tsconfig.json && tsc -p tests/tsconfig.json && pnpm -r run typecheck",
+    "hub:dev": "pnpm --filter @tandryio/hub dev",
+    "hub:deploy": "pnpm --filter @tandryio/hub run deploy",
+    "website:dev": "pnpm --filter @tandryio/website dev",
+    "website:deploy": "pnpm --filter @tandryio/website deploy",
+    "check:source": "node scripts/check-source.mjs",
+    "website:build": "pnpm --filter @tandryio/website build",
+    "format:web": "prettier --write \"website/src/**/*.{ts,tsx,css}\" website/vite.config.ts",
+    "self-host:configure": "node scripts/self-host.mjs configure",
+    "self-host:build": "node scripts/self-host.mjs build",
+    "self-host:check": "node scripts/self-host.mjs dry-run",
+    "notices:generate": "node scripts/generate-notices.mjs",
+    "notices:check": "node scripts/generate-notices.mjs --check",
+    "check:packages": "node scripts/check-packages.mjs",
+    "test": "pnpm -r run test",
+    "test:e2e": "tsx --test tests/e2e.test.ts",
+    "generate:commands": "tsx scripts/generate-commands.mts",
+    "test:marketplace": "node --test tests/marketplace.test.mjs",
+    "test:tooling": "node --test tests/agent.test.mjs tests/self-host-config.test.mjs tests/mcp-dev.test.mjs",
+    "agent": "node scripts/agent.mjs",
+    "npm:pack": "pnpm build && node scripts/npm-release.mjs pack",
+    "test:npm": "node --test tests/npm-release.test.mjs"
   },
   "devDependencies": {
-    "typescript": "^5.6.0"
-  }
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.27.0",
+    "mprocs": "0.9.6",
+    "prettier": "3.9.6",
+    "semver": "^7.8.5",
+    "tsx": "4.23.13",
+    "typescript": "^5.6.0",
+    "zod": "4.6.4"
+  },
+  "license": "Apache-2.0"
 }

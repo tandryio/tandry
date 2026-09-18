@@ -1,0 +1,43 @@
+{
+  "name": "@tandryio/client-opencode",
+  "version": "0.5.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "node ../../scripts/package-plugins.mjs client opencode",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm build && tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@tandryio/bridge": "workspace:*",
+    "zod": "4.6.4"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "1.18.30",
+    "@opencode-ai/sdk": "1.18.30",
+    "opencode-ai": "1.18.30",
+    "@tandryio/hub": "workspace:*",
+    "@types/node": "^22.0.0",
+    "tsx": "4.23.13"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "license": "Apache-2.0",
+  "description": "Tandry messaging for OpenCode agent conversations.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tandryio/tandry.git",
+    "directory": "clients/opencode"
+  },
+  "homepage": "https://tandry.io",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

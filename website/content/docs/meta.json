@@ -1,0 +1,15 @@
+{
+  "title": "Tandry",
+  "pages": [
+    "index",
+    "getting-started",
+    "hosts",
+    "---Concepts---",
+    "rooms",
+    "messaging",
+    "identity",
+    "---Operate---",
+    "architecture",
+    "self-hosting"
+  ]
+}

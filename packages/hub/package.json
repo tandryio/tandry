@@ -1,20 +1,64 @@
 {
-  "name": "@agent-room/hub",
+  "name": "@tandryio/hub",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit"
+    "deploy": "node ../../scripts/self-host.mjs deploy-hub",
+    "typecheck": "tsc --noEmit",
+    "types": "wrangler types --strict-vars=false --env-file .dev.vars.example",
+    "db:local": "wrangler d1 migrations apply AUTH_DB --local",
+    "db:remote": "wrangler d1 migrations apply AUTH_DB --remote",
+    "test": "tsx --test test/*.test.ts && vitest run",
+    "prepack": "node ../../scripts/prepare-package.mjs",
+    "test:workerd": "vitest run"
   },
   "dependencies": {
-    "@agent-room/protocol": "workspace:*",
+    "@better-auth/drizzle-adapter": "1.7.4",
+    "@better-auth/mcp": "1.7.4",
+    "@better-auth/oauth-provider": "1.7.4",
+    "@better-auth/utils": "0.4.2",
+    "@modelcontextprotocol/server": "2.0.0",
+    "@tandryio/protocol": "workspace:*",
+    "better-auth": "1.7.4",
+    "drizzle-orm": "^0.45.2",
     "hono": "^4.6.0",
-    "zod": "^3.23.8"
+    "zod": "^4.6.4"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.0.0",
-    "wrangler": "^4.0.0"
+    "@cloudflare/vitest-plugin": "1.1.11",
+    "@cloudflare/workers-types": "^5.20260917.1",
+    "@types/node": "^22.20.1",
+    "@types/ws": "^8.5.12",
+    "tsx": "4.23.13",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.133.0",
+    "ws": "^8.18.0"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json",
+    "./testing": "./testing/suite.ts",
+    "./migrations/*": "./migrations/*",
+    "./worker-configuration.d.ts": "./worker-configuration.d.ts"
+  },
+  "license": "Apache-2.0",
+  "files": [
+    "src",
+    "migrations",
+    "testing",
+    "worker-configuration.d.ts",
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tandryio/tandry.git",
+    "directory": "packages/hub"
   }
 }

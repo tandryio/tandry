@@ -1,28 +1,30 @@
 {
-  "name": "@agent-room/bridge",
+  "name": "@tandryio/bridge",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "bin": {
-    "agent-room": "./dist/agent-room.cjs"
-  },
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
-    "test": "node --test scripts/*.test.mjs",
-    "smoke": "node scripts/smoke.mjs"
+    "test": "tsx --test test/*.test.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./stdio": "./src/stdio.ts",
+    "./local": "./src/local.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
-    "@agent-room/protocol": "workspace:*",
+    "@tandryio/protocol": "workspace:*",
     "https-proxy-agent": "^7.0.6",
+    "proxy-from-env": "^2.1.0",
     "ws": "^8.18.0",
-    "zod": "^3.23.8"
+    "zod": "^4.6.4"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/proxy-from-env": "^1.0.4",
     "@types/ws": "^8.5.12",
-    "tsup": "^8.3.0"
-  }
+    "tsx": "4.23.13"
+  },
+  "license": "Apache-2.0"
 }

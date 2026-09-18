@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tandry": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/dist/main.cjs", "mcp"]
+    }
+  }
+}

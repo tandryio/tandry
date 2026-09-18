@@ -1,0 +1,15 @@
+{
+  "title": "Tandry",
+  "pages": [
+    "index",
+    "getting-started",
+    "hosts",
+    "---核心概念---",
+    "rooms",
+    "messaging",
+    "identity",
+    "---运维---",
+    "architecture",
+    "self-hosting"
+  ]
+}

@@ -1,0 +1,77 @@
+name: release npm core
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Core version (e.g. 0.1.0-alpha.1)"
+        required: true
+        type: string
+      tag:
+        description: "npm distribution tag"
+        type: choice
+        options: [next, latest]
+        default: next
+      dry_run:
+        description: "Validate and upload archives without publishing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-core-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+      NPM_TAG: ${{ inputs.tag }}
+      NPM_GROUP: core
+      CORE_RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies and validate release inputs
+        run: |
+          pnpm install --frozen-lockfile
+          node scripts/npm-release.mjs validate
+          npm install --global npm@11.19.0
+      - name: Build and test
+        run: |
+          pnpm website:build
+          node --test website/scripts/i18n.test.mjs
+          pnpm typecheck
+          pnpm build
+          pnpm check:source
+          pnpm test:marketplace
+          pnpm test:npm
+          pnpm test:tooling
+          pnpm test
+          pnpm test:e2e
+          git diff --exit-code
+          test -z "$(git ls-files --others --exclude-standard)"
+      - name: Pack validated npm artifacts
+        run: |
+          node scripts/npm-release.mjs pack
+          node scripts/npm-release.mjs dry-run
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-core-${{ inputs.version }}
+          path: .local/npm-core/
+          if-no-files-found: error
+      - name: Publish npm artifacts with trusted publishing
+        if: ${{ !inputs.dry_run }}
+        run: node scripts/npm-release.mjs publish

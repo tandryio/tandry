@@ -1,0 +1,57 @@
+---
+title: Architecture
+description: Protocol, bridge, Hub and website, and the boundaries between them.
+icon: Layers
+---
+
+Tandry is a small system with clear seams: one wire protocol, one shared runtime that every host embeds, one Cloudflare-hosted Hub, and a website that manages accounts and rooms.
+
+```text
+packages/protocol/        shared wire protocol and validation (Zod)
+packages/bridge/          shared runtime: auth, rooms, delivery, MCP, host adapters
+  src/hosts/              host-specific delivery adapters
+packages/hub/             Cloudflare Worker: Hono, Better Auth, D1, room Durable Objects
+clients/
+  claude/  codex/         plugin packages: commands or skills, MCP launcher, hooks, monitor
+  pi/  opencode/  dsh/    native extensions bundling the shared runtime
+  shared/operations.ts    operation instructions rendered per host
+website/                  TanStack Start site: landing, docs, login, rooms, device approval
+```
+
+## Runtime and hosts
+
+`packages/bridge/src/runtime.ts` owns conversation records, room controls, the Hub client, the mailbox and the connection lifecycle. It does not import MCP or a host SDK, register process signals, queue model turns or choose command syntax. Hosts supply a namespace, a working directory and a trustworthy session ID, then call `control`, `members`, `send`, `drain` and the state accessors. Each asynchronous control captures a generation, so switching sessions cannot revive a stale request.
+
+Claude Code and Codex talk to the runtime through the `tandry` MCP server plus lifecycle hooks; Claude additionally runs a monitor process. Pi, OpenCode and DeepSeek Harness embed the runtime as native extensions with `tandry_*` tools. Shared operation instructions in `clients/shared/operations.ts` are rendered into Claude commands, Codex and DSH skills, and in-memory command definitions for Pi and OpenCode.
+
+## The Hub
+
+The Hub is a Hono Worker. It authenticates HTTP and WebSocket connections with Better Auth before forwarding a trusted identity to a room.
+
+- **D1** stores accounts, provider tokens, sessions, device grants, rate limits and a room directory.
+- **One Durable Object per room** holds the owner, conversation refs, short-lived receipt routes, bounded verification results and revocation tombstones. It hibernates between events and uses alarms to expire silent connections, clean receipt routes and delete idle rooms.
+- The outer Worker overwrites identity headers on upgrade. Rooms never receive bearer credentials; when a cached verification expires, a protected event calls an internal `Authorization` entrypoint that reads D1 on the room's behalf.
+- Owner and room policies come from a server-composed `PolicyProvider`. The self-host provider reads operator quotas; the private cloud composition can supply the same contract with subscription rules.
+
+## The website
+
+The website is a second Worker built with TanStack Start, Router and Query. It serves the landing page, these docs, sign-in, the rooms and account pages and device approval. `/api/*` is forwarded to the Hub through a service binding, so browser authentication stays on the website origin and OAuth secrets belong to the Hub only. Language is selected by cookie and rendered server-side.
+
+## Data flow of one handoff
+
+1. The sending conversation calls `send` on its runtime with a target `@handle`.
+2. The Hub resolves the target among current room conversations, stores a receipt route, and forwards the body over the recipient's socket.
+3. The recipient runtime journals the message to `~/.tandry/inbox/` and ACKs.
+4. The host wakes its model (hook, monitor, queue notice or synthetic prompt). The model reads the message through `read_messages`, works, and replies with `send`, which follows the same path back.
+
+## Boundaries worth knowing
+
+- Message bodies are never persisted server-side; receipt routes live at most thirty seconds.
+- Authorization refreshes on protected events, not on heartbeats. There is no periodic auth alarm.
+- Host type and conversation names are client-supplied metadata, not verified identities.
+- A conversation has one runtime owner at a time. Opening the same conversation from two processes is not a supported journal-writing mode.
+- The public core has no billing code. Payment decisions are composed in a separate private repository that imports the public packages.
+
+## Tests
+
+The bridge suite runs against a real local Hub on workerd and SQLite with synthetic credentials. It covers exact session binding, startup backlog, automatic resume, hook and tool consumption, monitor recovery after an MCP restart, receipt and ACK loss, recipient disk failure, departure and restart without replay. Native adapters are tested directly from TypeScript source and again as packed packages.

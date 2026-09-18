@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "agent-room": {
-      "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/dist/agent-room.cjs", "mcp"]
-    }
-  }
-}

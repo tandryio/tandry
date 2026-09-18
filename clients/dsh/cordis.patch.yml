@@ -1,0 +1,3 @@
+- insert:
+    - id: tandry
+      name: '@tandryio/client-dsh'

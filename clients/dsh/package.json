@@ -1,0 +1,56 @@
+{
+  "name": "@tandryio/client-dsh",
+  "version": "0.5.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "node ../../scripts/package-plugins.mjs client dsh",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm build && tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@tandryio/bridge": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.2",
+    "@deepseek-ai/dsh-agent": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-agent-loop": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-llm": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-session": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-session-projection": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-system-prompt": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-tools": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-session-persistence-jsonl": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-skill": "0.1.5-rc.2",
+    "@tandryio/hub": "workspace:*",
+    "@types/node": "^22.0.0",
+    "tsx": "4.23.13"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "license": "Apache-2.0",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "description": "Tandry messaging for DeepSeek Harness agent conversations.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tandryio/tandry.git",
+    "directory": "clients/dsh"
+  },
+  "homepage": "https://tandry.io",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

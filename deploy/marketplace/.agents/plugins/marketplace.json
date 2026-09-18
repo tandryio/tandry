@@ -1,0 +1,20 @@
+{
+  "name": "tandry-marketplace",
+  "interface": {
+    "displayName": "Tandry Marketplace"
+  },
+  "plugins": [
+    {
+      "name": "tandry",
+      "source": {
+        "source": "local",
+        "path": "./clients/codex"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

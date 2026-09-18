@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import test from 'node:test';
+import { SelfHostConfig } from '../scripts/self-host.mjs';
+
+const config = {
+  ...JSON.parse(fs.readFileSync(new URL('../deploy/self-host.example.json', import.meta.url), 'utf8')),
+  accountId: 'a'.repeat(32),
+  databaseId: '00000000-0000-0000-0000-000000000001',
+};
+
+test('self-host configuration accepts explicit zero limits and parses distinct custom domains', () => {
+  const parsed = SelfHostConfig.parse({ ...config, roomLimit: 0, conversationLimit: 0 });
+  assert.equal(parsed.websiteOrigin.hostname, 'rooms.example.com');
+  assert.equal(parsed.hubOrigin.origin, 'https://hub.example.com');
+  assert.equal(parsed.roomLimit, 0);
+  assert.equal(parsed.conversationLimit, 0);
+});
+
+test('self-host configuration rejects secrets, malformed origins and invalid policy values', () => {
+  for (const overrides of [
+    { unexpectedSecret: 'synthetic-only' },
+    { accountId: 'invalid' },
+    { databaseId: 'invalid' },
+    { workerPrefix: '../escape' },
+    { websiteOrigin: 'http://rooms.example.com' },
+    { websiteOrigin: 'https://rooms.example.com/' },
+    { websiteOrigin: 'https://rooms.example.com:8443' },
+    { websiteOrigin: 'https://user:password@rooms.example.com' },
+    { websiteOrigin: 'https://demo.workers.dev' },
+    { websiteOrigin: config.hubOrigin },
+    { websiteOrigin: 123 },
+    { roomLimit: -1 },
+    { conversationLimit: 100001 },
+    { policyRevision: 0 },
+    { policyRevision: '1' },
+    { roomIdleDays: 1.5 },
+  ]) {
+    assert.equal(SelfHostConfig.safeParse({ ...config, ...overrides }).success, false, JSON.stringify(overrides));
+  }
+});

@@ -1,12 +1,36 @@
 node_modules
 dist/
-!plugins/claude/agent-room/dist/
-plugins/claude/agent-room/dist/*.map
 .wrangler
 .dev.vars
-!plugins/codex/agent-room/dist/
-plugins/codex/agent-room/dist/*.map
 
-# Authored static website assets
-!website/dist/
-!website/dist/**
+# Website is built from source; legacy dist is no longer authored.
+.tanstack/
+.env
+.env.*
+!.env.example
+.dev.vars.*
+!.dev.vars.example
+
+website/src/paraglide/
+website/.source/
+website/project.inlang/cache/
+.self-host/
+.local/
+
+# Generated plugin instructions and license copies
+clients/claude/commands/
+clients/codex/skills/
+clients/dsh/skills/
+clients/*/LICENSE
+clients/*/NOTICE
+clients/*/THIRD_PARTY_NOTICES.md
+
+website/public/third-party-notices.txt
+
+# Generated package license copies
+packages/*/LICENSE
+packages/*/NOTICE
+packages/*/THIRD_PARTY_NOTICES.md
+website/LICENSE
+website/NOTICE
+website/THIRD_PARTY_NOTICES.md

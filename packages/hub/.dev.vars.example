@@ -1,1 +1,14 @@
-# Room creation is public and needs no secrets.
+# Local development only. Copy missing keys into .dev.vars; never commit real secrets.
+BETTER_AUTH_URL=http://127.0.0.1:4173
+BETTER_AUTH_SECRET=replace-with-a-random-secret-at-least-32-characters-long
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+RESEND_API_KEY=
+# Must use a domain verified in Resend.
+RESEND_FROM=Tandry <login@example.com>
+# Local development only: print email login codes in the Hub terminal (no Resend).
+# Requires HTTP loopback, unless dev:mcp explicitly sets DEV_EMAIL_OTP_ORIGIN
+# to the exact HTTPS tunnel origin. Never enable console OTP in a deployment.
+DEV_EMAIL_OTP=console

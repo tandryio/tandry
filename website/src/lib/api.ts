@@ -3,10 +3,13 @@ export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number, code?: string) {
     super(message);
+    this.name = "ApiError";
     this.status = status;
     this.code = code;
   }
 }
+
+/** Fetch a Hub API route; a body makes it a JSON POST. Errors throw ApiError. */
 export async function api<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(`/api${path}`, {
     credentials: "same-origin",
@@ -25,9 +28,7 @@ export async function api<T>(path: string, body?: unknown): Promise<T> {
   };
   if (!response.ok)
     throw new ApiError(
-      typeof result.error === "string"
-        ? result.error
-        : result.message || "Something went wrong. Please try again.",
+      typeof result.error === "string" ? result.error : (result.message ?? ""),
       response.status,
       typeof result.code === "string" ? result.code : undefined,
     );

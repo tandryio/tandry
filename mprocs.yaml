@@ -1,0 +1,18 @@
+procs:
+  Hub:
+    cmd: [pnpm, hub:dev, --local, --ip, 127.0.0.1, --port, '8799']
+    cwd: <CONFIG_DIR>
+    stop: SIGTERM
+  Website:
+    cmd: [pnpm, website:dev, --strictPort]
+    cwd: <CONFIG_DIR>
+    stop: SIGTERM
+
+scrollback: 5000
+proc_list_width: 18
+keymap_procs:
+  <q>: { c: quit }
+  <C-c>: { c: quit }
+  <C-q>: { c: quit }
+keymap_term:
+  <C-q>: { c: quit }

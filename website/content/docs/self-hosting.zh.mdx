@@ -1,0 +1,85 @@
+---
+title: 自托管
+description: 在你自己的 Cloudflare 账号上运行 Hub 与网站。
+icon: Server
+---
+
+公共版本运行在你的 Cloudflare 账号上：两个 Worker、一个 D1 数据库和一个 SQLite Durable Object 命名空间。它包含登录、设备授权、房间管理和所有宿主适配器。不需要 Tandry Cloud 账号、订阅或许可证服务器。Cloudflare 以及你的邮件或 OAuth 提供方有各自的条款和费用。目前没有 Docker 或 VPS 部署方式。
+
+## 前提
+
+- Node.js 22+ 与 pnpm 10.28.0
+- 一个启用了 Workers、D1 与 Durable Objects 的 Cloudflare 账号
+- 一个你控制的域，用于两个自定义域名，例如 `rooms.example.com` 与 `hub.example.com`
+- 至少一个完整的登录提供方：GitHub OAuth 应用、Google Web 客户端，或带已验证发信域名的 Resend API key
+
+## 步骤
+
+<Steps>
+<Step>
+### 创建数据库
+
+```sh
+pnpm install --frozen-lockfile
+pnpm --filter @tandryio/hub exec wrangler d1 create my-tandry-accounts
+```
+
+记录数据库 ID 和你的账号 ID。
+</Step>
+<Step>
+### 生成部署配置
+
+把 `deploy/self-host.example.json` 复制到仓库之外，填入 ID、域名、名称和资源限制，然后运行：
+
+```sh
+pnpm self-host:configure /tmp/my-tandry.json
+```
+
+这会写入被忽略的 `.self-host/hub.json` 与 `.self-host/website.json`。仓库中的 Wrangler 文件是本地开发默认值；绝不要复用官方部署的资源标识。
+</Step>
+<Step>
+### 上传密钥
+
+```sh
+pnpm --filter @tandryio/hub exec wrangler secret put BETTER_AUTH_SECRET --config ../../.self-host/hub.json
+```
+
+按需对 `GITHUB_CLIENT_ID`、`GITHUB_CLIENT_SECRET`、`GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`、`RESEND_API_KEY` 与 `RESEND_FROM` 重复此操作。`BETTER_AUTH_SECRET` 至少需要 32 个随机字符。密钥绝不放进 JSON 配置。
+
+OAuth 回调地址使用**网站**域名：`https://rooms.example.com/api/auth/callback/github` 与 `/api/auth/callback/google`。`BETTER_AUTH_URL` 同样是网站域名，而不是 Hub 域名。
+</Step>
+<Step>
+### 试运行
+
+```sh
+pnpm self-host:check
+```
+
+这会用选定的服务绑定构建网站，并对两个 Worker 做部署试运行。它不会创建域名、上传密钥或部署代码。
+</Step>
+<Step>
+### 迁移并部署
+
+```sh
+pnpm --filter @tandryio/hub exec wrangler d1 migrations apply AUTH_DB --remote --config ../../.self-host/hub.json
+pnpm hub:deploy
+pnpm website:deploy
+```
+
+部署 Hub 之前先应用所有迁移，部署网站之前先部署 Hub。
+</Step>
+</Steps>
+
+## 连接 Agent
+
+在宿主的环境中设置 `TANDRY_HUB=wss://hub.example.com`，或在 `~/.tandry/config.json` 中设置 `hub`。重启宿主，登录你的实例，然后创建或加入房间。每个 Hub 有自己的凭据；指向新端点不会复用官方服务的凭据。
+
+## 限制与升级
+
+`roomLimit` 按所有者生效，`conversationLimit` 按房间生效。修改它们时务必递增 `policyRevision`；用不同的限制复用同一个修订号会直接失败。变更在有界缓存过期后的受保护活动中生效。
+
+升级前先备份 D1，并遵循该版本的 schema 与部署顺序。保持 Worker 名称、`TEAM_ROOM` 绑定、`TeamRoom` 类和迁移历史稳定；重命名可能选中不同的 Durable Object 命名空间。回滚代码不会回滚 schema 或房间状态。
+
+<Callout>
+  包含全部选项的完整指南位于仓库的 `docs/self-hosting.md`，提供方配置见旁边的 `docs/authentication.md`。
+</Callout>

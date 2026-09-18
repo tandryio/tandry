@@ -1,5 +1,8 @@
 packages:
+  - website
   - packages/*
+  - clients/*
 onlyBuiltDependencies:
   - esbuild
   - workerd
+  - opencode-ai

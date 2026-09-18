@@ -1,0 +1,79 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "timeout": 5,
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/dist/hook.cjs",
+              "SessionStart"
+            ]
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "timeout": 5,
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/dist/hook.cjs",
+              "UserPromptSubmit"
+            ]
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "timeout": 5,
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/dist/hook.cjs",
+              "PostToolUse"
+            ]
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "timeout": 5,
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/dist/hook.cjs",
+              "Stop"
+            ]
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "timeout": 5,
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/dist/hook.cjs",
+              "SessionEnd"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "tandry",
+  "version": "0.5.0",
+  "description": "Connect this conversation to a Tandry room with the local Claude Code adapter. Automatic delivery requires an interactive CLI session with plugin monitor support.",
+  "author": {
+    "name": "henrylo"
+  },
+  "repository": "https://github.com/tandryio/tandry"
+}

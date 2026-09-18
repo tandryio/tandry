@@ -1,0 +1,13 @@
+{
+  "name": "tandry-marketplace",
+  "owner": {
+    "name": "henrylo"
+  },
+  "plugins": [
+    {
+      "name": "tandry",
+      "source": "./clients/claude",
+      "description": "Message colleagues' Claude Code sessions through a shared hub."
+    }
+  ]
+}

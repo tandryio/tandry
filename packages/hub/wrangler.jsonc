@@ -1,19 +1,55 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  // Legacy deployment ID: preserve the existing Durable Object namespace and room data.
-  "name": "team-bridge-hub",
+  "name": "tandry-hub",
   "main": "src/index.ts",
-  "compatibility_date": "2025-06-01",
-  // custom domain: wrangler creates the DNS record + certificate on deploy
-  "routes": [{ "pattern": "hub.agentroom.online", "custom_domain": true }],
-  "workers_dev": false,
+  "compatibility_date": "2026-09-13",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
+  "d1_databases": [
+    {
+      "binding": "AUTH_DB",
+      "database_name": "tandry-local",
+      "database_id": "00000000-0000-0000-0000-000000000001",
+      "migrations_dir": "migrations"
+    }
+  ],
   "vars": {
-    // days without any activity before a room is destroyed
-    "ROOM_IDLE_DAYS": "7"
+    "BETTER_AUTH_URL": "http://127.0.0.1:4173",
+    "ROOM_LIMIT": "100",
+    "MEMBERS_PER_ROOM": "50",
+    "RETENTION_DAYS": "30"
   },
   "durable_objects": {
-    "bindings": [{ "name": "TEAM_ROOM", "class_name": "TeamRoom" }]
+    "bindings": [
+      {
+        "name": "ROOM",
+        "class_name": "RoomDO"
+      }
+    ]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["TeamRoom"] }],
-  "observability": { "enabled": true }
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "TeamRoom"
+      ]
+    },
+    {
+      "tag": "v2",
+      "deleted_classes": [
+        "TeamRoom"
+      ],
+      "new_sqlite_classes": [
+        "RoomDO"
+      ]
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "traces": {
+      "enabled": true
+    }
+  }
 }
