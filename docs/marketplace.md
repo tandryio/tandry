@@ -34,8 +34,10 @@ implemented because remote calls lack a shared trusted host conversation ID.
 1. Once: add the source repository's Actions secret `MARKETPLACE_TOKEN`. Use a
    fine-grained GitHub token restricted to `tandryio/tandry-marketplace`, with
    **Contents: read and write** permission.
-2. Open **Actions → release marketplace → Run workflow**, select the source branch,
-   and enter a new version such as `0.5.0`.
+2. Run **Actions → release npm clients** with publishing enabled. Successful npm
+   publication automatically invokes this workflow for the same source and version.
+   The standalone **release marketplace** action remains available for a
+   marketplace-only release or recovery.
 
 CI installs dependencies, builds and tests the plugins, applies the requested
 version to the bundled MCP servers and exported package/plugin manifests, and pushes the distribution plus
@@ -50,8 +52,8 @@ the distribution. The default `GITHUB_TOKEN` cannot publish to another repositor
 which is why the one-time token setup is required.
 
 Before the first plugin release, deploy the matching Hub/website described in the
-root README. This workflow publishes the marketplace; Pi, OpenCode and DSH use the separate
-[npm client release workflow](npm-releases.md).
+root README. The [npm client release workflow](npm-releases.md) publishes Pi, OpenCode and DSH
+first, then invokes this workflow to synchronize the marketplace.
 
 ## Local development
 

@@ -1,5 +1,13 @@
 name: release marketplace
 on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+    secrets:
+      MARKETPLACE_TOKEN:
+        required: true
   workflow_dispatch:
     inputs:
       version:

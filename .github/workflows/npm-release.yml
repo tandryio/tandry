@@ -42,6 +42,13 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+      - name: Check marketplace credentials before publishing
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.MARKETPLACE_TOKEN }}
+        run: |
+          test -n "$GH_TOKEN" || { echo "MARKETPLACE_TOKEN is required for the coordinated release"; exit 1; }
+          gh api repos/tandryio/tandry-marketplace --jq '.permissions.push' | grep -qx true
       - name: Install dependencies and validate release inputs
         run: |
           pnpm install --frozen-lockfile
@@ -73,3 +80,13 @@ jobs:
       - name: Publish npm artifacts with trusted publishing
         if: ${{ !inputs.dry_run }}
         run: node scripts/npm-release.mjs publish
+
+  marketplace:
+    name: Sync matching marketplace release
+    needs: release
+    if: ${{ !inputs.dry_run }}
+    uses: ./.github/workflows/marketplace-release.yml
+    with:
+      version: ${{ inputs.version }}
+    secrets:
+      MARKETPLACE_TOKEN: ${{ secrets.MARKETPLACE_TOKEN }}

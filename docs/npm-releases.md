@@ -39,7 +39,15 @@ GitHub provenance. Never publish directly from a client source directory.
    previews or `latest` for stable releases; prereleases cannot use `latest`.
 3. Leave `dry_run` enabled to build, test, inspect, and upload the archives.
 4. Once ready, run the workflow on the same source revision with `dry_run`
-   disabled to publish. Deploy the matching Hub and website before public use.
+   disabled. It publishes npm packages, then automatically calls the marketplace
+   workflow with the same version and source revision. Configure
+   `MARKETPLACE_TOKEN` as described in [marketplace releases](marketplace.md).
+   Deploy the matching Hub and website before public use.
+
+A dry run publishes neither npm packages nor the marketplace. A failed npm job
+blocks marketplace publication. If only marketplace synchronization fails, rerun
+its failed job; do not choose a new version or source revision. Normal source
+pushes and pull requests only validate; one explicit release starts distribution.
 
 The workflow builds the existing client distribution, runs workspace and
 artifact tests, then packs only the three native clients into `.local/npm/`.
