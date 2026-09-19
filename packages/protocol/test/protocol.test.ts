@@ -54,15 +54,15 @@ test("the notice is built from headers only", () => {
 test("send reports who sees it now and who waits", () => {
   const now = Date.UTC(2026, 8, 17, 10, 0, 0);
   const text = renderSent({ id: "m_01hzy3v9k8abcdefgh", seq: 1, recipients: [
-    { address: "alice/api-review", state: "live", tier: "push", wakeable: true, lastActiveAt: now },
-    { address: "bob/website", state: "live", tier: "push", wakeable: false, lastActiveAt: now },
-    { address: "carol/planning", state: "dormant", tier: "push", wakeable: false, lastActiveAt: now - 2 * 3600_000 },
-    { address: "dave/research", state: "live", tier: "pull", wakeable: false, lastActiveAt: now },
+    { address: "alice/api-review", state: "online", tier: "push", wakeable: true, lastActiveAt: now },
+    { address: "bob/website", state: "online", tier: "push", wakeable: false, lastActiveAt: now },
+    { address: "carol/planning", state: "offline", tier: "push", wakeable: false, lastActiveAt: now - 2 * 3600_000 },
+    { address: "dave/research", state: "online", tier: "pull", wakeable: false, lastActiveAt: now },
   ] }, now);
-  assert.match(text, /alice\/api-review: live; told now/);
-  assert.match(text, /bob\/website: live, seen on next turn/);
-  assert.match(text, /carol\/planning: dormant, last active 2h ago/);
-  assert.match(text, /dave\/research: live in a web chat/);
+  assert.match(text, /alice\/api-review: online; told now/);
+  assert.match(text, /bob\/website: online, seen on next turn/);
+  assert.match(text, /carol\/planning: offline, last active 2h ago/);
+  assert.match(text, /dave\/research: online in a web chat/);
   assert.match(renderSent({ id: "m_01hzy3v9k8abcdefgh", seq: 1, recipients: [] }, now), /nobody was told/);
 });
 

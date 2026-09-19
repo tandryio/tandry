@@ -149,7 +149,7 @@ test("idle mail starts a real pi turn; only inbox delivers the body and a reply 
   const sender = await room();
   const pi = await host();
   assert.match(await pi.call("join", { room: sender.code, name: "receiver", intro: "Pi receiver" }), /Joined/);
-  await until(async () => /alice\/receiver .*live; told now/.test(await sender.call("members")), "wakeable pi link");
+  await until(async () => /alice\/receiver .*online; told now/.test(await sender.call("members")), "wakeable pi link");
   pi.model.setResponses([response("inbox"), response("send", { to: ["alice/sender"], body: "391" }), fauxAssistantMessage("Replied.")]);
   await sender.call("send", { to: ["alice/receiver"], body: "PRIVATE: compute 17*23", dm: true });
   await until(() => pi.session.isIdle && pi.results().some(r => r.toolName === "tandry_send"), "automatic inbox and reply");
@@ -166,7 +166,7 @@ test("busy mail is announced once at the next tool boundary, preserving that too
   const sender = await room();
   const pi = await host();
   await pi.call("join", { room: sender.code, name: "receiver", intro: "Busy pi" });
-  await until(async () => /alice\/receiver .*live; told now/.test(await sender.call("members")), "link");
+  await until(async () => /alice\/receiver .*online; told now/.test(await sender.call("members")), "link");
   let release!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; });
   let entered = false;
@@ -197,7 +197,7 @@ test("resuming the same session wakes without a prompt; a fork has its own ident
   const id = pi.manager.getSessionId();
   const file = pi.manager.getSessionFile()!;
   await pi.close();
-  await until(async () => /alice\/receiver .*dormant/.test(await sender.call("members")), "dormant receiver");
+  await until(async () => /alice\/receiver .*offline/.test(await sender.call("members")), "offline receiver");
   await sender.call("send", { to: ["alice/receiver"], body: "offline catch-up" });
   const resumed = await host({ manager: SessionManager.open(file), responses: [response("inbox"), fauxAssistantMessage("Caught up.")] });
   assert.equal(resumed.manager.getSessionId(), id);
@@ -216,7 +216,7 @@ test("mail arriving during a final answer queues a follow-up even without anothe
   const sender = await room();
   const pi = await host();
   await pi.call("join", { room: sender.code, name: "receiver", intro: "Final answer pi" });
-  await until(async () => /alice\/receiver .*live; told now/.test(await sender.call("members")), "link");
+  await until(async () => /alice\/receiver .*online; told now/.test(await sender.call("members")), "link");
   let release!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; });
   let entered = false;
@@ -240,7 +240,7 @@ test("print mode reports next-turn delivery; leaving removes the membership", as
   const sender = await room();
   const pi = await host({ mode: "print" });
   await pi.call("join", { room: sender.code, name: "receiver", intro: "One-shot pi" });
-  await until(async () => /alice\/receiver .*live, seen on next turn/.test(await sender.call("members")), "non-wakeable print session");
+  await until(async () => /alice\/receiver .*online, seen on next turn/.test(await sender.call("members")), "non-wakeable print session");
   await sender.call("send", { to: ["alice/receiver"], body: "next prompt" });
   await new Promise(resolve => setTimeout(resolve, 100));
   assert.equal(pi.notices().length, 0);

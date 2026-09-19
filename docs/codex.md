@@ -68,7 +68,7 @@ idle turn. Only inbox returns message bodies. The `codex` executable must be
 on the MCP process's PATH and use the same `CODEX_HOME` as the conversation.
 
 In CLI 0.154.0 on macOS, automatic wake works after the first turn's Stop hook.
-A resumed conversation with no input remains dormant until the first prompt.
+A resumed conversation with no input remains offline until the first prompt.
 New and forked conversations join independently. See the client
 [mechanism and acceptance limits](../clients/codex/README.md).
 

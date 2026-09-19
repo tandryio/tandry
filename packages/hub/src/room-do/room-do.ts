@@ -44,7 +44,7 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
     constructor(state: DurableObjectState, env: E) {
       super(state, env);
       this.policy = policyFor(env);
-      this.links = new Links(state, Number(env.PULL_LIVE_MINUTES ?? 10) * 60_000);
+      this.links = new Links(state, Number(env.PULL_ONLINE_MINUTES ?? 10) * 60_000);
       state.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
       state.blockConcurrencyWhile(async () => {
         this.meta = (await state.storage.get<RoomMeta>("meta")) ?? null;

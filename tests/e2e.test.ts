@@ -96,10 +96,10 @@ test("signed-out conversations complete device login and exchange a message that
   assert.match(background, /kind="intro" from="alice\/hub-refactor"/);
   await until(() => receiver.bridge.inactive() === null && sender.bridge.inactive() === null, "both links");
   // The receiver's link must have reported wakeable before the send, or the sender is told "next turn".
-  await until(async () => /alice\/website .* live; told now/.test(await sender.tool("members")), "the receiver to be wakeable");
+  await until(async () => /alice\/website .* online; told now/.test(await sender.tool("members")), "the receiver to be wakeable");
 
   const sent = await sender.tool("send", { to: ["alice/website"], body: "Is the landing page translated yet?" });
-  assert.match(sent, /alice\/website: live; told now/);
+  assert.match(sent, /alice\/website: online; told now/);
 
   // The wake carries the fixed notice and nothing of the body.
   await until(() => receiver.shell.wakes.length === 1, "the receiver to be woken");

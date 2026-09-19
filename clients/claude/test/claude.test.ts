@@ -96,7 +96,7 @@ test("idle: the monitor prints the notice; busy: a hook carries it, once, and th
   assert.deepEqual(two.hook("PostToolUse"), {});
   const joined = await two.call("join", { room: code, intro: "Second session", name: "two" });
   assert.match(joined.text, /alice\/one · Claude Code · tandry@redesign/);
-  await until(async () => /alice\/two .*live; told now/.test((await one.call("members")).text), "session two to be wakeable");
+  await until(async () => /alice\/two .*online; told now/.test((await one.call("members")).text), "session two to be wakeable");
 
   // Idle recipient: one line from the monitor, the fixed notice only.
   await one.call("send", { to: ["alice/two"], body: "BODY-ONE" });
@@ -140,23 +140,23 @@ test("acceptance: join, quit, resume the same conversation, type nothing, and ma
   await first.call("join", { room: code, intro: "Will quit", name: "sleeper" });
   first.hook("SessionEnd");
   await first.stop();
-  await until(async () => /alice\/sleeper .*dormant/.test((await sender.call("members")).text), "the quit conversation to go dormant");
+  await until(async () => /alice\/sleeper .*offline/.test((await sender.call("members")).text), "the quit conversation to go offline");
 
   // A new claude process resumes the session. No prompt, no tool call.
   const resumed = await claude("session-resumed", { sessionStart: "resume" });
-  await until(async () => /alice\/sleeper .*live; told now/.test((await sender.call("members")).text), "the resumed conversation to be wakeable");
+  await until(async () => /alice\/sleeper .*online; told now/.test((await sender.call("members")).text), "the resumed conversation to be wakeable");
   await sender.call("send", { to: ["alice/sleeper"], body: "WAKE-UP" });
   await until(() => resumed.printed.length === 1, "the monitor line after resume");
   assert.equal(resumed.printed[0], NOTICE(1, "alice/sender"));
 });
 
-test("/clear puts another conversation in the same process: the old one goes dormant, the new one is in no room", async () => {
+test("/clear puts another conversation in the same process: the old one goes offline, the new one is in no room", async () => {
   const other = await claude("session-other");
   const cleared = await claude("session-before-clear");
   const code = await newRoom(other, "clear-room");
   await other.call("join", { room: code, intro: "Other", name: "other" });
   await cleared.call("join", { room: code, intro: "Before clear", name: "before" });
   cleared.hook("SessionStart", { source: "clear" }, "session-after-clear");
-  await until(async () => /alice\/before .*dormant/.test((await other.call("members")).text), "the cleared conversation to go dormant");
+  await until(async () => /alice\/before .*offline/.test((await other.call("members")).text), "the cleared conversation to go offline");
   assert.match((await cleared.call("members")).text, /has not joined a room/);
 });

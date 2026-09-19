@@ -63,7 +63,7 @@ function MemberCard({
     () => call("leave", { member: member.address }, room.id),
     { onSuccess: invalidate },
   );
-  const live = member.state === "live";
+  const live = member.state === "online";
   const delivery = !live
     ? m.rooms_dormant_hint()
     : member.tier === "pull"

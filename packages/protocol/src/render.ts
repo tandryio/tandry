@@ -82,9 +82,9 @@ export function renderHistory(page: Output<"history">, nonce: string): string {
 }
 
 export function renderPresence(presence: Presence, now: number): string {
-  if (presence.state === "dormant") return `dormant, last active ${relativeTime(presence.lastActiveAt, now)}; reads it when its conversation is next opened`;
-  if (presence.tier === "pull") return "live in a web chat; reads it at its next inbox check";
-  return presence.wakeable ? "live; told now" : "live, seen on next turn";
+  if (presence.state === "offline") return `offline, last active ${relativeTime(presence.lastActiveAt, now)}; reads it when its conversation is next opened`;
+  if (presence.tier === "pull") return "online in a web chat; reads it at its next inbox check";
+  return presence.wakeable ? "online; told now" : "online, seen on next turn";
 }
 
 export function renderSent(result: Output<"send">, now: number): string {
@@ -114,8 +114,8 @@ export function renderJoin(result: Output<"join">, nonce: string, now: number, h
     `Recent history:\n${renderHistory({ messages: result.history, nextBefore: null }, nonce)}`,
   ];
   if (result.unread) parts.push(`${result.unread} unread for this member. Call inbox.`);
-  if (result.dormant.length)
-    parts.push(`This account also has dormant members here: ${addresses(result.dormant)}. To take one over instead, the owner can ask for join with as: <member name>. Nothing was continued automatically.`);
+  if (result.offline.length)
+    parts.push(`This account also has offline members here: ${addresses(result.offline)}. To take one over instead, the owner can ask for join with as: <member name>. Nothing was continued automatically.`);
   return parts.join("\n\n");
 }
 

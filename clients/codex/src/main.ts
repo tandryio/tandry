@@ -50,7 +50,7 @@ async function mcp(): Promise<void> {
       const threadId = threadIdFrom(meta);
       if (!threadId || shell.threadId === threadId) return;
       // Resuming without typing anything produces no request that names the
-      // thread, so until the first turn this conversation shows as dormant.
+      // thread, so until the first turn this conversation shows as offline.
       shell.threadId = threadId;
       bridge.bind({ host: "codex", hostConversationId: threadId, workspace: readWorkspace(cwd ?? process.cwd()) });
     },

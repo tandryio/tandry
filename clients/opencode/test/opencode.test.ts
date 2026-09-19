@@ -39,7 +39,7 @@ async function room() {
 async function joined() {
   const peer = await room(); const session = await host.session();
   await host.call(session.id, "join", { room: peer.code, name: "receiver", intro: "OpenCode receiver" });
-  await until(async () => /alice\/receiver .*live; told now/.test(await peer.call("members")), "live OpenCode");
+  await until(async () => /alice\/receiver .*online; told now/.test(await peer.call("members")), "online OpenCode");
   return { peer, id: session.id };
 }
 
@@ -144,29 +144,29 @@ test("sessions are isolated; forks start unjoined and child sessions cannot use 
   assert.match(await host.call(child.id, "join", { room: peer.code, name: "child", intro: "Excluded child" }, true), /Only top-level/);
   assert.equal(readMarker("opencode", child.id), null);
   await host.api("DELETE", `/session/${id}`);
-  await until(async () => /alice\/receiver .*dormant/.test(await peer.call("members")), "deleted session closes link");
+  await until(async () => /alice\/receiver .*offline/.test(await peer.call("members")), "deleted session closes link");
   await host.call(other.id, "leave");
 });
 
-test("archiving a live session disposes its link", async () => {
+test("archiving an online session disposes its link", async () => {
   const { peer, id } = await joined();
   await host.api("PATCH", `/session/${id}`, { time: { archived: Date.now() } });
-  await until(async () => /alice\/receiver .*dormant/.test(await peer.call("members")), "archived session link closed");
+  await until(async () => /alice\/receiver .*offline/.test(await peer.call("members")), "archived session link closed");
 });
 
-test("restart stays dormant on read-only resume; first prompt reconnects and catches unread", async () => {
+test("restart stays offline on read-only resume; first prompt reconnects and catches unread", async () => {
   const { peer, id } = await joined();
   await host.close();
-  await until(async () => /alice\/receiver .*dormant/.test(await peer.call("members")), "shutdown closes link");
+  await until(async () => /alice\/receiver .*offline/.test(await peer.call("members")), "shutdown closes link");
   await peer.call("send", { to: ["alice/receiver"], body: "Offline catch-up" });
   host = await startHost(path.join(home, "host"));
   await host.api("GET", `/session/${id}`);
   await host.messages(id);
-  assert.match(await peer.call("members"), /alice\/receiver .*dormant/);
+  assert.match(await peer.call("members"), /alice\/receiver .*offline/);
   assert.equal((await host.notices(id)).length, 0);
   assert.match(await host.call(id, "inbox"), /Offline catch-up/);
-  await until(async () => /alice\/receiver .*live; told now/.test(await peer.call("members")), "first prompt reconnects");
+  await until(async () => /alice\/receiver .*online; told now/.test(await peer.call("members")), "first prompt reconnects");
   await host.api("POST", "/instance/dispose");
-  await until(async () => /alice\/receiver .*dormant/.test(await peer.call("members")), "instance dispose");
+  await until(async () => /alice\/receiver .*offline/.test(await peer.call("members")), "instance dispose");
   assert.deepEqual(host.failures, []);
 });

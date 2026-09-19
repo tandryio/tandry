@@ -128,7 +128,7 @@ test("observer member management enforces ownership and removal drops access", a
   assert.ok(!(await call(bob, "status", {})).rooms.some((r) => r.id === context.room));
 });
 
-test("website presence distinguishes a working push host from idle and dormant", async () => {
+test("website presence distinguishes a working push host from idle and offline", async () => {
   const { alice, context, a } = await fixture();
   const socket = new WebSocket(hub.baseUrl.replace("http", "ws") + "/v1/link", { headers: contextHeaders({ ...a, token: alice.token }) });
   try {
@@ -137,7 +137,7 @@ test("website presence distinguishes a working push host from idle and dormant",
     const deadline = Date.now() + 3000;
     for (;;) {
       const member = (await call(alice, "members", {}, context)).members.find((m) => m.address === "alice/main")!;
-      if (member.busy) { assert.equal(member.state, "live"); assert.equal(member.wakeable, true); break; }
+      if (member.busy) { assert.equal(member.state, "online"); assert.equal(member.wakeable, true); break; }
       assert.ok(Date.now() < deadline, "Host busy state did not reach the website");
       await new Promise((resolve) => setTimeout(resolve, 10));
     }

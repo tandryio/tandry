@@ -103,14 +103,14 @@ export type ConversationRef = ConversationKey & { workspace: Workspace };
 
 // ---- presence ------------------------------------------------------------
 
-export const MemberState = z.enum(["live", "dormant"]);
+export const MemberState = z.enum(["online", "offline"]);
 export type MemberState = z.infer<typeof MemberState>;
 
 /** What a sender can know about a recipient's ability to receive right now. */
 export const Presence = z.object({
   state: MemberState,
   tier: Tier,
-  /** Only meaningful for a live push member. */
+  /** Only meaningful for an online push member. */
   wakeable: z.boolean(),
   /** Reported by a connected push host; absent for pull hosts. */
   busy: z.boolean().optional(),

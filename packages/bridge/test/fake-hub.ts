@@ -43,7 +43,7 @@ export async function startFakeHub(): Promise<FakeHub> {
     logout: () => ({}),
     status: () => ({ account: { id: "acct", handle: "henry" }, rooms: [] }),
     new_room: (input) => ({ id: input.id, name: input.name, code: "4BCD-2QQF" }),
-    join: () => ({ room: { id: "r_0000000000room01", name: "hub-design", description: "" }, member: "henry/hub-refactor", outcome: "joined", members: [], history: [], unread: 0, dormant: [] }),
+    join: () => ({ room: { id: "r_0000000000room01", name: "hub-design", description: "" }, member: "henry/hub-refactor", outcome: "joined", members: [], history: [], unread: 0, offline: [] }),
     leave: () => ({ left: "henry/hub-refactor" }),
     members: () => ({ members: [] }),
     send: (input) => ({ id: input.id, seq: 1, recipients: [] }),

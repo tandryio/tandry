@@ -15,7 +15,7 @@ interface Attachment {
  * decides who is told, and it is not a lock.
  */
 export class Links {
-  constructor(private readonly state: DurableObjectState, private readonly pullLiveMs: number) {}
+  constructor(private readonly state: DurableObjectState, private readonly pullOnlineMs: number) {}
 
   private sockets(memberId: string): { socket: WebSocket; attachment: Attachment }[] {
     return this.state.getWebSockets(memberId)
@@ -60,13 +60,13 @@ export class Links {
   presence(member: Pick<MemberRow, "id" | "host" | "last_active_at">, now: number): Presence {
     const tier = tierOf(member.host);
     if (tier === "pull")
-      return { state: now - member.last_active_at < this.pullLiveMs ? "live" : "dormant", tier, wakeable: false, lastActiveAt: member.last_active_at };
-    const live = this.sockets(member.id);
+      return { state: now - member.last_active_at < this.pullOnlineMs ? "online" : "offline", tier, wakeable: false, lastActiveAt: member.last_active_at };
+    const open = this.sockets(member.id);
     return {
-      state: live.length ? "live" : "dormant", tier,
-      wakeable: live.some(({ attachment }) => attachment.wakeable),
-      busy: live.some(({ attachment }) => attachment.busy),
-      lastActiveAt: live.length ? now : member.last_active_at,
+      state: open.length ? "online" : "offline", tier,
+      wakeable: open.some(({ attachment }) => attachment.wakeable),
+      busy: open.some(({ attachment }) => attachment.busy),
+      lastActiveAt: open.length ? now : member.last_active_at,
     };
   }
 }

@@ -84,7 +84,7 @@ test("idle: mail is announced with codex queue; busy: it waits for a hook and is
   assert.match(joined.text, /alice\/one · Codex · tandry@redesign/);
   await one.hook("Stop");
   await two.hook("Stop");
-  await until(async () => /alice\/two .*live; told now/.test((await one.call("members")).text), "thread two to be wakeable");
+  await until(async () => /alice\/two .*online; told now/.test((await one.call("members")).text), "thread two to be wakeable");
 
   // Idle recipient: queued as a new turn, and the queued text is the fixed notice only.
   await one.call("send", { to: ["alice/two"], body: "BODY-ONE" });
@@ -116,7 +116,7 @@ test("missing Stop hooks disable automatic wake; trusting hooks restores repeate
   const code = /Code: (\S+)/.exec((await one.call("new_room", { name: "no-hooks", description: "" })).text)![1]!;
   await one.call("join", { room: code, intro: "Sender", name: "sender" });
   await two.call("join", { room: code, intro: "Receiver", name: "receiver" });
-  await until(async () => /alice\/receiver .*live, seen on next turn/.test((await one.call("members")).text), "receiver link without automatic wake");
+  await until(async () => /alice\/receiver .*online, seen on next turn/.test((await one.call("members")).text), "receiver link without automatic wake");
   assert.match((await two.call("status")).text, /trust all four Tandry hooks in \/hooks/);
   await one.call("send", { to: ["alice/receiver"], body: "FIRST" });
   assert.match((await two.call("inbox")).text, /FIRST/);
@@ -130,7 +130,7 @@ test("missing Stop hooks disable automatic wake; trusting hooks restores repeate
   await two.hook("PostToolUse");
   assert.match((await two.call("status")).text, /trust all four Tandry hooks/);
   await two.hook("Stop");
-  await until(async () => /alice\/receiver .*live; told now/.test((await one.call("members")).text), "Stop enables automatic wake");
+  await until(async () => /alice\/receiver .*online; told now/.test((await one.call("members")).text), "Stop enables automatic wake");
   assert.doesNotMatch((await two.call("status")).text, /trust all four Tandry hooks/);
   for (let round = 1; round <= 2; round++) {
     await one.call("send", { to: ["alice/receiver"], body: `AFTER-TRUST-${round}` });

@@ -134,8 +134,8 @@ export function join(room: RoomContext, caller: Caller, input: ParsedInput<"join
       members: everyone.map((row) => memberView(room, row, viewer)),
       history: recentHistory(room, viewer),
       unread: unreadFor(room, self)?.unread ?? 0,
-      dormant: everyone
-        .filter((row) => row.account_id === caller.accountId && row.id !== self.id && room.links.presence(row, room.now).state === "dormant")
+      offline: everyone
+        .filter((row) => row.account_id === caller.accountId && row.id !== self.id && room.links.presence(row, room.now).state === "offline")
         .map(addressOf),
     },
     effects,

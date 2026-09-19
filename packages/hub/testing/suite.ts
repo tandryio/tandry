@@ -191,7 +191,7 @@ export function runHubSuite(start: () => Promise<HubUnderTest>): void {
     const bob = await joined(hub.accounts.bob, room.code, "b");
     const carol = await joined(hub.accounts.bob, room.code, "c");
     const sent = await text(alice, ["bob/b"], "for bob, on the record");
-    assert.deepEqual(sent.recipients.map((recipient) => [recipient.address, recipient.state]), [["bob/b", "dormant"]]);
+    assert.deepEqual(sent.recipients.map((recipient) => [recipient.address, recipient.state]), [["bob/b", "offline"]]);
     const secret = await text(alice, ["bob/b"], "for bob only", { dm: true });
 
     const inbox = await call(bob, "inbox", {});
@@ -331,7 +331,7 @@ export function runHubSuite(start: () => Promise<HubUnderTest>): void {
 
   // ---- links ---------------------------------------------------------------
 
-  test("a link makes a member live, carries only notices, and reports wakeable", async () => {
+  test("a link makes a member online, carries only notices, and reports wakeable", async () => {
     const room = await newRoom();
     const alice = await joined(hub.accounts.alice, room.code, "a");
     const bob = await joined(hub.accounts.bob, room.code, "b");
@@ -343,13 +343,13 @@ export function runHubSuite(start: () => Promise<HubUnderTest>): void {
     bobLink.state(true);
     await quiet();
     const sent = await text(alice, ["bob/b"], "SECRET BODY");
-    assert.deepEqual(sent.recipients.map((recipient) => [recipient.state, recipient.wakeable]), [["live", true]]);
+    assert.deepEqual(sent.recipients.map((recipient) => [recipient.state, recipient.wakeable]), [["online", true]]);
     assert.equal((await bobLink.notify(2)).unread, 2);
     assert.ok(!JSON.stringify(bobLink.frames).includes("SECRET BODY"));
     bobLink.close();
     await bobLink.closed;
     await quiet();
-    assert.equal((await call(alice, "members", {})).members.find((member) => member.address === "bob/b")?.state, "dormant");
+    assert.equal((await call(alice, "members", {})).members.find((member) => member.address === "bob/b")?.state, "offline");
 
     const outsider = link({ ...bob, conversation: conversation() });
     assert.equal(await outsider.rejected, 409);

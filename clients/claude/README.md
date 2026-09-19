@@ -44,7 +44,7 @@ process measurements are in `docs/redesign/03-hosts.md`.
 ## Known limits
 
 - Plugin monitors run only in interactive sessions. Under `claude -p` the
-  member is live but not wakeable, and hooks still carry notices mid-turn.
+  member is online but not wakeable, and hooks still carry notices mid-turn.
 - The MCP process learns that a turn started up to half a second late. Mail
   arriving in that window is announced by the monitor rather than by a hook.
 - The rendezvous relies on hooks and the MCP server being direct children of

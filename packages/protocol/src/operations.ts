@@ -152,8 +152,8 @@ export const join = operation({
     members: z.array(MemberView),
     history: z.array(MessageView),
     unread: z.number().int().min(0),
-    /** Dormant members of the same account, candidates for `as`. */
-    dormant: z.array(MemberAddress),
+    /** Offline members of the same account, candidates for `as`. */
+    offline: z.array(MemberAddress),
   }),
   errors: [...SIGNED_IN, "handle_required", "no_such_room", "no_such_member", "limit_reached"],
 });

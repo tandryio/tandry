@@ -134,7 +134,7 @@ test("idle mail wakes repeatedly, preserves model selection and delivers bodies 
   const dsh = await host();
   const receiver = await dsh.open();
   await receiver.call("join", { room: sender.code, name: "receiver", intro: "Dsh receiver" });
-  await until(async () => /alice\/receiver .*live; told now/.test(await sender.call("members")), "wakeable link");
+  await until(async () => /alice\/receiver .*online; told now/.test(await sender.call("members")), "wakeable link");
   for (let i = 0; i < 2; i++) {
     dsh.model.steps = [{ name: "inbox" }, { name: "send", args: { to: ["alice/sender"], body: `391-${i}` } }, "Done."];
     await sender.call("send", { to: ["alice/receiver"], body: `PRIVATE-${i}: compute 17*23`, dm: true });
@@ -152,7 +152,7 @@ test("busy mail enters once at the tool boundary and preserves the tool result",
   const dsh = await host();
   const receiver = await dsh.open();
   await receiver.call("join", { room: sender.code, name: "receiver", intro: "Busy dsh" });
-  await until(async () => /alice\/receiver .*live; told now/.test(await sender.call("members")), "link");
+  await until(async () => /alice\/receiver .*online; told now/.test(await sender.call("members")), "link");
   let release!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; });
   let entered = false;
@@ -175,7 +175,7 @@ test("mail during a final answer gets one follow-up at true idle", async () => {
   const dsh = await host();
   const receiver = await dsh.open();
   await receiver.call("join", { room: sender.code, name: "receiver", intro: "Final answer dsh" });
-  await until(async () => /alice\/receiver .*live; told now/.test(await sender.call("members")), "link");
+  await until(async () => /alice\/receiver .*online; told now/.test(await sender.call("members")), "link");
   let release!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; });
   let entered = false;
@@ -199,7 +199,7 @@ test("persisted resume catches up without input; forks and runtime children neve
   const id = receiver.agent.id;
   const seed = receiver.agent.session.snapshotEvents();
   await receiver.close();
-  await until(async () => /alice\/receiver .*dormant/.test(await sender.call("members")), "dormant");
+  await until(async () => /alice\/receiver .*offline/.test(await sender.call("members")), "offline");
   await sender.call("send", { to: ["alice/receiver"], body: "offline catch-up" });
   dsh.model.steps = [{ name: "inbox" }, "Caught up."];
   const resumed = await dsh.open({ sessionId: id }, true);
@@ -222,14 +222,14 @@ test("concurrent roots remain isolated and plugin disposal closes all links", as
   const b = await dsh.open();
   await a.call("join", { room: sender.code, name: "a", intro: "A" });
   await b.call("join", { room: sender.code, name: "b", intro: "B" });
-  await until(async () => /alice\/a .*live; told now/.test(await sender.call("members")) && /alice\/b .*live; told now/.test(await sender.call("members")), "both roots");
+  await until(async () => /alice\/a .*online; told now/.test(await sender.call("members")) && /alice\/b .*online; told now/.test(await sender.call("members")), "both roots");
   dsh.model.steps = [{ name: "inbox" }, "Done."];
   await sender.call("send", { to: ["alice/a"], body: "only-a", dm: true });
   await until(() => a.agent.status === "idle" && JSON.stringify(a.results()).includes("only-a"), "a inbox");
   assert.equal(b.notices().length, 0);
   assert.doesNotMatch(await b.call("inbox"), /only-a/);
   await dsh.mounted.dispose();
-  await until(async () => /alice\/a .*dormant/.test(await sender.call("members")) && /alice\/b .*dormant/.test(await sender.call("members")), "disposed links");
+  await until(async () => /alice\/a .*offline/.test(await sender.call("members")) && /alice\/b .*offline/.test(await sender.call("members")), "disposed links");
   await a.close();
   await b.close();
 });
@@ -239,7 +239,7 @@ test("non-wakeable mode reports next-turn delivery and leave removes the marker"
   const dsh = await host(false);
   const receiver = await dsh.open();
   await receiver.call("join", { room: sender.code, name: "receiver", intro: "One-shot dsh" });
-  await until(async () => /alice\/receiver .*live, seen on next turn/.test(await sender.call("members")), "next-turn link");
+  await until(async () => /alice\/receiver .*online, seen on next turn/.test(await sender.call("members")), "next-turn link");
   await sender.call("send", { to: ["alice/receiver"], body: "next-turn mail" });
   await new Promise(resolve => setTimeout(resolve, 100));
   assert.equal(receiver.notices().length, 0);
@@ -257,7 +257,7 @@ test("a model failure after wake leaves unread recoverable without repeated turn
   const dsh = await host();
   const receiver = await dsh.open();
   await receiver.call("join", { room: sender.code, name: "receiver", intro: "Provider failure" });
-  await until(async () => /alice\/receiver .*live; told now/.test(await sender.call("members")), "link");
+  await until(async () => /alice\/receiver .*online; told now/.test(await sender.call("members")), "link");
   dsh.model.steps = [async () => { throw new Error("Synthetic provider failure"); }];
   const before = dsh.model.requests.length;
   await sender.call("send", { to: ["alice/receiver"], body: "recoverable mail" });

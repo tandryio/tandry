@@ -62,7 +62,7 @@ Provider failures remain visible in OpenCode; submitting a prompt does not mark
 mail read. The owner can recover unread mail with inbox.
 
 OpenCode's server plugin has no event for selecting or resuming a saved session.
-After restarting OpenCode, **resume without input stays dormant**. The first
+After restarting OpenCode, **resume without input stays offline**. The first
 prompt or tool call reconnects that session and makes unread mail available.
 The plugin never scans historical conversations to wake them. Within a running
 server, conversations that have become active retain their connections until

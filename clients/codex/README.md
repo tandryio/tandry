@@ -22,7 +22,7 @@ plugin does not grant hook trust. If you enable hooks during an existing session
 submit a prompt so the hooks can report its lifecycle.
 
 Automatic wake is enabled only after a `Stop` hook has reached the client.
-Until then senders see "live, seen on next turn", and `join`/`status` explain
+Until then senders see "online, seen on next turn", and `join`/`status` explain
 how to enable hooks. Inbox remains available. This prevents the old failure in
 which one queue succeeded, but the missing Stop hook left the client busy forever.
 
@@ -35,7 +35,7 @@ Coverage includes missing hooks, enabling them after joining, and two consecutiv
 idle wake/inbox/Stop cycles.
 
 In a real Codex CLI 0.154.0 session on macOS (2026-09-17): join, quit and
-resume preserves membership, but the conversation remains dormant until its
+resume preserves membership, but the conversation remains offline until its
 first prompt. That turn reads the accumulated mail. After it ends, new mail
 starts a turn through the real `codex queue`; the agent calls `inbox` and the
 sender sees the unread count return to zero. The no-input resume scenario
@@ -46,9 +46,9 @@ in the workspace's `docs/redesign/03-hosts.md`.
 
 - Resuming a conversation without typing anything produces no request that
   names the thread (measured on Codex CLI 0.154.0). Until the first turn the
-  member shows as dormant and mail waits as unread. Senders see this.
+  member shows as offline and mail waits as unread. Senders see this.
 - `codex` must be on the MCP process's PATH and use the same `CODEX_HOME`. If
-  it is missing, the member reports itself as live but not wakeable.
+  it is missing, the member reports itself as online but not wakeable.
 - Hooks must remain enabled and trusted by the owner (`/hooks`). The client can
   observe hook calls, but Codex does not notify it if the owner subsequently
   disables hooks. Missing lifecycle events can leave its busy state stale.

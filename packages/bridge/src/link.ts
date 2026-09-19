@@ -21,7 +21,7 @@ const REJECTIONS: Partial<Record<ErrorCode, LinkEnd>> = {
 
 /**
  * The room link: one WebSocket per conversation, carrying only notices in and
- * state out. Connected means live. An ordinary drop is retried with backoff
+ * state out. Connected means online. An ordinary drop is retried with backoff
  * and the Hub replays the notice on reconnect; operations keep working over
  * HTTP meanwhile. A terminal close code or a rejected upgrade ends it.
  */
