@@ -90,7 +90,8 @@ test("a conversation that never joined makes no network request at all", async (
 
 test("a joined marker alone brings the process online, with the conversation in the headers", async () => {
   const { made } = await linked();
-  assert.equal(made.inactive(), null);
+  // The Hub sees the upgrade before the client's socket reports open.
+  await until(() => made.inactive() === null, "the client to report the link open");
   await until(() => hub.states.length === 1, "the state frame");
   assert.deepEqual(hub.states[0], { t: "state", wakeable: true, busy: false });
 });
@@ -300,7 +301,7 @@ test("an ordinary drop reconnects; a terminal close code does not", async () => 
   const { made, shell } = await linked();
   hub.closeLinks(1001);
   await until(() => hub.linkUpgrades === 2 && hub.links.length === 1, "the reconnect");
-  assert.equal(made.inactive(), null);
+  await until(() => made.inactive() === null, "the client to report the link open");
 
   hub.closeLinks(CLOSE_CODES.superseded);
   await until(() => made.inactive() !== null, "the link to end");
