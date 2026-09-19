@@ -1,10 +1,10 @@
 import { DurableObject } from "cloudflare:workers";
 import {
-  Frame, OLDEST_SUPPORTED_PROTOCOL, TandryError, fail, operations,
+  CLOSE_CODES, Frame, OLDEST_SUPPORTED_PROTOCOL, TandryError, fail, operations,
   type AccountId, type ErrorBody, type Result, type RoomId,
 } from "@tandryio/protocol";
 import type { Env } from "../env";
-import type { Limits, Policy, PolicyFactory } from "../policy/policy";
+import type { Limits, Policy, PolicyFactory, RoomAccess } from "../policy/policy";
 import type { Caller, Handled, ResolvedCaller, RoomContext } from "./context";
 import { Links } from "./links";
 import { delete_message, history, inbox, read, send, unreadFor } from "./mail";
@@ -22,6 +22,8 @@ export type RoomOperation = "init" | "join" | "leave" | "rename" | "members" | "
 export interface RoomRpc {
   call(op: RoomOperation, caller: Caller, input: unknown, room?: { id: RoomId; ownerAccountId: AccountId }): Promise<Result<unknown>>;
   fetch(request: Request): Promise<Response>;
+  invalidatePolicy(): Promise<void>;
+  memberCandidates(owner: AccountId): Promise<{ id: string; name: string; host: string; lastActive: number }[]>;
 }
 
 const handlers: Record<Exclude<RoomOperation, "init" | "join">, (room: RoomContext, caller: ResolvedCaller, input: never) => Handled<unknown>> = {
@@ -40,6 +42,7 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
     readonly links: Links;
     readonly policy: Policy;
     cached: { limits: Limits; at: number } | null = null;
+    access: RoomAccess | undefined;
 
     constructor(state: DurableObjectState, env: E) {
       super(state, env);
@@ -65,18 +68,68 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
     /** The owner's limits, resolved outside the transaction and cached briefly. */
     async context(meta: RoomMeta): Promise<RoomContext> {
       const now = Date.now();
-      if (!this.cached || now - this.cached.at > POLICY_TTL_MS) {
-        const [limits, retentionDays] = await Promise.all([
-          this.policy.limits(meta.ownerAccountId), this.policy.retention(meta.ownerAccountId, meta.roomId),
-        ]);
-        this.cached = { limits, at: now };
+      if (this.policy.room || !this.cached || now - this.cached.at > POLICY_TTL_MS) {
+        const limits = await this.policy.limits(meta.ownerAccountId);
+        const retentionDays = await this.policy.retention(meta.ownerAccountId, meta.roomId);
+        const access = await this.policy.room?.(meta.ownerAccountId, meta.roomId);
+        if (access && access.validUntil <= Date.now()) throw new TandryError("unavailable", "Room policy expired; retry");
+        this.access = access;
+        this.cached = { limits: access ? { ...limits, membersPerRoom: access.members } : limits, at: now };
+        this.applyAccess();
+        if (access?.transition) {
+          const departed = this.ctx.storage.sql.exec<{ account_id: string }>("SELECT DISTINCT account_id FROM member WHERE account_id NOT IN (SELECT account_id FROM member WHERE left_at IS NULL)").toArray().map(row => row.account_id);
+          if (departed.length) await this.env.AUTH_DB.prepare("DELETE FROM joined_rooms WHERE room_id=? AND account_id IN (SELECT value FROM json_each(?))").bind(meta.roomId, JSON.stringify(departed)).run();
+        }
         if (retentionDays !== meta.retentionDays) {
           this.meta = { ...meta, retentionDays };
           await this.ctx.storage.put("meta", this.meta);
         }
         await this.scheduleRetention();
       }
-      return { sql: this.ctx.storage.sql, meta: this.meta!, links: this.links, now, limits: this.cached.limits };
+      if (this.access?.enabled === false) throw new TandryError("forbidden", "This room is disabled by its owner’s policy");
+      return { sql: this.ctx.storage.sql, meta: this.meta!, links: this.links, now, limits: this.cached.limits, admission: this.access?.admission };
+    }
+
+    applyAccess(): void {
+      const access = this.access;
+      if (!access) return;
+      const sql = this.ctx.storage.sql;
+      const close: string[] = [];
+      this.ctx.storage.transactionSync(() => {
+        sql.exec("CREATE TABLE IF NOT EXISTS policy_transition (id TEXT PRIMARY KEY)");
+        sql.exec("CREATE TABLE IF NOT EXISTS policy_revision (singleton INTEGER PRIMARY KEY CHECK(singleton=1), revision INTEGER NOT NULL)");
+        const previous = sql.exec<{ revision: number }>("SELECT revision FROM policy_revision WHERE singleton=1").toArray()[0];
+        if (previous && previous.revision > access.revision) throw new TandryError("unavailable", "Room policy changed; retry");
+        sql.exec("INSERT INTO policy_revision VALUES (1,?) ON CONFLICT(singleton) DO UPDATE SET revision=excluded.revision", access.revision);
+        const transition = access.transition;
+        if (transition && transition.effectiveAt <= Date.now() && !sql.exec("SELECT 1 FROM policy_transition WHERE id=?", transition.id).toArray().length) {
+          const rows = sql.exec<MemberRow>("SELECT * FROM member WHERE left_at IS NULL AND joined_at<=? ORDER BY last_active_at DESC,id", transition.effectiveAt).toArray();
+          const eligible = new Set(rows.map(row => row.id));
+          const selected = [...new Set([...transition.preferred.filter(id => eligible.has(id)), ...rows.map(row => row.id)])].slice(0, transition.limit);
+          for (const row of rows) if (!selected.includes(row.id)) {
+            sql.exec("UPDATE member SET left_at=? WHERE id=?", transition.effectiveAt, row.id);
+            close.push(row.id);
+          }
+          sql.exec("INSERT INTO policy_transition VALUES (?)", transition.id);
+        }
+        if (!access.enabled) close.push(...sql.exec<{ id: string }>("SELECT id FROM member WHERE left_at IS NULL").toArray().map(row => row.id));
+      });
+      for (const id of close) this.links.close(id, CLOSE_CODES.not_in_room, access.enabled ? "not_in_room" : "room_disabled");
+    }
+
+    async invalidatePolicy(): Promise<void> {
+      this.cached = null;
+      if (this.meta) {
+        try { await this.context(this.meta); }
+        catch (error) { if (!(error instanceof TandryError && error.code === "forbidden")) throw error; }
+      }
+    }
+
+    async memberCandidates(owner: AccountId) {
+      if (!this.meta || this.meta.ownerAccountId !== owner) throw new TandryError("forbidden", "Only the room owner may select members");
+      await this.context(this.meta);
+      return this.ctx.storage.sql.exec<MemberRow>("SELECT * FROM member WHERE left_at IS NULL ORDER BY last_active_at DESC,id").toArray()
+        .map(row => ({ id: row.id, name: `${row.account_handle}/${row.name}`, host: row.host, lastActive: row.last_active_at }));
     }
 
     async call(op: RoomOperation, caller: Caller, input: unknown, room?: { id: RoomId; ownerAccountId: AccountId }): Promise<Result<unknown>> {
@@ -89,7 +142,7 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
           op === "join"
             ? join(context, caller, input as never)
             : handlers[op](context, resolveCaller(context, caller), input as never));
-        this.after(context, handled);
+        await this.after(context, handled);
         // Only these two write messages, and so only they can create something to expire.
         if (op === "send" || op === "join") await this.scheduleRetention();
         return { ok: true, result: handled.result };
@@ -101,11 +154,11 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
     }
 
     /** Effects run only once the transaction has committed. */
-    after(context: RoomContext, handled: Handled<unknown>): void {
+    async after(context: RoomContext, handled: Handled<unknown>): Promise<void> {
       for (const { memberId, code, reason } of handled.effects?.close ?? []) this.links.close(memberId, code, reason);
       for (const memberId of handled.effects?.notify ?? []) this.notify(context, memberId);
       for (const event of handled.effects?.usage ?? []) {
-        try { this.policy.onUsage(event); } catch { /* metering never fails an operation */ }
+        try { await this.policy.onUsage(event); } catch { /* metering never fails an operation */ }
       }
     }
 
@@ -169,19 +222,36 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
      * that has been emptied, or keeps messages forever, is never woken again.
      */
     async scheduleRetention(): Promise<void> {
-      if (!this.meta || this.meta.retentionDays === "unlimited") return;
-      if (await this.ctx.storage.getAlarm()) return;
-      const oldest = this.ctx.storage.sql.exec<{ at: number | null }>("SELECT min(created_at) AS at FROM message").one().at;
-      if (oldest === null) return;
+      if (!this.meta) return;
       const now = Date.now();
-      await this.ctx.storage.setAlarm(Math.max(now + DAY_MS, oldest + this.meta.retentionDays * DAY_MS));
+      const deadlines: number[] = [];
+      if (this.access?.nextChangeAt && this.access.nextChangeAt > now) deadlines.push(this.access.nextChangeAt);
+      if (this.meta.retentionDays !== "unlimited") {
+        const oldest = this.ctx.storage.sql.exec<{ at: number | null }>("SELECT min(created_at) AS at FROM message").one().at;
+        if (oldest !== null) deadlines.push(Math.max(now + DAY_MS, oldest + this.meta.retentionDays * DAY_MS));
+      }
+      const current = await this.ctx.storage.getAlarm();
+      if (deadlines.length) {
+        const next = Math.min(...deadlines);
+        if (current === null || next < current) await this.ctx.storage.setAlarm(next);
+      }
     }
 
     async alarm(): Promise<void> {
-      if (!this.meta || this.meta.retentionDays === "unlimited") return;
-      this.ctx.storage.sql.exec("DELETE FROM message WHERE created_at<?", Date.now() - this.meta.retentionDays * DAY_MS);
-      await this.scheduleRetention();
+      if (!this.meta) return;
+      try {
+        await this.invalidatePolicy();
+        if (this.meta.retentionDays !== "unlimited")
+          this.ctx.storage.sql.exec("DELETE FROM message WHERE created_at<?", Date.now() - this.meta.retentionDays * DAY_MS);
+        await this.ctx.storage.deleteAlarm();
+        await this.scheduleRetention();
+      } catch (error) {
+        // Platform retries are bounded. Preserve a future wake through provider outages.
+        await this.ctx.storage.setAlarm(Date.now() + 30_000);
+        throw error;
+      }
     }
+
   };
 }
 

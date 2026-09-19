@@ -25,6 +25,7 @@ export interface RoomContext {
   now: number;
   /** The room owner's limits, resolved before the transaction. */
   limits: Limits;
+  admission?: { cutoffAt: number; newMemberLimit: number };
 }
 
 /** What happens after the transaction commits. Never inside it. */

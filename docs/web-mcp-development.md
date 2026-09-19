@@ -9,7 +9,7 @@ public OAuth issuer, resource and browser session on the same origin.
 
 1. Install with `pnpm install --frozen-lockfile`.
 2. Apply Hub D1 migrations with `pnpm --filter @tandryio/hub db:local`.
-   `0003_oauth.sql` adds the Better Auth JWT/OAuth provider tables.
+   `0001_initial.sql` adds the Better Auth JWT/OAuth provider tables.
 3. Set the Hub's ignored `.dev.vars`: `BETTER_AUTH_SECRET` and
    `BETTER_AUTH_URL=http://127.0.0.1:4173`, plus a configured login method.
 4. Run `pnpm hub:dev --local --port 8799` and `pnpm website:dev` separately.

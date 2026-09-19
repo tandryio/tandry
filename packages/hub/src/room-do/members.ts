@@ -102,7 +102,8 @@ export function join(room: RoomContext, caller: Caller, input: ParsedInput<"join
     effects.close = [{ memberId: member.id, code: CLOSE_CODES.rebound, reason: "rebound" }];
     outcome = "continued";
   } else if (!member) {
-    if (present(room).length >= room.limits.membersPerRoom)
+    const admissionLimit = room.admission?.newMemberLimit ?? room.limits.membersPerRoom;
+    if (present(room).length >= admissionLimit)
       throw new TandryError("limit_reached", `The room is full (${room.limits.membersPerRoom} members)`);
     const id = newId("mb", room.now);
     const name = freeName(room, handle, input.name ?? toMemberName(input.workspace.repo) ?? conversation.host);

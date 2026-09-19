@@ -17,7 +17,7 @@
   ],
   "vars": {
     "BETTER_AUTH_URL": "http://127.0.0.1:4173",
-    "ROOM_LIMIT": "100",
+    "ROOM_LIMIT": "unlimited",
     "MEMBERS_PER_ROOM": "50",
     "RETENTION_DAYS": "30"
   },

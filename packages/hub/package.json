@@ -40,7 +40,8 @@
     "./package.json": "./package.json",
     "./testing": "./testing/suite.ts",
     "./migrations/*": "./migrations/*",
-    "./worker-configuration.d.ts": "./worker-configuration.d.ts"
+    "./worker-configuration.d.ts": "./worker-configuration.d.ts",
+    "./policy": "./src/policy/policy.ts"
   },
   "license": "Apache-2.0",
   "files": [

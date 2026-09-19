@@ -1,8 +1,13 @@
-# Tandry Hub core
+# Tandry Hub
 
-Public Cloudflare Worker/RoomDO composition, authentication, resource policy and
-room delivery. `createHub` and `createAuthorization` accept a server-selected
-PolicyProvider. `TeamRoom` is shared by self-hosted and private cloud deployments.
-This package contains source, migrations, runtime declarations and explicitly
-opt-in local test helpers. It contains no deployment IDs or payment integration.
-See the repository's `docs/self-hosting.md` and `docs/authentication.md`.
+Public Cloudflare Worker and Durable Object core for authentication, rooms and
+message delivery. Deployments compose `createHub({ policy, routes })` and extend
+`createRoomDO(policy)`. The default export and `RoomDO` use the self-host policy.
+
+`Policy` controls limits and retention. Optional room reservations and revisioned
+room access decisions support admission limits, scheduled changes and one-time
+member retention. Payment-provider logic belongs to the deployment, not this package.
+
+Exports include the composition API, account authentication helpers, generic policy
+types, the initial D1 schema and a reusable black-box test suite. The `./policy`
+entry can be imported outside Workers without loading a Durable Object class.

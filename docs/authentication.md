@@ -92,10 +92,10 @@ allows different provider emails after the user authenticates both accounts.
 
 ## Current limits
 
-Self-host defaults allow 100 active rooms per owner and 50 participating conversations per
-room. Configure `ROOM_LIMIT`, `CONVERSATION_LIMIT`, and an increasing
-`RESOURCE_POLICY_REVISION` to change them. These are operator quotas, not named
-subscription plans. Apply all D1 migrations, including `0002_resources.sql`, before
+Self-host defaults allow unlimited rooms per owner and 50 participating conversations per
+room. Configure `ROOM_LIMIT` (a number or `unlimited`) and `MEMBERS_PER_ROOM` to
+change them. These are operator quotas, not named
+subscription plans. Apply all D1 migrations, including `0001_initial.sql`, before
 deploying this implementation. Existing rooms are registered from trusted DO metadata,
 not inferred from member directory rows.
 
@@ -163,7 +163,7 @@ The selected ref must belong to the same account. This never broadcasts or sends
 outside the current room. Writing a handle in message body text alone does not
 trigger delivery. Authorization and bans still use immutable account IDs.
 
-The development schema is initialized from `0001_accounts.sql`. This change assumes
+The development schema is initialized from `0001_initial.sql`. This change assumes
 a fresh database; no legacy data migration is provided. Do not deploy over an old
 production schema without separately planning its reset or upgrade.
 

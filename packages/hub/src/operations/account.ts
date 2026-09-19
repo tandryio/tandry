@@ -75,15 +75,19 @@ export async function new_room(hub: HubContext, who: Principal, input: ParsedInp
   if (!who.handle) throw new TandryError("handle_required", "The account has no handle yet");
   const existing = await hub.directory.roomById(input.id);
   if (existing && existing.ownerAccountId !== who.accountId) throw new TandryError("invalid_input", "This room ID is already in use");
-  if (!existing) {
+  if (!existing && hub.policy.reserveRoom) await hub.policy.reserveRoom(who.accountId, input.id);
+  if (!existing && !hub.policy.reserveRoom) {
     const { rooms } = await hub.policy.limits(who.accountId);
-    if ((await hub.directory.ownedCount(who.accountId)) >= rooms) throw new TandryError("limit_reached", `This account may own at most ${rooms} rooms`);
+    if (rooms !== "unlimited" && (await hub.directory.ownedCount(who.accountId)) >= rooms) throw new TandryError("limit_reached", `This account may own at most ${rooms} rooms`);
   }
   const room = await hub.directory.createRoom(who.accountId, input, hub.now());
+  if (room.ownerAccountId !== who.accountId) throw new TandryError("invalid_input", "This room ID is already in use");
   // Both steps are idempotent, so a retry after a failure between them completes the room.
   const initialised = await roomStub(hub.env, room.id).call("init", { accountId: who.accountId, handle: who.handle, protocol: 0 }, {}, room);
   if (!initialised.ok) throw TandryError.from(initialised.error);
-  if (!existing) hub.policy.onUsage({ type: "room_created", account: who.accountId, room: room.id });
+  if (!existing) {
+    try { await hub.policy.onUsage({ type: "room_created", account: who.accountId, room: room.id }); } catch { /* metering never fails creation */ }
+  }
   return { id: room.id, name: room.name, code: displayCode(room.code) };
 }
 

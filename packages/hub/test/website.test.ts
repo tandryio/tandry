@@ -176,3 +176,11 @@ test("device management returns no tokens, isolates accounts and revokes HTTP ac
   const denied = await fetch(hub.baseUrl + bearer.path, bearer);
   assert.equal(denied.status, 401);
 });
+
+test("self-hosted accounts can create more than 100 rooms by default", async () => {
+  for (let index = 0; index < 101; index++) {
+    const id = newId("r");
+    const room = await call(hub.accounts.alice, "new_room", { id, name: `Unlimited ${index}`, description: "" });
+    assert.equal(room.id, id);
+  }
+});
