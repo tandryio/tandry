@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as DeviceRouteImport } from './routes/device'
+import { Route as InstallRouteImport } from './routes/install'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RoomsRouteImport } from './routes/rooms'
@@ -38,6 +39,11 @@ const ConnectRoute = ConnectRouteImport.update({
 const DeviceRoute = DeviceRouteImport.update({
   id: '/device',
   path: '/device',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InstallRoute = InstallRouteImport.update({
+  id: '/install',
+  path: '/install',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/connect': typeof ConnectRoute
   '/device': typeof DeviceRoute
+  '/install': typeof InstallRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/rooms': typeof RoomsRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/account': typeof AccountRoute
   '/connect': typeof ConnectRoute
   '/device': typeof DeviceRoute
+  '/install': typeof InstallRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/rooms': typeof RoomsRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/connect': typeof ConnectRoute
   '/device': typeof DeviceRoute
+  '/install': typeof InstallRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/rooms': typeof RoomsRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/connect'
     | '/device'
+    | '/install'
     | '/login'
     | '/privacy'
     | '/rooms'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/connect'
     | '/device'
+    | '/install'
     | '/login'
     | '/privacy'
     | '/rooms'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/connect'
     | '/device'
+    | '/install'
     | '/login'
     | '/privacy'
     | '/rooms'
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   ConnectRoute: typeof ConnectRoute
   DeviceRoute: typeof DeviceRoute
+  InstallRoute: typeof InstallRoute
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
   RoomsRoute: typeof RoomsRoute
@@ -188,6 +201,13 @@ declare module '@tanstack/react-router' {
       path: '/device'
       fullPath: '/device'
       preLoaderRoute: typeof DeviceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/install': {
+      id: '/install'
+      path: '/install'
+      fullPath: '/install'
+      preLoaderRoute: typeof InstallRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -240,6 +260,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRoute: AccountRoute,
   ConnectRoute: ConnectRoute,
   DeviceRoute: DeviceRoute,
+  InstallRoute: InstallRoute,
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
   RoomsRoute: RoomsRoute,

@@ -13,8 +13,8 @@ assert.deepEqual(artifacts, [], 'Ignored build artifacts must not be tracked in 
 console.log('Source repository contains no tracked build artifacts.');
 
 // Packages appear as the redesign reaches them; check the ones that exist.
-const sourceDirs = ['packages/hub/src', 'packages/protocol/src', 'packages/bridge/src', 'website/src'].filter(dir => fs.existsSync(path.join(root, dir)));
-const manifests = ['package.json', 'packages/hub/package.json', 'packages/protocol/package.json', 'packages/bridge/package.json', 'website/package.json'].filter(file => fs.existsSync(path.join(root, file)));
+const sourceDirs = ['packages/hub/src', 'packages/protocol/src', 'packages/bridge/src', 'packages/web/src', 'website/src'].filter(dir => fs.existsSync(path.join(root, dir)));
+const manifests = ['package.json', 'packages/hub/package.json', 'packages/protocol/package.json', 'packages/bridge/package.json', 'packages/web/package.json', 'website/package.json'].filter(file => fs.existsSync(path.join(root, file)));
 const sourceFiles = dirs => dirs.flatMap(dir => fs.readdirSync(path.join(root, dir), { recursive: true, withFileTypes: true })
   .filter(entry => entry.isFile()).map(entry => path.join(entry.parentPath, entry.name)));
 const files = sourceFiles(sourceDirs).concat(manifests.map(file => path.join(root, file)));
@@ -34,7 +34,7 @@ console.log('Public source boundary and local deployment defaults verified.');
 // website know each other only through protocol; a client knows only the bridge;
 // clients never import each other.
 const workspaceImports = file => [...fs.readFileSync(file, 'utf8').matchAll(/(?:from|import)\s*\(?\s*['"](@tandryio\/[a-z-]+|(?:\.\.\/)+(?:packages|clients)\/[^'"]+)/g)].map(match => match[1]);
-const allowed = { 'packages/protocol/src': [], 'packages/hub/src': ['@tandryio/protocol'], 'packages/bridge/src': ['@tandryio/protocol'], 'website/src': ['@tandryio/protocol'] };
+const allowed = { 'packages/protocol/src': [], 'packages/hub/src': ['@tandryio/protocol'], 'packages/bridge/src': ['@tandryio/protocol'], 'packages/web/src': ['@tandryio/protocol'], 'website/src': ['@tandryio/protocol', '@tandryio/web'] };
 for (const [dir, permitted] of Object.entries(allowed)) {
   if (!fs.existsSync(path.join(root, dir))) continue;
   for (const file of sourceFiles([dir]).filter(name => /\.(ts|tsx|mts|mjs)$/.test(name)))

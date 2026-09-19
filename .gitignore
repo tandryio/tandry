@@ -13,7 +13,7 @@ dist/
 
 website/src/paraglide/
 website/.source/
-website/project.inlang/cache/
+packages/web/project.inlang/cache/
 .self-host/
 .local/
 
@@ -25,7 +25,7 @@ clients/*/LICENSE
 clients/*/NOTICE
 clients/*/THIRD_PARTY_NOTICES.md
 
-website/public/third-party-notices.txt
+packages/web/public/third-party-notices.txt
 
 # Generated package license copies
 packages/*/LICENSE
@@ -34,3 +34,5 @@ packages/*/THIRD_PARTY_NOTICES.md
 website/LICENSE
 website/NOTICE
 website/THIRD_PARTY_NOTICES.md
+
+packages/web/src/paraglide/

@@ -1,7 +1,7 @@
 # Core package releases
 
 The private cloud installs exact registry versions of `@tandryio/protocol`,
-`@tandryio/hub`, and `@tandryio/website`. They are published together by
+`@tandryio/hub`, and `@tandryio/web`. They are published together by
 **release npm core**, separately from client packages and the Git marketplace.
 
 ## Workflow
@@ -13,8 +13,9 @@ three archives plus their source commit and SHA-512 integrity values.
 
 The packing hook applies `CORE_RELEASE_VERSION` only to exported manifests
 and dependencies between the three core packages. Source manifests stay
-unchanged. Protocol and Hub ship TypeScript; the website ships built assets
-and its Worker entry. The publisher writes protocol before Hub, then website.
+unchanged. Protocol, Hub and Web ship source. The publisher writes protocol before its consumers.
+Web includes compiled locale modules, shared pages, docs and assets. Each application
+builds its own deployment; a deployed website bundle is not an npm artifact.
 Preflight checks all versions before any write, rejecting conflicting contents.
 Identical packages from a partially completed release are skipped.
 
@@ -26,7 +27,7 @@ separate trusted publisher configurations.
 
 ## Local candidate
 
-After installing dependencies and building the website:
+After installing dependencies:
 
 ```sh
 RELEASE_VERSION=0.1.0-alpha.1 CORE_RELEASE_VERSION=0.1.0-alpha.1 NPM_GROUP=core node scripts/npm-release.mjs pack
@@ -40,7 +41,7 @@ Actual publication requires a clean source revision and npm authorization.
 
 1. Run public CI and validate candidate archives against the private composition.
 2. Publish the three core packages and verify their registry versions.
-3. Update all three exact versions in the private repository. Generate its
+3. Update all exact versions in the private repository. Generate its
    registry lockfile with `pnpm install --ignore-pnpmfile`; never copy the local
    development lockfile into the repository.
 4. Run `check:release`, a frozen installation, `check:release --installed`, and

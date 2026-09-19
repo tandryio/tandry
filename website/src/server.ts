@@ -1,5 +1,5 @@
 import handler from "@tanstack/react-start/server-entry";
-import { paraglideMiddleware } from "./paraglide/server";
+import { paraglideMiddleware } from "@tandryio/web/server-locale";
 import { env } from "cloudflare:workers";
 
 export default {

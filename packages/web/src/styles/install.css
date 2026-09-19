@@ -1,0 +1,356 @@
+/* Connect page in the landing page's skin: a host list beside one terminal-like
+   panel of numbered steps, each command on its own copyable line. */
+.install-hero {
+  max-width: 1160px;
+  margin: auto;
+  padding: 76px 28px 44px;
+}
+.install-hero h1 {
+  max-width: 760px;
+  margin: 0 0 18px;
+  font-size: clamp(34px, 3.6vw, 50px);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.05em;
+  color: #fafafa;
+}
+.install-lead {
+  max-width: 640px;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #aaa;
+}
+
+/* Host list and panel */
+.install-body {
+  max-width: 1160px;
+  margin: auto;
+  padding: 0 28px 84px;
+  scroll-margin-top: 80px;
+}
+.install-picker {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.install-hosts {
+  position: sticky;
+  top: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.install-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.install-group-label {
+  margin: 0 0 6px;
+  padding: 0 12px 8px;
+  border-bottom: 1px solid #ffffff12;
+  font: 10px/1.6 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #777;
+}
+.install-host {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: #999;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background 0.15s,
+    border-color 0.15s;
+}
+.install-host:hover {
+  color: #f2f2f2;
+  background: #ffffff08;
+}
+.install-host[data-state="active"] {
+  color: #f2f2f2;
+  border-color: #a6d8f532;
+  background: #a6d8f50d;
+}
+.install-host:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.install-host img,
+.install-host svg,
+.install-panel header img,
+.install-panel header svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+img[data-host="chatgpt"] {
+  filter: invert(1);
+}
+
+.install-panel {
+  min-width: 0;
+  border: 1px solid #ffffff1f;
+  border-radius: 12px;
+  background: linear-gradient(150deg, #151515, #0b0b0b 55%);
+  box-shadow: inset 0 1px 0 #ffffff0d;
+  overflow: hidden;
+}
+.install-panel:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+.install-panel > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid #ffffff14;
+  background: #ffffff05;
+}
+.install-panel > header strong {
+  font-size: 14px;
+  font-weight: 550;
+  color: #f2f2f2;
+}
+.install-panel > header span {
+  font: 10px/1.6 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+.install-panel > header .install-source {
+  margin-left: auto;
+  color: #777;
+}
+
+.install-steps {
+  margin: 0;
+  padding: 10px 24px;
+  list-style: none;
+}
+.install-steps > li {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 14px;
+  padding: 22px 0;
+}
+.install-steps > li + li {
+  border-top: 1px solid #ffffff0f;
+}
+.install-step-number {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #a6d8f540;
+  border-radius: 50%;
+  font: 10px/1 var(--font-mono);
+  color: var(--color-accent);
+}
+.install-steps h2 {
+  margin: 4px 0 6px;
+  font-size: 15px;
+  font-weight: 550;
+  letter-spacing: -0.01em;
+  color: #f2f2f2;
+}
+.install-steps p {
+  margin: 0;
+  max-width: 620px;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: #999;
+}
+
+.install-block {
+  margin-top: 14px;
+  border: 1px solid #ffffff17;
+  border-radius: 8px;
+  background: #060606;
+  overflow: hidden;
+}
+.install-block-bar {
+  padding: 7px 12px;
+  border-bottom: 1px solid #ffffff0f;
+  font: 9.5px/1.6 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #777;
+}
+.install-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px 4px 14px;
+}
+.install-block-bar + .install-line {
+  padding-top: 8px;
+}
+.install-line:last-child {
+  padding-bottom: 8px;
+}
+.install-line code {
+  flex: 1;
+  min-width: 0;
+  font: 12.5px/1.8 var(--font-mono);
+  color: #e4e4e4;
+  overflow-wrap: anywhere;
+}
+.install-prompt {
+  margin-right: 10px;
+  color: var(--color-accent);
+  user-select: none;
+}
+.install-copy {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  color: #777;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s;
+}
+.install-copy:hover,
+.install-copy:focus-visible {
+  color: #f2f2f2;
+  border-color: #ffffff1f;
+  background: #ffffff0a;
+}
+.install-copy[data-state="copied"] {
+  color: var(--color-accent);
+}
+.install-copy[data-state="failed"] {
+  color: #f0a58f;
+}
+
+.install-panel > footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 16px 24px 18px;
+  border-top: 1px solid #ffffff14;
+  background: #ffffff03;
+}
+.install-panel > footer p {
+  margin: 0;
+  max-width: 620px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #888;
+}
+.install-panel > footer a,
+.install-more a {
+  flex: none;
+  font-size: 12.5px;
+  color: var(--color-accent);
+  text-decoration: none;
+}
+.install-panel > footer a:hover,
+.install-more a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Edge cases */
+.install-more {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 36px;
+  max-width: 1160px;
+  margin: auto;
+  padding: 64px 28px 84px;
+  border-top: 1px solid #ffffff12;
+}
+.install-more h2 {
+  margin: 14px 0 10px;
+  font-size: 17px;
+  font-weight: 550;
+  letter-spacing: -0.02em;
+  color: #eee;
+}
+.install-more p {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: #999;
+}
+
+@media (max-width: 900px) {
+  .install-picker {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .install-hosts {
+    position: static;
+    gap: 16px;
+  }
+  .install-group {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .install-group-label {
+    grid-column: 1 / -1;
+  }
+  .install-host {
+    padding: 10px;
+    font-size: 13px;
+  }
+  .install-more {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+}
+@media (max-width: 600px) {
+  .install-hero {
+    padding: 48px 16px 32px;
+  }
+  .install-lead {
+    font-size: 15px;
+  }
+  .install-body {
+    padding: 0 16px 56px;
+  }
+  .install-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .install-panel > header,
+  .install-panel > footer {
+    padding-inline: 16px;
+  }
+  .install-panel > header .install-source {
+    margin-left: 0;
+  }
+  .install-panel > footer {
+    flex-direction: column;
+  }
+  .install-steps {
+    padding: 4px 16px;
+  }
+  .install-steps > li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .install-more {
+    padding: 44px 16px 56px;
+  }
+}

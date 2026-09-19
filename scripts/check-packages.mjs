@@ -7,11 +7,11 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'tandry-npm-check-'));
 const definitions = {
   protocol: ['packages/protocol', ['src/']],
+  web: ['packages/web', ['src/', 'content/', 'messages/', 'public/', 'scripts/', 'vite.mjs', 'vite.d.mts']],
   hub: [
     'packages/hub',
     ['src/', 'migrations/', 'testing/', 'worker-configuration.d.ts'],
   ],
-  website: ['website', ['dist/client/', 'dist/server/']],
 };
 try {
   execFileSync('pnpm', ['notices:check'], { cwd: root, stdio: 'inherit' });

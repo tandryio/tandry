@@ -11,10 +11,11 @@ This pnpm workspace contains:
 - `clients/codex/`: the Codex client, bundled to `dist/tandry.cjs`.
 - `clients/claude/`: the Claude Code client: `dist/main.cjs` (`mcp`, `monitor`) and the small `dist/hook.cjs`. Its three kinds of process talk only through the files in `src/files.ts`; host measurements are in `../docs/redesign/03-hosts.md`.
 - `clients/commands.ts` is the one source for every host's slash commands and skills (`pnpm generate:commands`). The other hosts are not rewritten yet (step 6 of `04-codebase.md`).
-- `website/`: TanStack Start frontend. Room history, correspondence and management use the protocol through `lib/hub.ts`; auth/config routes use `lib/api.ts`. Browser calls are account observers and never consume inboxes.
+- `packages/web/`: shared frontend pages, components, styles, locales, docs and assets.
+- `website/`: thin self-host TanStack Start application. Room history, correspondence and management use the protocol through `lib/hub.ts`; auth/config routes use `lib/api.ts`. Browser calls are account observers and never consume inboxes.
 - `docs/`: mostly describes the previous design; trust `../docs/redesign/` where they differ.
 
-Dependency direction is checked by `pnpm check:source`: hub, bridge and website import only `@tandryio/protocol`; a client imports only `@tandryio/bridge`; clients never import each other.
+Dependency direction is checked by `pnpm check:source`: hub, bridge and web import only `@tandryio/protocol`; website imports protocol and web; a client imports only `@tandryio/bridge`; clients never import each other.
 
 ## Build, Test, and Development Commands
 

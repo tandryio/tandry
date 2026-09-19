@@ -1,0 +1,226 @@
+/* Documentation in the landing page's skin: black paper, neutral greys, one pale
+   blue accent, mono labels, hairline borders. Fumadocs reads --color-fd-*, which
+   :root resolved against the older palette, so they are redefined here. */
+.docs-site {
+  --color-fd-background: #080808;
+  --color-fd-foreground: #f2f2f2;
+  --color-fd-muted: #ffffff0a;
+  --color-fd-muted-foreground: #999;
+  --color-fd-popover: #111;
+  --color-fd-popover-foreground: #f2f2f2;
+  --color-fd-card: #0d0d0d;
+  --color-fd-card-foreground: #f2f2f2;
+  --color-fd-border: #ffffff14;
+  --color-fd-primary: #a6d8f5;
+  --color-fd-primary-foreground: #111;
+  --color-fd-secondary: #ffffff08;
+  --color-fd-secondary-foreground: #eee;
+  --color-fd-accent: #ffffff0d;
+  --color-fd-accent-foreground: #f2f2f2;
+  --color-fd-ring: #a6d8f5;
+  --color-fd-overlay: #000000b3;
+  overflow: visible;
+  min-height: 100dvh;
+}
+.docs-site #nd-docs-layout {
+  --fd-banner-height: 67px;
+  --fd-layout-width: 1440px;
+}
+
+/* Sidebar */
+.docs-site #nd-sidebar {
+  background: #080808;
+  border-color: #ffffff12;
+}
+.docs-site .docs-nav-title {
+  align-self: center;
+  margin-inline-end: auto;
+  font: 10px/1.6 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  text-decoration: none;
+}
+.docs-site #nd-sidebar a[data-active] {
+  font-size: 13px;
+  color: #999;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+.docs-site #nd-sidebar a[data-active]:hover {
+  color: #f2f2f2;
+  background: #ffffff08;
+}
+.docs-site #nd-sidebar a[data-active="true"] {
+  color: var(--color-accent);
+  background: #a6d8f50d;
+  border-color: #a6d8f532;
+}
+.docs-site #nd-sidebar p:has(> .fd-page-tree-item-name) {
+  font: 10px/1.6 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #777;
+}
+.docs-site [data-search-full] {
+  border-color: #ffffff1a;
+  border-radius: 6px;
+  background: #0c0c0c;
+  font-size: 13px;
+}
+
+/* Page head */
+.docs-site #nd-page > h1 {
+  font-size: clamp(30px, 3vw, 40px);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.15;
+  color: #fafafa;
+}
+.docs-site #nd-page > h1::before {
+  content: "Tandry / Docs";
+  display: block;
+  margin-bottom: 18px;
+  font: 10px/1.6 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+.docs-site #nd-page > h1 + p {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #aaa;
+  padding-bottom: 28px;
+  border-bottom: 1px solid #ffffff12;
+}
+
+/* Body */
+.docs-site #nd-docs-layout .prose {
+  --tw-prose-body: #b7b7b7;
+  --tw-prose-headings: #f2f2f2;
+  --tw-prose-links: var(--color-accent);
+  --tw-prose-bold: #eee;
+  --tw-prose-code: #ddd;
+  --tw-prose-counters: #777;
+  --tw-prose-bullets: #555;
+  font-size: 15px;
+  line-height: 1.85;
+}
+.docs-site #nd-docs-layout .prose :is(h2, h3) {
+  font-weight: 550;
+  letter-spacing: -0.03em;
+}
+.docs-site #nd-docs-layout .prose h2 {
+  font-size: 24px;
+  margin-top: 2.6em;
+}
+.docs-site #nd-docs-layout .prose a:not([data-card]) {
+  text-decoration-color: #a6d8f555;
+  text-underline-offset: 3px;
+}
+.docs-site #nd-docs-layout .prose a:not([data-card]):hover {
+  text-decoration-color: currentColor;
+}
+.docs-site #nd-docs-layout .prose :not(pre) > code {
+  padding: 2px 6px;
+  border: 1px solid #ffffff14;
+  border-radius: 4px;
+  background: #ffffff08;
+  font-size: 0.86em;
+}
+
+/* Code blocks read like the landing terminals. */
+.docs-site #nd-docs-layout figure.shiki,
+.docs-site #nd-docs-layout .prose pre {
+  border: 1px solid #ffffff1f;
+  border-radius: 10px;
+  background: linear-gradient(150deg, #181818, #0c0c0c 60%);
+  box-shadow: inset 0 1px 0 #ffffff0d;
+}
+.docs-site #nd-docs-layout figure.shiki pre {
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 12.5px;
+  line-height: 1.8;
+}
+
+/* Tables */
+.docs-site #nd-docs-layout .prose table {
+  font-size: 14px;
+}
+.docs-site #nd-docs-layout .prose :is(th, td) {
+  border-color: #ffffff12;
+}
+.docs-site #nd-docs-layout .prose th {
+  font: 500 10.5px/1.6 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #888;
+  background: #ffffff05;
+}
+.docs-site #nd-docs-layout .prose td {
+  color: #b7b7b7;
+}
+.docs-site #nd-docs-layout .prose td:first-child {
+  white-space: nowrap;
+}
+
+/* Cards, callouts and steps */
+.docs-site
+  #nd-docs-layout
+  .prose
+  a[data-card]:not(:is(h1, h2, h3, h4, h5, h6) > a) {
+  border-color: #ffffff14;
+  border-radius: 8px;
+  background: #0c0c0c;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.docs-site
+  #nd-docs-layout
+  .prose
+  a[data-card]:not(:is(h1, h2, h3, h4, h5, h6) > a):hover {
+  border-color: #a6d8f555;
+  background: #a6d8f508;
+}
+.docs-site
+  #nd-docs-layout
+  .prose
+  a[data-card]:not(:is(h1, h2, h3, h4, h5, h6) > a)
+  h3 {
+  font-size: 14px;
+  font-weight: 550;
+}
+.docs-site #nd-docs-layout .prose .fd-steps {
+  border-color: #ffffff14;
+}
+.docs-site #nd-docs-layout .prose .fd-step::before {
+  font-family: var(--font-mono);
+  color: var(--color-accent);
+  background: #0c0c0c;
+  border: 1px solid #a6d8f540;
+}
+
+/* Table of contents */
+.docs-site #nd-toc h3,
+.docs-site #nd-toc > p,
+.docs-site [data-toc-popover-trigger] {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.docs-site #nd-toc a {
+  font-size: 12.5px;
+}
+
+@media (max-width: 767px) {
+  .docs-site #nd-docs-layout {
+    --fd-banner-height: 59px;
+  }
+  .docs-site #nd-subnav {
+    background: #080808e6;
+  }
+}

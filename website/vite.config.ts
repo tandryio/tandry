@@ -3,22 +3,15 @@ import { fileURLToPath } from "node:url";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
-import { paraglideVitePlugin } from "@inlang/paraglide-js";
+import { webConfig } from "@tandryio/web/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { fumadocsMdx } from "fumadocs-mdx/vite";
 
 export default defineConfig({
+  ...webConfig(),
   plugins: [
     fumadocsMdx(),
     tailwindcss(),
-    paraglideVitePlugin({
-      project: "./project.inlang",
-      outdir: "./src/paraglide",
-      outputStructure: "message-modules",
-      emitTsDeclarations: true,
-      cookieName: "tandry-locale",
-      strategy: ["cookie", "baseLocale"],
-    }),
     cloudflare({ viteEnvironment: { name: "ssr" } }),
     tanstackStart(),
     {

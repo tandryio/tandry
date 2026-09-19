@@ -1,0 +1,96 @@
+{
+  "name": "@tandryio/web",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "node scripts/build.mjs && node ../../scripts/prepare-package.mjs",
+    "prepack": "pnpm build",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test scripts/i18n.test.mjs && tsx --test scripts/*.test.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource/instrument-serif": "^5.3.0",
+    "@radix-ui/react-accordion": "^1.2.20",
+    "@radix-ui/react-dropdown-menu": "2.1.24",
+    "@radix-ui/react-select": "2.3.7",
+    "@radix-ui/react-slot": "^1.3.3",
+    "@radix-ui/react-tabs": "^1.1.21",
+    "better-auth": "1.7.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "fumadocs-core": "^16.15.11",
+    "fumadocs-mdx": "^15.4.1",
+    "fumadocs-ui": "^16.15.11",
+    "lucide-react": "^1.46.0",
+    "motion": "^13.3.0",
+    "tailwind-merge": "^3.7.0",
+    "@tandryio/protocol": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "@tanstack/react-router": "^1.170.35",
+    "@tanstack/react-query": "^5.102.8",
+    "@tanstack/react-start": "^1.168.52"
+  },
+  "devDependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "@tanstack/react-router": "^1.170.35",
+    "@tanstack/react-query": "^5.102.8",
+    "@tanstack/react-start": "^1.168.52",
+    "@inlang/paraglide-js": "2.25.1",
+    "@types/mdx": "^2.0.14",
+    "@types/node": "^22.20.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.0",
+    "tsx": "4.23.13"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    "./messages": "./src/paraglide/messages.js",
+    "./runtime": "./src/paraglide/runtime.js",
+    "./server-locale": "./src/paraglide/server.js",
+    "./root": "./src/root.tsx",
+    "./router": "./src/router.tsx",
+    "./options": "./src/options.tsx",
+    "./pages/*": "./src/pages/*.tsx",
+    "./components/ui": "./src/components/ui/index.ts",
+    "./components/*": "./src/components/*.tsx",
+    "./lib/*": "./src/lib/*.ts",
+    "./lib/docs/layout": "./src/lib/docs/layout.tsx",
+    "./styles/*": "./src/styles/*",
+    "./vite": {
+      "types": "./vite.d.mts",
+      "default": "./vite.mjs"
+    },
+    "./locale-tests": "./scripts/i18n.test.mjs",
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "content",
+    "messages",
+    "public",
+    "vite.mjs",
+    "scripts/i18n.test.mjs",
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md",
+    "README.md",
+    "vite.d.mts"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tandryio/tandry.git",
+    "directory": "packages/web"
+  }
+}

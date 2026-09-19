@@ -1,11 +1,11 @@
 import { loader } from "fumadocs-core/source";
 import { lucideIconsPlugin } from "fumadocs-core/source/plugins/lucide-icons";
 import { defineDocs } from "fumadocs-mdx/macro";
-import { docsI18n } from "./i18n";
+import { docsI18n } from "@tandryio/web/lib/docs/i18n";
 
 /** MDX collection compiled by the Fumadocs Vite plugin; bodies load lazily. */
 export const docs = defineDocs({
-  dir: "content/docs",
+  dir: "node_modules/@tandryio/web/content/docs",
   docs: { async: true },
 });
 

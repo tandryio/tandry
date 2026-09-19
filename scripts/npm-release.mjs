@@ -10,7 +10,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 export const hosts = ['pi', 'opencode', 'dsh'];
 const group = process.env.NPM_GROUP ?? 'clients';
 assert.ok(['clients', 'core'].includes(group), 'NPM_GROUP must be clients or core.');
-const selected = group === 'core' ? ['protocol', 'hub', 'website'] : hosts;
+const selected = group === 'core' ? ['protocol', 'hub', 'web'] : hosts;
 const packageName = host => group === 'core' ? `@tandryio/${host}` : `@tandryio/client-${host}`;
 const output = path.join(root, group === 'core' ? '.local/npm-core' : '.local/npm');
 const run = (command, args, cwd = root) => execFileSync(command, args, { cwd, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
@@ -56,14 +56,15 @@ export function checkCorePackage(pkg, name, version, files) {
     assert.doesNotMatch(range, /^(workspace:|file:|link:)/);
     if (dependency.startsWith('@tandryio/')) assert.equal(range, version);
   }
-  const allowed = name === 'website' ? ['dist/client/', 'dist/server/']
-    : name === 'hub' ? ['src/', 'migrations/', 'testing/'] : ['src/'];
+  const allowed = name === 'web' ? ['src/', 'content/', 'messages/', 'public/', 'scripts/'] : name === 'hub' ? ['src/', 'migrations/', 'testing/'] : ['src/'];
   const common = ['package.json', 'README.md', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md'];
   for (const file of common) assert.ok(files.includes(file), `Missing ${name}/${file}`);
-  const entry = name === 'website' ? 'dist/server/index.js' : 'src/index.ts';
+  if (name === 'web') for (const file of ['src/paraglide/messages.js', 'src/paraglide/runtime.js', 'src/paraglide/server.js', 'public/third-party-notices.txt', 'content/docs/index.mdx', 'vite.mjs', 'vite.d.mts'])
+    assert.ok(files.includes(file), `Missing web/${file}`);
+  const entry = 'src/index.ts';
   assert.ok(files.includes(entry), `Missing ${name}/${entry}`);
   for (const file of files) {
-    assert.ok(common.includes(file) || (name === 'hub' && file === 'worker-configuration.d.ts') || allowed.some(prefix => file.startsWith(prefix)), `Unexpected ${name}/${file}`);
+    assert.ok(common.includes(file) || (name === 'web' && ['vite.mjs', 'vite.d.mts'].includes(file)) || (name === 'hub' && file === 'worker-configuration.d.ts') || allowed.some(prefix => file.startsWith(prefix)), `Unexpected ${name}/${file}`);
     assert.doesNotMatch(file, /(^|\/)(\.env|\.dev\.vars|node_modules|\.git)(\.|\/|$)|\.map$|(?:^|\/)\.\.(?:\/|$)/);
   }
 }
@@ -73,7 +74,7 @@ function packCore(options) {
   fs.rmSync(output, { recursive: true, force: true });
   fs.mkdirSync(output, { recursive: true });
   const packages = selected.map(host => {
-    const directory = path.join(root, host === 'website' ? host : `packages/${host}`);
+    const directory = path.join(root, `packages/${host}`);
     const filename = `tandryio-${host}-${options.version}.tgz`;
     const archive = path.join(output, filename);
     run('pnpm', ['pack', '--out', archive], directory);

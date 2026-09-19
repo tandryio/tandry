@@ -1,0 +1,353 @@
+/* Landing hero demo: two host sessions exchanging a message through Tandry. */
+.terminal-conversation {
+  width: 100%;
+  min-width: 0;
+  font-family: var(--font-mono);
+}
+
+/* The message in flight, centred above the two sessions. */
+.conversation-transfer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  margin: 0 auto 10px;
+  padding: 6px 0;
+  color: #b7dcf5;
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity 200ms;
+}
+.conversation-transfer[data-visible="true"] {
+  opacity: 1;
+}
+.conversation-transfer i {
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: #a6d8f5;
+  transform-origin: left;
+}
+.conversation-transfer[data-returning="true"] i {
+  transform-origin: right;
+}
+.transfer-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 5px;
+  color: #a5b4c0;
+}
+
+.conversation-screens {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 14px;
+}
+
+/* Window chrome shared by both hosts; each host overrides its palette. */
+.agent-terminal {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #ffffff25;
+  border-radius: 8px;
+  background: #1c1c2bf5;
+  box-shadow:
+    0 18px 50px #0005,
+    inset 0 1px #ffffff09;
+  color: #ccd2ec;
+  transition: border-color 0.4s;
+  backdrop-filter: blur(16px);
+}
+.agent-terminal[data-active="true"] {
+  border-color: #a6d8f578;
+}
+.claude-terminal {
+  background: #232323f5;
+  color: #dedcd6;
+}
+.agent-terminal header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #ffffff04;
+  border-bottom: 1px solid #ffffff12;
+  font-size: 10px;
+}
+.agent-terminal header strong {
+  color: #dadff2;
+  font-weight: 500;
+}
+.agent-terminal header > span:last-child {
+  margin-left: auto;
+  color: #84879f;
+}
+.terminal-lights {
+  display: inline-flex;
+  gap: 5px;
+}
+.terminal-lights i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e36b61;
+}
+.terminal-lights i:nth-child(2) {
+  background: #d8ac55;
+}
+.terminal-lights i:nth-child(3) {
+  background: #70a879;
+}
+.terminal-host-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 72px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #ffffff0b;
+}
+.terminal-host-banner > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.terminal-host-banner b {
+  font-size: 12px;
+  color: #e6e3dc;
+}
+.terminal-host-banner span {
+  font-size: 10px;
+  color: #97979b;
+}
+.host-mark {
+  display: block;
+  flex-shrink: 0;
+  width: 48px;
+  height: 40px;
+  object-fit: contain;
+}
+.codex-terminal .host-mark {
+  width: 40px;
+  margin-inline: 4px;
+  filter: invert(1);
+}
+.agent-terminal-output {
+  height: 350px;
+  padding: 15px 14px;
+  font-size: 11px;
+  line-height: 1.7;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  scrollbar-width: thin;
+  scrollbar-color: #555569 transparent;
+}
+.agent-terminal-output p {
+  margin: 0 0 7px;
+}
+.agent-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 16px;
+  border-block: 1px solid #ffffff29;
+  background: #ffffff05;
+  font-size: 11px;
+  color: #e0e5fb;
+}
+.claude-terminal .agent-input {
+  border-color: #ffffff36;
+}
+.terminal-caret {
+  display: inline-block;
+  flex: 0 0 7px;
+  width: 7px;
+  height: 13px;
+  background: #c7d2f2;
+  animation: terminal-blink 1s steps(1) infinite;
+}
+@keyframes terminal-blink {
+  50% {
+    opacity: 0;
+  }
+}
+.agent-terminal footer {
+  padding: 6px 14px;
+  color: #8f92a9;
+  font-size: 9px;
+}
+
+/* Session output. */
+.agent-answer {
+  color: #dde2f5;
+}
+.agent-thinking {
+  color: #9396ac;
+  font-style: italic;
+}
+.inbox-thinking {
+  padding: 3px 0 3px 12px;
+  color: #b1b6c5;
+}
+.terminal-dim {
+  color: #8f92a9;
+}
+.terminal-bullet {
+  color: #d8d8cc;
+}
+.agent-tool-call {
+  margin: 8px 0;
+}
+.agent-tool-call b {
+  font-weight: 550;
+  color: #b8d6f4;
+}
+.claude-terminal .agent-tool-call b {
+  color: #dfdfd7;
+}
+.agent-tool-call pre {
+  font: inherit;
+  margin: 7px 0 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.agent-tool-detail {
+  padding-left: 13px;
+  color: #b3bad2;
+}
+.terminal-code {
+  color: #a8cda9;
+}
+.terminal-diff {
+  color: #9ec59a;
+}
+.agent-notice {
+  padding: 8px 10px;
+  border-left: 2px solid #a6d8f570;
+  background: #a6d8f50b;
+  color: #b8d9ee;
+  font-size: 10px;
+  transition:
+    background 300ms,
+    color 300ms,
+    border-color 300ms;
+}
+.agent-notice[data-active="true"] {
+  border-left-color: #c3e8ff;
+  background: #a6d8f527;
+  color: #e4f4ff;
+}
+
+/* Tandry MCP calls, highlighted while the message is in flight. */
+.mcp-call {
+  padding: 9px 10px;
+  border-left: 2px solid #a6d8f529;
+  background: #a6d8f504;
+  transition:
+    background 300ms,
+    border-color 300ms,
+    box-shadow 300ms;
+}
+.mcp-call[data-active="true"] {
+  border-left-color: #a6d8f5;
+  background: #a6d8f512;
+  box-shadow: inset 12px 0 24px -16px #a6d8f54d;
+}
+.mcp-call-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.mcp-direction {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  color: #929eaa;
+  font-size: 9px;
+}
+.mcp-call[data-active="true"] .mcp-direction {
+  color: #b7e3ff;
+}
+.mcp-call .mcp-params {
+  padding: 2px 0 2px 10px;
+  color: #949bab;
+  line-height: 1.65;
+  tab-size: 2;
+}
+.mcp-params code {
+  font: inherit;
+}
+.mcp-params .json-entry {
+  display: block;
+  padding-left: 4ch;
+  text-indent: -4ch;
+}
+.mcp-params .json-key {
+  color: #b7dcf5;
+}
+.mcp-params .json-string {
+  color: #d7dcc8;
+}
+.mcp-call .agent-tool-detail {
+  padding-left: 12px;
+  color: #c2c3c8;
+}
+.mcp-call[data-direction="incoming"] .agent-tool-detail {
+  padding: 5px 0 0 10px;
+}
+.mcp-call[data-direction="incoming"] .agent-tool-detail p:first-child {
+  color: #9ebacf;
+  font-size: 10px;
+}
+.mcp-call[data-active="true"] .agent-tool-detail p:last-child {
+  color: #e1eff8;
+}
+
+@media (max-width: 1100px) {
+  .agent-terminal-output {
+    height: 380px;
+  }
+}
+@media (max-width: 680px) {
+  .conversation-screens {
+    grid-template-columns: repeat(2, minmax(300px, 1fr));
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding-bottom: 8px;
+  }
+  .agent-terminal {
+    scroll-snap-align: start;
+  }
+  .agent-terminal-output {
+    height: 370px;
+  }
+}
+@media (max-width: 420px) {
+  .agent-terminal header {
+    padding-inline: 12px;
+    gap: 9px;
+  }
+  .agent-terminal header > span:last-child {
+    font-size: 9px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .terminal-caret {
+    animation: none;
+  }
+  .agent-terminal,
+  .agent-notice,
+  .mcp-call,
+  .conversation-transfer {
+    transition: none;
+  }
+}
