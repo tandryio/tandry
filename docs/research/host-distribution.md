@@ -16,9 +16,9 @@ not currently available releases.
 
 | Host             | Proposed package            | Installation                                        |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| Pi               | `@tandryio/client-pi`       | `pi install npm:@tandryio/client-pi`                |
-| OpenCode         | `@tandryio/client-opencode` | Add the package to `opencode.json`'s `plugin` array |
-| DeepSeek Harness | `@tandryio/client-dsh`      | `dsh plugin --profile web add @tandryio/client-dsh` |
+| Pi               | `@tandryio/pi`       | `pi install npm:@tandryio/pi`                |
+| OpenCode         | `@tandryio/opencode` | Add the package to `opencode.json`'s `plugin` array |
+| DeepSeek Harness | `@tandryio/dsh`      | `dsh plugin --profile web add @tandryio/dsh` |
 
 ## Pi
 
@@ -27,8 +27,8 @@ the `pi` manifest or conventional directories. The `pi-package` keyword makes
 an npm package discoverable in its gallery. Tandry already declares
 `pi.extensions`. [Official package documentation](https://pi.dev/docs/latest/packages)
 
-Use `pi update npm:@tandryio/client-pi` for this package and
-`pi remove npm:@tandryio/client-pi` to uninstall. Bare `pi update` updates Pi
+Use `pi update npm:@tandryio/pi` for this package and
+`pi remove npm:@tandryio/pi` to uninstall. Bare `pi update` updates Pi
 itself; `pi update --extensions` updates packages. Install/remove default to
 user settings; `-l` selects project settings. [Package management](https://pi.dev/docs/latest/packages#install-and-manage)
 
@@ -50,7 +50,7 @@ The proposed configuration is:
 
 ```json
 {
-  "plugin": ["@tandryio/client-opencode"]
+  "plugin": ["@tandryio/opencode"]
 }
 ```
 

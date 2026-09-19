@@ -1,5 +1,5 @@
 {
-  "name": "@tandryio/client-opencode",
+  "name": "@tandryio/opencode",
   "version": "0.1.0",
   "private": true,
   "type": "module",

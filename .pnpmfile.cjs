@@ -7,11 +7,11 @@ module.exports = {
           '@tandryio/hub',
           '@tandryio/protocol',
           '@tandryio/web',
-          '@tandryio/client-claude',
-          '@tandryio/client-codex',
-          '@tandryio/client-pi',
-          '@tandryio/client-opencode',
-          '@tandryio/client-dsh',
+          '@tandryio/claude',
+          '@tandryio/codex',
+          '@tandryio/pi',
+          '@tandryio/opencode',
+          '@tandryio/dsh',
         ].includes(pkg.name)
       )
         return pkg;
@@ -22,7 +22,7 @@ module.exports = {
         for (const name of Object.keys(pkg.dependencies ?? {}))
           if (['@tandryio/protocol', '@tandryio/hub', '@tandryio/web'].includes(name)) pkg.dependencies[name] = version;
       }
-      if (pkg.name.startsWith('@tandryio/client-')) {
+      if (['@tandryio/claude', '@tandryio/codex', '@tandryio/pi', '@tandryio/opencode', '@tandryio/dsh'].includes(pkg.name)) {
         delete pkg.dependencies;
         delete pkg.private;
       }

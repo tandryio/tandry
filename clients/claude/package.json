@@ -1,5 +1,5 @@
 {
-  "name": "@tandryio/client-claude",
+  "name": "@tandryio/claude",
   "version": "0.1.0",
   "private": true,
   "type": "module",

@@ -122,7 +122,7 @@ const HOSTS: Host[] = [
       {
         title: m.install_step_plugin,
         body: m.install_step_plugin_pi,
-        block: terminal("pi install npm:@tandryio/client-pi"),
+        block: terminal("pi install npm:@tandryio/pi"),
       },
       signIn,
       slashRoom("pi", "/tandry-"),
@@ -143,7 +143,7 @@ const HOSTS: Host[] = [
         body: m.install_step_plugin_opencode,
         block: {
           label: () => "opencode.json",
-          lines: () => ['{ "plugin": ["@tandryio/client-opencode"] }'],
+          lines: () => ['{ "plugin": ["@tandryio/opencode"] }'],
         },
       },
       signIn,
@@ -163,7 +163,7 @@ const HOSTS: Host[] = [
       {
         title: m.install_step_plugin,
         body: m.install_step_plugin_dsh,
-        block: terminal("dsh plugin --profile web add @tandryio/client-dsh"),
+        block: terminal("dsh plugin --profile web add @tandryio/dsh"),
       },
       signIn,
       room(askAgent(m.install_prompt_create, m.install_prompt_join)),

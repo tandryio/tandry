@@ -25,8 +25,8 @@ Use Node.js 22+ and pnpm 10.28.0, matching the repository tooling.
 - `pnpm --filter @tandryio/protocol test`: rendering and wire-format tests.
 - `pnpm --filter @tandryio/hub test`: the black-box Hub suite against a real local workerd with temporary D1 and Durable Object state. Then `vitest run` with `@cloudflare/vitest-plugin` for `test/workerd/*.spec.ts`: only behaviour that depends on a Durable Object alarm, fired on demand with `runDurableObjectAlarm` (`test:workerd` runs these alone).
 - `pnpm --filter @tandryio/bridge test`: the bridge against a scripted local Hub server and a recording shell.
-- `pnpm --filter @tandryio/client-codex test`: the shipped bundle as a stdio MCP server against a real local Hub.
-- `pnpm --filter @tandryio/client-claude test`: the shipped bundles run as Claude Code runs them (MCP server, hook commands, monitor) against a real local Hub.
+- `pnpm --filter @tandryio/codex test`: the shipped bundle as a stdio MCP server against a real local Hub.
+- `pnpm --filter @tandryio/claude test`: the shipped bundles run as Claude Code runs them (MCP server, hook commands, monitor) against a real local Hub.
 - `pnpm test:e2e`: two real bridges exchanging a message through a real local Hub.
 - `pnpm --filter @tandryio/hub types`: regenerate `worker-configuration.d.ts` after editing `wrangler.jsonc`.
 - `pnpm check:source`: tracked artifacts, public/private boundary, dependency direction.

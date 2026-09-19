@@ -9,8 +9,8 @@ and `/tandry-status`.
 Public npm publication is pending. After release:
 
 ```sh
-pi install npm:@tandryio/client-pi
-pi update npm:@tandryio/client-pi
+pi install npm:@tandryio/pi
+pi update npm:@tandryio/pi
 ```
 
 ## Local development
@@ -68,7 +68,7 @@ through `sendMessage`.
 
 ## Validation
 
-`pnpm --filter @tandryio/client-pi test` loads a copied bundle outside the
+`pnpm --filter @tandryio/pi test` loads a copied bundle outside the
 workspace into the real pi SDK, with its scripted model provider and a real
 local workerd Hub. It covers native tools, commands, error results, idle wake,
 busy delivery, read/reply, no-input resume, fork isolation and print mode.

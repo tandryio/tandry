@@ -32,7 +32,7 @@ test('actual release packages preserve host entry points and reject unsafe conte
 });
 
 test('registry preflight resumes identical versions and fails closed on conflicts or outages', async () => {
-  const packages = hosts.map(host => ({ name: `@tandryio/client-${host}`, integrity: `sha512-${host}` }));
+  const packages = hosts.map(host => ({ name: `@tandryio/${host}`, integrity: `sha512-${host}` }));
   let calls = 0;
   const pending = await unpublishedPackages(packages, '0.5.0', async () => {
     const pkg = packages[calls++];

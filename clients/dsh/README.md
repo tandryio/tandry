@@ -10,8 +10,8 @@ minimal profiles can use the tools directly.
 Public npm publication is pending. After release:
 
 ```sh
-dsh plugin --profile web add @tandryio/client-dsh
-dsh plugin --profile web update @tandryio/client-dsh
+dsh plugin --profile web add @tandryio/dsh
+dsh plugin --profile web update @tandryio/dsh
 ```
 
 Restart the selected profile after updating.
@@ -37,12 +37,12 @@ The package is a self-contained ESM bundle and declares `dsh.bundle.patch`.
 Install the packed archive into the desired profile:
 
 ```sh
-pnpm --filter @tandryio/client-dsh pack --out /tmp/tandry-dsh.tgz
+pnpm --filter @tandryio/dsh pack --out /tmp/tandry-dsh.tgz
 dsh plugin --profile web add /tmp/tandry-dsh.tgz
 ```
 
 The host adds the package to that profile's bundle stack. For a custom Cordis
-composition, load `@tandryio/client-dsh` alongside `agents` and `tools`.
+composition, load `@tandryio/dsh` alongside `agents` and `tools`.
 
 Long-lived profiles can wake idle conversations. For a one-shot profile, set
 `config: { wakeable: false }` on the `tandry` row; the local launcher does this

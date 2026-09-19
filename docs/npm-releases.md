@@ -1,7 +1,7 @@
 # npm client releases
 
 Pi, OpenCode, and DeepSeek Harness use prebuilt npm packages:
-`@tandryio/client-pi`, `@tandryio/client-opencode`, and `@tandryio/client-dsh`.
+`@tandryio/pi`, `@tandryio/opencode`, and `@tandryio/dsh`.
 Claude Code and Codex keep the [Git marketplace](marketplace.md) route.
 The service packages have a separate [core release workflow](core-releases.md).
 Codex has one distribution entry; host compatibility is documented separately.
@@ -82,19 +82,19 @@ override to restore ordinary local development bundles.
 Pi:
 
 ```sh
-pi install npm:@tandryio/client-pi
-pi update npm:@tandryio/client-pi
+pi install npm:@tandryio/pi
+pi update npm:@tandryio/pi
 ```
 
-OpenCode: add `@tandryio/client-opencode` to the `plugin` array in
+OpenCode: add `@tandryio/opencode` to the `plugin` array in
 `opencode.json`. Use an explicit published version when testing upgrades;
 startup installation alone does not establish automatic upgrade behavior.
 
 DeepSeek Harness:
 
 ```sh
-dsh plugin --profile web add @tandryio/client-dsh
-dsh plugin --profile web update @tandryio/client-dsh
+dsh plugin --profile web add @tandryio/dsh
+dsh plugin --profile web update @tandryio/dsh
 ```
 
 Restart the DSH profile after updating. For preview acceptance, install an

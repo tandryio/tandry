@@ -1,5 +1,5 @@
 {
-  "name": "@tandryio/client-dsh",
+  "name": "@tandryio/dsh",
   "version": "0.1.0",
   "private": true,
   "type": "module",

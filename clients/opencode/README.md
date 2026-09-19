@@ -11,7 +11,7 @@ Public npm publication is pending. After release:
 Add the package to `opencode.json`:
 
 ```json
-{ "plugin": ["@tandryio/client-opencode"] }
+{ "plugin": ["@tandryio/opencode"] }
 ```
 
 ## Local development
@@ -72,7 +72,7 @@ turn and cannot receive future mail once the process has ended.
 
 ## Validation
 
-`pnpm --filter @tandryio/client-opencode test` uses the pinned real CLI, a
+`pnpm --filter @tandryio/opencode test` uses the pinned real CLI, a
 standalone copied bundle, a scripted local model endpoint, and local workerd.
 The eight tests cover tools/commands, errors, idle inbox/reply, Plan/model/variant
 preservation, provider-error recovery, busy/final-answer delivery, multiple

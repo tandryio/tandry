@@ -11,7 +11,7 @@ export const hosts = ['pi', 'opencode', 'dsh'];
 const group = process.env.NPM_GROUP ?? 'clients';
 assert.ok(['clients', 'core'].includes(group), 'NPM_GROUP must be clients or core.');
 const selected = group === 'core' ? ['protocol', 'hub', 'web'] : hosts;
-const packageName = host => group === 'core' ? `@tandryio/${host}` : `@tandryio/client-${host}`;
+const packageName = host => `@tandryio/${host}`;
 const output = path.join(root, group === 'core' ? '.local/npm-core' : '.local/npm');
 const run = (command, args, cwd = root) => execFileSync(command, args, { cwd, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
 
@@ -24,7 +24,7 @@ export function releaseOptions(version, tag = 'next') {
 
 export function checkPackage(pkg, host, version, files) {
   assert.ok(hosts.includes(host));
-  assert.equal(pkg.name, `@tandryio/client-${host}`);
+  assert.equal(pkg.name, `@tandryio/${host}`);
   assert.equal(pkg.version, version);
   for (const field of ['private', 'scripts', 'devDependencies', 'dependencies'])
     assert.equal(pkg[field], undefined, `Unexpected ${field} in ${pkg.name}`);
