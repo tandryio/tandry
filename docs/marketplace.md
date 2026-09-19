@@ -41,7 +41,7 @@ implemented because remote calls lack a shared trusted host conversation ID.
 
 CI installs dependencies, builds and tests the plugins, applies the requested
 version to the bundled MCP servers and exported package/plugin manifests, and pushes the distribution plus
-its `v0.5.0` tag to the marketplace. It also handles an empty marketplace's first
+its `v0.1.0` tag to the marketplace. It also handles an empty marketplace's first
 release. Reusing a published version fails; existing tags are never overwritten.
 Source manifests are unchanged. Normal pushes and pull requests validate without
 publishing. No local release commands or manual source tags are needed.

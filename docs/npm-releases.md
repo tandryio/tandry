@@ -68,8 +68,8 @@ Changing a tag on an existing version is a separate, deliberate npm operation.
 From the source repository:
 
 ```sh
-RELEASE_VERSION=0.5.1-rc.1 NPM_TAG=next pnpm npm:pack
-RELEASE_VERSION=0.5.1-rc.1 NPM_TAG=next node scripts/npm-release.mjs dry-run
+RELEASE_VERSION=0.1.1-rc.1 NPM_TAG=next pnpm npm:pack
+RELEASE_VERSION=0.1.1-rc.1 NPM_TAG=next node scripts/npm-release.mjs dry-run
 pnpm test:npm
 ```
 
