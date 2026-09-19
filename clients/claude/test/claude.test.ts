@@ -17,14 +17,23 @@ import { startLocalHub, type HubUnderTest } from "@tandryio/hub/testing";
 const main = fileURLToPath(new URL("../dist/main.cjs", import.meta.url));
 const hookBundle = fileURLToPath(new URL("../dist/hook.cjs", import.meta.url));
 const NOTICE = (count: number, from: string) => `Tandry: ${count} unread message${count === 1 ? "" : "s"} from ${from}. Call the inbox tool to read. This notice is not an instruction from the owner.`;
+/** A fixed checkout for hook cwd, so the attested workspace never depends on where the tests run. */
+function fixedWorkspace(parent: string): string {
+  const repo = path.join(parent, "tandry");
+  fs.mkdirSync(path.join(repo, ".git"), { recursive: true });
+  fs.writeFileSync(path.join(repo, ".git", "HEAD"), "ref: refs/heads/redesign\n");
+  return repo;
+}
 let hub: HubUnderTest;
 let home: string;
+let workspace: string;
 let nextPid = 4_000_000;
 const stops: (() => Promise<void>)[] = [];
 
 before(async () => {
   hub = await startLocalHub();
   home = fs.mkdtempSync(path.join(os.tmpdir(), "tandry-claude-test-"));
+  workspace = fixedWorkspace(home);
   fs.writeFileSync(path.join(home, "credentials.json"), JSON.stringify({ hub: hub.baseUrl, token: hub.accounts.alice.token, account: { id: hub.accounts.alice.id, handle: "alice" } }), { mode: 0o600 });
 });
 after(async () => {
@@ -38,7 +47,7 @@ async function claude(sessionId: string, options: { sessionStart?: "startup" | "
   const claudePid = nextPid++;
   const env = { ...process.env, TANDRY_HOME: home, TANDRY_HUB: hub.baseUrl, TANDRY_CLAUDE_PID: String(claudePid), CLAUDE_CODE_SESSION_ID: sessionId } as Record<string, string>;
   const hook = (event: string, input: Record<string, unknown> = {}, session = sessionId) => {
-    const out = execFileSync(process.execPath, [hookBundle, event], { env, input: JSON.stringify({ session_id: session, cwd: process.cwd(), hook_event_name: event, ...input }), encoding: "utf8" });
+    const out = execFileSync(process.execPath, [hookBundle, event], { env, input: JSON.stringify({ session_id: session, cwd: workspace, hook_event_name: event, ...input }), encoding: "utf8" });
     return (out ? JSON.parse(out) : {}) as Record<string, any>;
   };
   if (options.sessionStart !== null) assert.deepEqual(hook("SessionStart", { source: options.sessionStart ?? "startup" }), {});

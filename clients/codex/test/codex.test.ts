@@ -13,14 +13,23 @@ import { startLocalHub, type HubUnderTest } from "@tandryio/hub/testing";
 // calls, against a real local Hub. `codex queue` is a recording stand-in.
 
 const bundle = fileURLToPath(new URL("../dist/tandry.cjs", import.meta.url));
+/** A fixed checkout for hook cwd, so the attested workspace never depends on where the tests run. */
+function fixedWorkspace(parent: string): string {
+  const repo = path.join(parent, "tandry");
+  fs.mkdirSync(path.join(repo, ".git"), { recursive: true });
+  fs.writeFileSync(path.join(repo, ".git", "HEAD"), "ref: refs/heads/redesign\n");
+  return repo;
+}
 let hub: HubUnderTest;
 let home: string;
+let workspace: string;
 let queueLog: string;
 const clients: Client[] = [];
 
 before(async () => {
   hub = await startLocalHub();
   home = fs.mkdtempSync(path.join(os.tmpdir(), "tandry-codex-test-"));
+  workspace = fixedWorkspace(home);
   queueLog = path.join(home, "queue.log");
   const fakeCodex = path.join(home, "codex");
   fs.writeFileSync(fakeCodex, `#!/bin/sh\nprintf '%s\\n' "$*" >> "${queueLog}"\n`, { mode: 0o755 });
@@ -43,7 +52,7 @@ async function codexConversation(threadId: string) {
     const result = await client.callTool({ name, arguments: args, _meta: meta });
     return { text: (result.content as { text: string }[])[0]!.text, isError: !!result.isError };
   };
-  const hook = async (event: string) => JSON.parse((await call("codex_event", { event, cwd: process.cwd() })).text) as Record<string, any>;
+  const hook = async (event: string) => JSON.parse((await call("codex_event", { event, cwd: workspace })).text) as Record<string, any>;
   return { client, call, hook };
 }
 const queued = () => (fs.existsSync(queueLog) ? fs.readFileSync(queueLog, "utf8").trim().split("\n").filter(Boolean) : []);
