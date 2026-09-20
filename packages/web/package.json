@@ -85,12 +85,10 @@
     "README.md",
     "vite.d.mts"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/tandryio/tandry.git",
     "directory": "packages/web"
-  }
+  },
+  "private": true
 }

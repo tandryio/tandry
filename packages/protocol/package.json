@@ -25,9 +25,6 @@
     "./package.json": "./package.json",
     ".": "./src/index.ts"
   },
-  "publishConfig": {
-    "access": "public"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/tandryio/tandry.git",
@@ -36,5 +33,6 @@
   "devDependencies": {
     "tsx": "4.23.13",
     "@types/node": "^22.0.0"
-  }
+  },
+  "private": true
 }
