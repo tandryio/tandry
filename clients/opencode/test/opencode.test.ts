@@ -43,11 +43,11 @@ async function joined() {
   return { peer, id: session.id };
 }
 
-test("standalone bundle loads nine native tools and shared commands in the real CLI", async () => {
+test("standalone bundle loads eleven native tools and shared commands in the real CLI", async () => {
   const session = await host.session();
   assert.match(await host.call(session.id, "status"), /alice/);
   const tools = host.requests.at(-1)!.tools!.map(tool => tool.function.name).filter(name => name.startsWith("tandry_"));
-  assert.deepEqual(tools.sort(), ["history", "inbox", "join", "leave", "login", "members", "new_room", "send", "status"].map(name => `tandry_${name}`).sort());
+  assert.deepEqual(tools.sort(), ["history", "inbox", "join", "leave", "login", "members", "new_room", "rename", "send", "status", "update_room"].map(name => `tandry_${name}`).sort());
   const commands = await host.api<Array<{ name: string }>>("GET", "/command");
   assert.deepEqual(commands.filter(c => c.name.startsWith("tandry-")).map(c => c.name).sort(), ["tandry-join", "tandry-leave", "tandry-members", "tandry-new-room", "tandry-status"]);
   assert.match(await host.call(session.id, "inbox", {}, true), /not_in_room/);

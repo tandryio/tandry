@@ -151,6 +151,14 @@ export function createBridge(options: BridgeOptions): Bridge {
       unread.reset();
       openLink();
     },
+    remark(patch) {
+      // The Hub changed something about the room or the member. Only the
+      // marker is stale: the link is keyed by member ID, which did not change,
+      // and no mail has been read.
+      if (!marker || !conversation) return;
+      marker = { ...marker, ...patch };
+      writeMarker(conversation.host, conversation.hostConversationId, marker);
+    },
     forget,
     signedIn: openLink,
     signedOut: () => link?.stop(),

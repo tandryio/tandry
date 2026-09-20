@@ -3,7 +3,7 @@ import { createMcpHandler, McpServer } from "@modelcontextprotocol/server";
 import {
   Handle, PROTOCOL_VERSION, RoomId, TandryError, newId, newNonce, operations,
   renderConversationHandle, renderError, renderHistory, renderInbox, renderJoin, renderLeft,
-  renderMembers, renderNewRoom, renderSent, renderStatus, toolParameters, tools,
+  renderMembers, renderNewRoom, renderRenamed, renderRoomUpdated, renderSent, renderStatus, toolParameters, tools,
   type ConversationKey, type Input, type OperationName, type Output, type ToolName, type ToolParams,
 } from "@tandryio/protocol";
 import { z } from "zod";
@@ -36,6 +36,12 @@ function connectorServer(hub: HubContext, who: Principal) {
     async new_room(params) {
       return renderNewRoom(await call("new_room", { id: newId("r"), ...params }));
     },
+    async update_room(params, handle) {
+      // Account scope: the handle only supplies the room, and the Hub checks
+      // that the verified account owns it.
+      const { room } = decodeHandle(handle);
+      return renderRoomUpdated(await call("update_room", { room, ...params }), params.rotateCode === true);
+    },
     async join(params) {
       const conversation: ConversationKey = { host: "web", hostConversationId: newId("c") };
       const result = await call("join", { code: params.room, intro: params.intro, name: params.name, as: params.as,
@@ -47,6 +53,11 @@ function connectorServer(hub: HubContext, who: Principal) {
     },
     async members(_, handle) {
       return renderMembers(await call("members", {}, decodeHandle(handle)), hub.now());
+    },
+    async rename(params, handle) {
+      // The handle's conversation locates the member, so a connector can only
+      // ever rename the member backing its own chat.
+      return renderRenamed(await call("rename", params, decodeHandle(handle)));
     },
     async send(params, handle) {
       return renderSent(await call("send", { id: newId("m"), ...params }, decodeHandle(handle)), hub.now());
@@ -67,10 +78,13 @@ function connectorServer(hub: HubContext, who: Principal) {
       inputSchema: toolParameters(name, "connector"),
       annotations: {
         readOnlyHint: readOnly,
-        // Continuing a member can replace its conversation; leaving abandons unread.
-        destructiveHint: name === "join" || name === "leave",
+        // Continuing a member can replace its conversation; leaving abandons
+        // unread; rotating the code stops the old one admitting anyone, and
+        // renaming stops a member's old address resolving.
+        destructiveHint: name === "join" || name === "leave" || name === "update_room" || name === "rename",
         // Each pull consumes a batch; retrying inbox can return the next batch.
-        idempotentHint: readOnly || name === "leave",
+        // A repeated rename lands on the same name, but a repeated rotate does not.
+        idempotentHint: readOnly || name === "leave" || name === "rename",
         openWorldHint: true,
       },
     }, async (params) => {

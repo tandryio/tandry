@@ -64,10 +64,10 @@ async function until(check: () => boolean | Promise<boolean>, what: string) {
   }
 }
 
-test("the tool surface is the protocol's nine tools plus the hook entry", async () => {
+test("the tool surface is the protocol's eleven tools plus the hook entry", async () => {
   const { client } = await codexConversation("thread-tools");
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map((tool) => tool.name), ["login", "status", "new_room", "join", "leave", "members", "send", "inbox", "history", "codex_event"]);
+  assert.deepEqual(tools.map((tool) => tool.name), ["login", "status", "new_room", "update_room", "join", "leave", "members", "rename", "send", "inbox", "history", "codex_event"]);
 });
 
 test("the conversation is whatever thread Codex names in request metadata, never a guess", async () => {

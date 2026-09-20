@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   CLOSE_CODES, contextHeaders, decodeResult, encodeCall, isOperationName, newId, operations, readContext,
-  renderEnvelope, renderError, renderInbox, renderNotice, renderSent, terminalClose, tierOf, toMemberName,
+  renderEnvelope, renderError, renderInbox, renderNotice, renderRenamed, renderRoomUpdated, renderSent, terminalClose, tierOf, toMemberName,
   toolInputSchema, tools, MessageId, RoomId, TandryError, type MessageView,
 } from "../src/index";
 
@@ -109,7 +109,39 @@ test("connector tools add the conversation handle, local tools do not", () => {
   assert.ok("conversation" in connector.properties);
   assert.ok(connector.required?.includes("conversation"));
   assert.ok(!("conversation" in (toolInputSchema("join", "connector") as typeof local).properties));
-  assert.deepEqual(Object.keys(tools), ["login", "status", "new_room", "join", "leave", "members", "send", "inbox", "history"]);
+  assert.deepEqual(Object.keys(tools), ["login", "status", "new_room", "update_room", "join", "leave", "members", "rename", "send", "inbox", "history"]);
+});
+
+test("room administration tools take no room: the binding supplies it", () => {
+  // An agent must not choose the room ID. A local bridge reads it from the
+  // joined marker; a connector reads it from the conversation handle.
+  const update = toolInputSchema("update_room", "local") as { properties: Record<string, unknown> };
+  assert.deepEqual(Object.keys(update.properties).sort(), ["description", "name", "rotateCode"]);
+  const rename = toolInputSchema("rename", "local") as { properties: Record<string, unknown> };
+  assert.deepEqual(Object.keys(rename.properties), ["name"]);
+  for (const name of ["update_room", "rename"] as const) {
+    const connector = toolInputSchema(name, "connector") as { required?: string[] };
+    assert.ok(connector.required?.includes("conversation"), `${name} needs the conversation handle`);
+  }
+});
+
+test("room and member administration say what changed, and withhold what they cannot", () => {
+  const room = { id: "r_01hzy3v9k8abcdefgh", name: "game-hub", description: "Playable rooms", role: "owner" as const, code: "RACZ-3QZ6" };
+  const plain = renderRoomUpdated(room, false);
+  assert.equal(plain, "Updated #game-hub.\nDescription: Playable rooms");
+  assert.ok(!plain.includes("RACZ-3QZ6"), "an unchanged code is not repeated");
+  const rotated = renderRoomUpdated(room, true);
+  assert.ok(rotated.includes("New code: RACZ-3QZ6"));
+  assert.match(rotated, /no longer admits new members; everyone already in the room is unaffected\./);
+  // A result with no code (a non-owner view) has nothing to print.
+  const { code: _, ...bare } = room;
+  assert.ok(!renderRoomUpdated(bare, true).includes("New code"));
+  assert.equal(renderRoomUpdated({ ...room, description: "" }, false), "Updated #game-hub.\nDescription: (none)");
+
+  assert.equal(
+    renderRenamed({ member: "max/tandry-dev" }),
+    "Renamed to max/tandry-dev. Messages addressed to the old name no longer resolve; replies are unaffected because they resolve by message ID.",
+  );
 });
 
 test("small helpers", () => {

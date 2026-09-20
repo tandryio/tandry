@@ -86,7 +86,7 @@ test('exported Claude and Codex MCP servers run outside the workspace and report
     assert.equal(initialized.serverInfo.version, read(`clients/${host}/package.json`).version);
     child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
     const { tools } = await request(2, 'tools/list', {});
-    assert.equal(tools.length, host === 'codex' ? 10 : 9);
+    assert.equal(tools.length, host === 'codex' ? 12 : 11);
     const status = await request(3, 'tools/call', { name: 'status', arguments: {} });
     assert.equal(status.isError, false);
     assert.match(status.content[0].text, /not signed in/i);

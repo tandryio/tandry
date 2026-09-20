@@ -127,6 +127,18 @@ export function renderNewRoom(result: Output<"new_room">): string {
   return `Created #${result.name}. Code: ${result.code}\nGive the code to whoever should join. This conversation has not joined; call join with the code to do so.`;
 }
 
+/** `rotated` says the call replaced the code, because the result alone cannot. */
+export function renderRoomUpdated(result: Output<"update_room">, rotated: boolean): string {
+  const parts = [`Updated #${result.name}.`, `Description: ${result.description || "(none)"}`];
+  if (rotated && result.code)
+    parts.push(`New code: ${result.code}\nThe previous code no longer admits new members; everyone already in the room is unaffected.`);
+  return parts.join("\n");
+}
+
+export function renderRenamed(result: Output<"rename">): string {
+  return `Renamed to ${result.member}. Messages addressed to the old name no longer resolve; replies are unaffected because they resolve by message ID.`;
+}
+
 export function renderLoginStart(result: Pick<Output<"login_start">, "url" | "userCode" | "expiresInSeconds">): string {
   return `Ask the owner to open ${result.url} and enter the code ${result.userCode} within ${Math.round(result.expiresInSeconds / 60)} minutes. Do not approve it for them. Sign-in completes by itself; call status to check.`;
 }

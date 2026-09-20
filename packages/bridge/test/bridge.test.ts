@@ -5,7 +5,7 @@ import path from "node:path";
 import { afterEach, beforeEach, test } from "node:test";
 import { CLOSE_CODES, renderNotice, type ConversationRef } from "@tandryio/protocol";
 import { createBridge, type Bridge, type Shell } from "../src/index";
-import { credentialsPath, markerPath, readRun, writeJson } from "../src/local";
+import { credentialsPath, markerPath, readMarker, readRun, writeJson } from "../src/local";
 import { message, startFakeHub, type FakeHub } from "./fake-hub";
 
 // The bridge is tested through its two faces only: what createBridge returns,
@@ -82,7 +82,7 @@ async function linked(shell = new FakeShell(), extra: Partial<Parameters<typeof 
 test("a conversation that never joined makes no network request at all", async () => {
   signIn();
   const made = bridge();
-  assert.equal(made.tools.length, 9);
+  assert.equal(made.tools.length, 11);
   assert.equal(made.inactive(), "This conversation has not joined a room.");
   await settle();
   assert.equal(hub.connections, 0);
@@ -119,6 +119,43 @@ test("joining a second room fails locally and names the current one", async () =
   assert.equal(result.isError, true);
   assert.match(result.text, /^Error already_in_room: This conversation is already henry\/hub-refactor in #hub-design/);
   assert.equal(hub.requests.length, before);
+});
+
+test("update_room names the room from the marker, never from the agent, and refreshes the room name", async () => {
+  const { made } = await linked();
+  const result = await tool(made, "update_room", { name: "hub-design-2", description: "Newly described" });
+  const request = hub.requests.find((entry) => entry.op === "update_room")!;
+  assert.equal(request.input.room, "r_0000000000room01"); // the marker's room, not a parameter
+  assert.deepEqual(Object.keys(request.input).sort(), ["description", "name", "room"]);
+  assert.equal(result.text, "Updated #hub-design-2.\nDescription: Newly described");
+  assert.equal(readMarker("codex", "thread-1")!.roomName, "hub-design-2");
+});
+
+test("update_room prints a code only when it rotated one", async () => {
+  const { made } = await linked();
+  const plain = await tool(made, "update_room", { description: "Same room, new purpose" });
+  assert.ok(!plain.text.includes("New code"));
+  const rotated = await tool(made, "update_room", { rotateCode: true });
+  assert.match(rotated.text, /New code: 4BCD-2QQF\nThe previous code no longer admits new members/);
+});
+
+test("rename refreshes the member address without touching the room, the link or unread mail", async () => {
+  const shell = new FakeShell();
+  shell.wakeableNow = false;
+  const { made } = await linked(shell, { runFile: true });
+  hub.notify({ unread: 1, upTo: 7, from });
+  await until(() => readRun("thread-1")?.unread === 1, "the run file to record the unread state");
+
+  const renamed = await tool(made, "rename", { name: "hub-rename" });
+  assert.match(renamed.text, /^Renamed to henry\/hub-rename\./);
+  const marker = readMarker("codex", "thread-1")!;
+  assert.equal(marker.member, "henry/hub-rename");
+  // A full re-join would have discarded all of this; a rename must not.
+  assert.equal(marker.room, "r_0000000000room01");
+  assert.equal(marker.code, "4BCD2QQF");
+  assert.equal(hub.links.length, 1);
+  assert.equal(readRun("thread-1")?.unread, 1);
+  assert.match((await tool(made, "status")).text, /henry\/hub-rename in #hub-design/);
 });
 
 test("before the host gives a conversation ID, account tools work and room tools explain", async () => {

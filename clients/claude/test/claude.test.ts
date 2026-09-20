@@ -79,9 +79,9 @@ const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const newRoom = async (conversation: Awaited<ReturnType<typeof claude>>, name: string) =>
   /Code: (\S+)/.exec((await conversation.call("new_room", { name, description: "" })).text)![1]!;
 
-test("the tool surface is exactly the protocol's nine tools", async () => {
+test("the tool surface is exactly the protocol's eleven tools", async () => {
   const { client } = await claude("session-tools", { monitor: false });
-  assert.deepEqual((await client.listTools()).tools.map((tool) => tool.name), ["login", "status", "new_room", "join", "leave", "members", "send", "inbox", "history"]);
+  assert.deepEqual((await client.listTools()).tools.map((tool) => tool.name), ["login", "status", "new_room", "update_room", "join", "leave", "members", "rename", "send", "inbox", "history"]);
 });
 
 test("the conversation is the session the SessionStart hook recorded, and nothing before that", async () => {
