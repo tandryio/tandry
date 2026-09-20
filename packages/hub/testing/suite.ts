@@ -401,4 +401,16 @@ export function runHubSuite(start: () => Promise<HubUnderTest>): void {
     await call(third, "leave", {});
     await assert.rejects(joined(hub.accounts.bob, room.code, "x", { as: "work" }), fails("no_such_member"));
   });
+
+  test("a conversation that already backs a member cannot continue a different one", async () => {
+    const room = await newRoom();
+    const first = await joined(hub.accounts.alice, room.code, "a");
+    // The account does have another member here, so the refusal comes from this
+    // conversation's own membership and not from a missing continuation target.
+    await joined(hub.accounts.alice, room.code, "second");
+    await assert.rejects(
+      call(first, "join", { code: room.code, intro: "x", as: "second", workspace: { repo: "tandry", branch: "main" } }),
+      fails("already_in_room"),
+    );
+  });
 }
