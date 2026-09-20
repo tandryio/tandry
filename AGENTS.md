@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-The repository is being rewritten on the `redesign` branch. The design lives outside this repository, in the workspace root: `../docs/redesign/01-concepts.md` (glossary), `02-architecture.md` and `04-codebase.md` (module layout, interfaces, implementation order and progress). Read them before editing; code follows those documents.
+The rewrite has landed on `main`; there is no longer a separate branch for it. The design lives outside this repository, in the workspace root: `../docs/redesign/01-concepts.md` (glossary), `02-architecture.md` and `04-codebase.md` (module layout, interfaces, implementation order and progress). Read them before editing; code follows those documents.
 
 This pnpm workspace contains:
 - `packages/protocol/`: the wire contract. Nouns, the operation table, error codes, headers and frames, agent-facing tool definitions, and the functions that render every word an agent reads. Depends on zod only; no IO.
