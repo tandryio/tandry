@@ -135,11 +135,14 @@ export function createTools(session: Session): Tool[] {
       const marker = needRoom();
       const result = await ops("update_room", { room: marker.room, ...params });
       // The marker holds the room's name and its code, and the call may have
-      // changed either. A stale code is worse than a stale name: joining with
-      // the code that is no longer current would pass the check below and then
-      // reach the Hub as no_such_room, for a room the conversation is sitting
-      // in. The result carries the code only in its displayed form, while the
-      // marker and the check below compare normalized codes.
+      // changed either. This refreshes this conversation's copy only: a link
+      // frame carries a count, a position and who from, never room metadata, so
+      // another member's marker keeps the old name and the old code until it
+      // joins again. For this conversation the code is what matters, because the
+      // check in join compares it: the stale one would let a join through to the
+      // Hub as no_such_room for the room this conversation is already sitting in.
+      // The result carries the code in its displayed form, while the marker and
+      // that check compare normalized codes.
       session.remark({ roomName: result.name, ...(result.code ? { code: normalizeCode(result.code) } : {}) });
       return renderRoomUpdated(result, params.rotateCode === true);
     },

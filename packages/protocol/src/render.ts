@@ -135,8 +135,13 @@ export function renderRoomUpdated(result: Output<"update_room">, rotated: boolea
   return parts.join("\n");
 }
 
+/**
+ * The Hub treats renaming to the name the member already has as a no-op and
+ * reports the same address, so this says only what holds either way: it never
+ * claims that a particular old name stopped resolving.
+ */
 export function renderRenamed(result: Output<"rename">): string {
-  return `Renamed to ${result.member}. Messages addressed to the old name no longer resolve; replies are unaffected because they resolve by message ID.`;
+  return `Renamed to ${result.member}. Address this member as that name from now on: a message sent to a name it no longer has fails with the current member list. Replies are unaffected because they resolve by message ID.`;
 }
 
 export function renderLoginStart(result: Pick<Output<"login_start">, "url" | "userCode" | "expiresInSeconds">): string {

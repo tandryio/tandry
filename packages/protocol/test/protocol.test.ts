@@ -140,8 +140,13 @@ test("room and member administration say what changed, and withhold what they ca
 
   assert.equal(
     renderRenamed({ member: "max/tandry-dev" }),
-    "Renamed to max/tandry-dev. Messages addressed to the old name no longer resolve; replies are unaffected because they resolve by message ID.",
+    "Renamed to max/tandry-dev. Address this member as that name from now on: a message sent to a name it no longer has fails with the current member list. Replies are unaffected because they resolve by message ID.",
   );
+  // Renaming to the name the member already has is a no-op on the Hub, and the
+  // renderer cannot tell the two apart, so one text has to hold for both. It
+  // therefore never speaks of an "old name" that stopped resolving; it states
+  // the rule instead.
+  assert.ok(!/old name/.test(renderRenamed({ member: "max/tandry-dev" })));
 });
 
 test("small helpers", () => {
