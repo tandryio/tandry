@@ -134,11 +134,13 @@ export function createTools(session: Session): Tool[] {
       // Account scope: authority is the room's owner account, checked on the Hub.
       const marker = needRoom();
       const result = await ops("update_room", { room: marker.room, ...params });
-      // The marker holds the room's name, which the call may have changed. Its
-      // code is deliberately left alone: a stale code only makes a later join
-      // fail locally with a truthful message, and the conversation never joined
-      // with the new one.
-      session.remark({ roomName: result.name });
+      // The marker holds the room's name and its code, and the call may have
+      // changed either. A stale code is worse than a stale name: joining with
+      // the code that is no longer current would pass the check below and then
+      // reach the Hub as no_such_room, for a room the conversation is sitting
+      // in. The result carries the code only in its displayed form, while the
+      // marker and the check below compare normalized codes.
+      session.remark({ roomName: result.name, ...(result.code ? { code: normalizeCode(result.code) } : {}) });
       return renderRoomUpdated(result, params.rotateCode === true);
     },
 

@@ -131,12 +131,16 @@ test("update_room names the room from the marker, never from the agent, and refr
   assert.equal(readMarker("codex", "thread-1")!.roomName, "hub-design-2");
 });
 
-test("update_room prints a code only when it rotated one", async () => {
+test("update_room prints a code only when it rotated one, and keeps the marker's copy current", async () => {
   const { made } = await linked();
   const plain = await tool(made, "update_room", { description: "Same room, new purpose" });
   assert.ok(!plain.text.includes("New code"));
+  assert.equal(readMarker("codex", "thread-1")!.code, "4BCD2QQF");
   const rotated = await tool(made, "update_room", { rotateCode: true });
-  assert.match(rotated.text, /New code: 4BCD-2QQF\nThe previous code no longer admits new members/);
+  assert.match(rotated.text, /New code: ZZZZ-9999\nThe previous code no longer admits new members/);
+  // Stored normalized, as join stores it and as the local check compares it:
+  // a stale code would send a join with the current one to the Hub as no_such_room.
+  assert.equal(readMarker("codex", "thread-1")!.code, "ZZZZ9999");
 });
 
 test("rename refreshes the member address without touching the room, the link or unread mail", async () => {

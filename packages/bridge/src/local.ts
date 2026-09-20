@@ -45,7 +45,11 @@ export function remove(file: string): void {
 export interface JoinedMarker {
   room: string;
   roomName: string;
-  /** Normalized code the conversation joined with; lets a repeated join of the same room through. */
+  /**
+   * Normalized code that admits to this room; lets a repeated join of the same
+   * room through. join writes the code it presented, update_room refreshes it
+   * after the owner rotates it.
+   */
   code: string;
   member: string;
 }
