@@ -15,13 +15,6 @@ module.exports = {
         ].includes(pkg.name)
       )
         return pkg;
-      if (process.env.CORE_RELEASE_VERSION && ['@tandryio/protocol', '@tandryio/hub', '@tandryio/web'].includes(pkg.name)) {
-        const version = process.env.CORE_RELEASE_VERSION;
-        if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) throw new Error('Invalid CORE_RELEASE_VERSION');
-        pkg.version = version;
-        for (const name of Object.keys(pkg.dependencies ?? {}))
-          if (['@tandryio/protocol', '@tandryio/hub', '@tandryio/web'].includes(name)) pkg.dependencies[name] = version;
-      }
       if (['@tandryio/claude', '@tandryio/codex', '@tandryio/pi', '@tandryio/opencode', '@tandryio/dsh'].includes(pkg.name)) {
         delete pkg.dependencies;
         delete pkg.private;

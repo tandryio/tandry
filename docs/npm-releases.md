@@ -3,7 +3,9 @@
 Pi, OpenCode, and DeepSeek Harness use prebuilt npm packages:
 `@tandryio/pi`, `@tandryio/opencode`, and `@tandryio/dsh`.
 Claude Code and Codex keep the [Git marketplace](marketplace.md) route.
-The service packages have a separate [core release workflow](core-releases.md).
+Only the client packages are published. Protocol, Hub and Web are workspace source:
+the private cloud builds them from a pinned commit, and self-hosting builds this
+repository, so neither installs them from a registry. See [public artifacts](public-artifacts.md).
 Codex has one distribution entry; host compatibility is documented separately.
 
 All three packages are published under `@tandryio` with npm trusted publishing

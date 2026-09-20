@@ -8,11 +8,9 @@ import semver from 'semver';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 export const hosts = ['pi', 'opencode', 'dsh'];
-const group = process.env.NPM_GROUP ?? 'clients';
-assert.ok(['clients', 'core'].includes(group), 'NPM_GROUP must be clients or core.');
-const selected = group === 'core' ? ['protocol', 'hub', 'web'] : hosts;
+const selected = hosts;
 const packageName = host => `@tandryio/${host}`;
-const output = path.join(root, group === 'core' ? '.local/npm-core' : '.local/npm');
+const output = path.join(root, '.local/npm');
 const run = (command, args, cwd = root) => execFileSync(command, args, { cwd, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
 
 export function releaseOptions(version, tag = 'next') {
@@ -46,51 +44,6 @@ export function checkPackage(pkg, host, version, files) {
   for (const file of files) {
     assert.ok(required.includes(file) || (host === 'dsh' && /^skills\/[a-z-]+\/SKILL\.md$/.test(file)), `Unexpected ${host}/${file}`);
   }
-}
-
-export function checkCorePackage(pkg, name, version, files) {
-  assert.equal(pkg.name, `@tandryio/${name}`);
-  assert.equal(pkg.version, version);
-  for (const key of ['private', 'scripts', 'devDependencies']) assert.equal(pkg[key], undefined);
-  for (const [dependency, range] of Object.entries(pkg.dependencies ?? {})) {
-    assert.doesNotMatch(range, /^(workspace:|file:|link:)/);
-    if (dependency.startsWith('@tandryio/')) assert.equal(range, version);
-  }
-  const allowed = name === 'web' ? ['src/', 'content/', 'messages/', 'public/', 'scripts/'] : name === 'hub' ? ['src/', 'migrations/', 'testing/'] : ['src/'];
-  const common = ['package.json', 'README.md', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md'];
-  for (const file of common) assert.ok(files.includes(file), `Missing ${name}/${file}`);
-  if (name === 'web') for (const file of ['src/paraglide/messages.js', 'src/paraglide/runtime.js', 'src/paraglide/server.js', 'public/third-party-notices.txt', 'content/docs/index.mdx', 'vite.mjs', 'vite.d.mts'])
-    assert.ok(files.includes(file), `Missing web/${file}`);
-  const entry = 'src/index.ts';
-  assert.ok(files.includes(entry), `Missing ${name}/${entry}`);
-  for (const file of files) {
-    assert.ok(common.includes(file) || (name === 'web' && ['vite.mjs', 'vite.d.mts'].includes(file)) || (name === 'hub' && file === 'worker-configuration.d.ts') || allowed.some(prefix => file.startsWith(prefix)), `Unexpected ${name}/${file}`);
-    assert.doesNotMatch(file, /(^|\/)(\.env|\.dev\.vars|node_modules|\.git)(\.|\/|$)|\.map$|(?:^|\/)\.\.(?:\/|$)/);
-  }
-}
-
-function packCore(options) {
-  assert.equal(process.env.CORE_RELEASE_VERSION, options.version, 'CORE_RELEASE_VERSION must match RELEASE_VERSION.');
-  fs.rmSync(output, { recursive: true, force: true });
-  fs.mkdirSync(output, { recursive: true });
-  const packages = selected.map(host => {
-    const directory = path.join(root, `packages/${host}`);
-    const filename = `tandryio-${host}-${options.version}.tgz`;
-    const archive = path.join(output, filename);
-    run('pnpm', ['pack', '--out', archive], directory);
-    const files = run('tar', ['-tzf', archive]).trim().split('\n').filter(file => !file.endsWith('/')).map(file => {
-      assert.ok(file.startsWith('package/'));
-      return file.slice('package/'.length);
-    });
-    const pkg = JSON.parse(run('tar', ['-xOzf', archive, 'package/package.json']));
-    checkCorePackage(pkg, host, options.version, files);
-    for (const file of files)
-      assert.doesNotMatch(run('tar', ['-xOzf', archive, `package/${file}`]), /@tandryio\/cloud|STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|\/Users\//);
-    return { host, name: pkg.name, filename, integrity: 'sha512-' + createHash('sha512').update(fs.readFileSync(archive)).digest('base64') };
-  });
-  const source = { repository: 'https://github.com/tandryio/tandry', commit: run('git', ['rev-parse', 'HEAD']).trim(), dirty: Boolean(run('git', ['status', '--porcelain']).trim()) };
-  fs.writeFileSync(path.join(output, 'release.json'), JSON.stringify({ ...options, source, packages }, null, 2) + '\n');
-  console.log(`Validated core npm archives in ${output}`);
 }
 
 function pack(options) {
@@ -156,6 +109,6 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
   const action = process.argv[2];
   const options = releaseOptions(process.env.RELEASE_VERSION, process.env.NPM_TAG);
   assert.ok(['validate', 'pack', 'dry-run', 'publish'].includes(action), 'Expected validate, pack, dry-run or publish.');
-  if (action === 'pack') (group === 'core' ? packCore : pack)(options);
+  if (action === 'pack') pack(options);
   if (action === 'dry-run' || action === 'publish') await publish(options, action === 'dry-run');
 }

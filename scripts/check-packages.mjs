@@ -71,13 +71,13 @@ try {
         encoding: 'utf8',
       }),
     );
-    if (manifest.private || manifest.scripts || manifest.devDependencies)
-      throw new Error('Development metadata in npm package');
+    if (manifest.scripts || manifest.devDependencies)
+      throw new Error('Development metadata in packaged source');
     for (const version of Object.values(manifest.dependencies ?? {}))
       if (/^(workspace:|file:|link:)/.test(version))
         throw new Error('Unresolved local package dependency');
     console.log(
-      `Validated standard npm package: ${manifest.name}@${manifest.version}`,
+      `Validated packaged source layout: ${manifest.name}@${manifest.version}`,
     );
   }
 } finally {
