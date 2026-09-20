@@ -2,8 +2,9 @@
 
 `tandryio/tandry` contains source, manifests, tests and build configuration.
 [`tandryio/tandry-marketplace`](https://github.com/tandryio/tandry-marketplace)
-contains installable plugin packages. The marketplace repository has been created;
-no plugins have been published yet.
+contains installable plugin packages. It carries the released Claude Code and
+Codex plugins; its `release.json` records the source commit and plugin versions
+of each build.
 
 ## Connection and distribution
 
@@ -21,9 +22,9 @@ not separate accounts, rooms, or products. Publishing either does not publish
 the other. A marketplace plugin can also reference a remote MCP service;
 distribution source does not determine delivery capability.
 
-Before public release, complete the relevant host acceptance, publish the
-matching Hub and website, then replace the website’s local-preview setup with
-actual released install commands or listing URLs. Do not attach two
+The Git marketplace is released; the OpenAI directory submission is separate
+and does not follow from it. Complete the relevant host acceptance and keep the
+website's install commands matching what is actually released. Do not attach two
 indistinguishable sets of local and remote room tools to the same conversation.
 For a switch, explicitly continue the same member with `join as`; never use
 `leave` to preserve membership. Cross-connection duplicate detection is not
@@ -41,7 +42,7 @@ implemented because remote calls lack a shared trusted host conversation ID.
 
 CI installs dependencies, builds and tests the plugins, applies the requested
 version to the bundled MCP servers and exported package/plugin manifests, and pushes the distribution plus
-its `v0.1.0` tag to the marketplace. It also handles an empty marketplace's first
+its version tag to the marketplace. It also handles an empty marketplace's first
 release. Reusing a published version fails; existing tags are never overwritten.
 Source manifests are unchanged. Normal pushes and pull requests validate without
 publishing. No local release commands or manual source tags are needed.
@@ -51,8 +52,8 @@ publishing. No local release commands or manual source tags are needed.
 the distribution. The default `GITHUB_TOKEN` cannot publish to another repository,
 which is why the one-time token setup is required.
 
-Before the first plugin release, deploy the matching Hub/website described in the
-root README. The [npm client release workflow](npm-releases.md) publishes Pi, OpenCode and DSH
+Keep a matching Hub and website deployed for the released plugins, as described
+in the root README. The [npm client release workflow](npm-releases.md) publishes Pi, OpenCode and DSH
 first, then invokes this workflow to synchronize the marketplace.
 
 ## Local development
@@ -74,8 +75,9 @@ name points to the old source root, remove that registration before retrying.
 
 ## Switch existing installations
 
-After the first release, replace the old source-repository registration. The
-marketplace name and plugin identifier remain unchanged.
+Installations that still point at the source repository or a local build need
+their registration replaced. The marketplace name and plugin identifier remain
+unchanged.
 
 Claude Code:
 

@@ -7,8 +7,6 @@ minimal profiles can use the tools directly.
 
 ## npm installation
 
-Public npm publication is pending. After release:
-
 ```sh
 dsh plugin --profile web add @tandryio/dsh
 dsh plugin --profile web update @tandryio/dsh

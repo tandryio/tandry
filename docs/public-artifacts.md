@@ -47,12 +47,11 @@ been removed. Ordinary local edits require no packing or importing.
 
 ## Consumer release gate
 
-The private repository pins npm versions. After the first public npm release, run
-its normal registry install and commit pnpm-lock.yaml. CI/release must use that
-registry-only frozen lockfile and reject local link/file overrides. A missing initial
-registry lockfile is a pending release prerequisite, not a reason to commit the local
-lockfile or fabricate registry integrity hashes. None of these packages were published
-as part of this cleanup.
+The private repository pins npm versions. The public packages are published, so
+it runs its normal registry install and commits the resulting pnpm-lock.yaml.
+CI/release must use that registry-only frozen lockfile and reject local link/file
+overrides. A missing registry lockfile is never a reason to commit the local
+lockfile or fabricate registry integrity hashes.
 
 Before publication, the private `check:standalone --candidate /path/to/public` checks
 standard npm archives in an isolated temporary consumer. This is explicitly candidate

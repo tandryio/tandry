@@ -52,13 +52,11 @@ const signIn: Step = {
   body: m.install_step_sign_in_body,
   block: askAgent(m.install_prompt_sign_in),
 };
-const room = (block: Block): Step => ({
+const room: Step = {
   title: m.install_step_room,
   body: m.install_step_room_body,
-  block,
-});
-const slashRoom = (label: string, prefix: string) =>
-  room(inHost(label, `${prefix}new-room my-team`, `${prefix}join ROOM-CODE`));
+  block: askAgent(m.install_prompt_create, m.install_prompt_join),
+};
 
 const HOSTS: Host[] = [
   {
@@ -79,7 +77,7 @@ const HOSTS: Host[] = [
         ),
       },
       signIn,
-      slashRoom("Claude Code", "/tandry:"),
+      room,
     ],
     note: m.install_note_claude,
     guide: "/docs/hosts#claude-code-cli",
@@ -106,7 +104,7 @@ const HOSTS: Host[] = [
         block: inHost("Codex", "/hooks"),
       },
       signIn,
-      slashRoom("Codex", "$tandry:"),
+      room,
     ],
     note: m.install_note_codex,
     guide: "/docs/hosts#codex-cli",
@@ -125,7 +123,7 @@ const HOSTS: Host[] = [
         block: terminal("pi install npm:@tandryio/pi"),
       },
       signIn,
-      slashRoom("pi", "/tandry-"),
+      room,
     ],
     note: m.install_note_pi,
     guide: "/docs/hosts#other-hosts",
@@ -147,7 +145,7 @@ const HOSTS: Host[] = [
         },
       },
       signIn,
-      slashRoom("OpenCode", "/tandry-"),
+      room,
     ],
     note: m.install_note_opencode,
     guide: "/docs/hosts#other-hosts",
@@ -166,7 +164,7 @@ const HOSTS: Host[] = [
         block: terminal("dsh plugin --profile web add @tandryio/dsh"),
       },
       signIn,
-      room(askAgent(m.install_prompt_create, m.install_prompt_join)),
+      room,
     ],
     note: m.install_note_dsh,
     guide: "/docs/hosts#other-hosts",

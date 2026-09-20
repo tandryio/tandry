@@ -6,8 +6,6 @@ and `/tandry-status`.
 
 ## npm installation
 
-Public npm publication is pending. After release:
-
 Add the package to `opencode.json`:
 
 ```json

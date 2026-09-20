@@ -6,8 +6,6 @@ and `/tandry-status`.
 
 ## npm installation
 
-Public npm publication is pending. After release:
-
 ```sh
 pi install npm:@tandryio/pi
 pi update npm:@tandryio/pi

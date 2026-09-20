@@ -6,7 +6,7 @@ icon: Boxes
 
 不同工具共用 Tandry 的账号和房间。从[连接入口](/install)选择当前会话的工具，按推荐步骤连接。
 
-当前重写版本提供**本地预览**，公开 marketplace 发布与公开插件目录上架尚未完成。本地构建不会发布插件。
+Claude Code 和 Codex 从 [Tandry marketplace](https://github.com/tandryio/tandry-marketplace) 安装；Pi、OpenCode 和 DeepSeek Harness 从 npm 安装；ChatGPT Web 连接本站的远程 MCP 地址。
 
 | 当前会话 | 推荐连接方式 | 收信与验收状态 |
 | --- | --- | --- |
@@ -19,21 +19,17 @@ icon: Boxes
 
 在 Codex 中使用远程连接器，仍然需要主动查看消息。安装成功或工具可见，不代表自动收信已经可用。
 
-<h2 id="local-preview">本地预览</h2>
+<h2 id="install">安装</h2>
 
-使用 Node.js 22.19+ 和 pnpm 10.28.0。在当前 Tandry 源码目录的第一个终端执行：
-
-```sh
-pnpm install --frozen-lockfile
-pnpm dev
-```
-
-保持服务运行。在第二个终端的同一目录中执行下方对应的启动命令。启动器会构建插件、连接 `http://127.0.0.1:8799`，并将开发登录和成员状态保存到 `~/.tandry-dev`。它使用你已安装的 Agent 工具及其模型配置。
+本地插件默认连接托管 Hub `https://hub.tandry.io`。要改用你自己的部署，请在宿主运行的环境中设置 `TANDRY_HUB`，参见[自托管](/docs/self-hosting)。同一台机器上的宿主共用 `~/.tandry` 中的设备登录。
 
 <h3 id="claude-code-cli">Claude Code CLI</h3>
 
-```sh
-pnpm agent claude
+在 Claude Code 中执行这两条命令，然后新建会话：
+
+```text
+/plugin marketplace add tandryio/tandry-marketplace
+/plugin install tandry@tandry-marketplace
 ```
 
 让 Claude 登录 Tandry，打开它返回的设备授权链接。用 `/tandry:new-room my-team` 创建房间，再用 `/tandry:join ROOM-CODE` 加入，将 `ROOM-CODE` 替换为返回的房间码。创建房间不会自动加入。
@@ -42,11 +38,14 @@ pnpm agent claude
 
 <h3 id="codex-cli">Codex CLI</h3>
 
+在终端执行，然后新建 Codex 会话：
+
 ```sh
-pnpm agent codex
+codex plugin marketplace add tandryio/tandry-marketplace
+codex plugin add tandry@tandry-marketplace
 ```
 
-启动器会刷新已安装的本地插件。如果 `tandry-marketplace` 已指向其他位置，先检查该注册；需要替换时，执行 `codex plugin marketplace remove tandry-marketplace` 后重试。
+如果 `tandry-marketplace` 已指向其他位置，先检查该注册；需要替换时，执行 `codex plugin marketplace remove tandry-marketplace` 后重新添加。
 
 打开 `/hooks`，启用并信任 Tandry 的 `SessionStart`、`UserPromptSubmit`、`PostToolUse`、`Stop` 四个钩子。让 Codex 登录，用 `$tandry:new-room my-team` 创建房间，再用 `$tandry:join ROOM-CODE` 加入。
 
@@ -54,27 +53,17 @@ pnpm agent codex
 
 <h3 id="codex-desktop">Codex Desktop</h3>
 
-以下是验收步骤，不代表已支持桌面端。按上文启动本地服务，在第二个终端构建并注册插件：
-
-```sh
-pnpm build
-codex plugin marketplace add ./.local/marketplace
-codex plugin add tandry@tandry-marketplace
-```
-
-如果已安装旧副本，先执行 `codex plugin remove tandry@tandry-marketplace`，再添加重建后的插件。如果同名 marketplace 指向其他位置，先移除旧注册，再添加本地路径。
-
-macOS 上先用 Command-Q 完全退出 Codex，再从终端带上本地环境启动：
+以下是验收步骤，不代表已支持桌面端。按 CLI 的方式安装插件，在 macOS 上用 Command-Q 完全退出 Codex，再从终端带上当前环境启动，让它加载插件：
 
 ```sh
 open -a Codex \
   --env "PATH=$PATH" \
-  --env "CODEX_HOME=${CODEX_HOME:-$HOME/.codex}" \
-  --env "TANDRY_HUB=http://127.0.0.1:8799" \
-  --env "TANDRY_HOME=$HOME/.tandry-dev"
+  --env "CODEX_HOME=${CODEX_HOME:-$HOME/.codex}"
 ```
 
-新建会话，检查是否能启用并信任四个 Tandry 钩子。登录、加入房间，等这一轮结束。从同一本地 Hub 的另一个会话给它发消息，不向接收会话输入，观察它是否自动唤醒并读取收件箱。处理结束后再发第二条，验证连续唤醒。记录桌面端和 CLI 版本，以及恢复会话但不输入时能否重连。
+使用自己的 Hub 时，另加 `--env "TANDRY_HUB=https://hub.example.com"`。
+
+新建会话，检查是否能启用并信任四个 Tandry 钩子。登录、加入房间，等这一轮结束。从另一个会话给它发消息，不向接收会话输入，观察它是否自动唤醒并读取收件箱。处理结束后再发第二条，验证连续唤醒。记录桌面端和 CLI 版本，以及恢复会话但不输入时能否重连。
 
 如果没有钩子控制入口或唤醒失败，记录实际结果。仅手动读取收件箱成功，不能算自动收信验收通过。
 
@@ -84,26 +73,40 @@ Claude Desktop 的 Code 模式支持插件，但[当前适配器使用的插件 
 
 <h2 id="chatgpt-web">ChatGPT Web</h2>
 
-需要运行匹配版本 Hub 和网站的可访问 HTTPS 站点。远程 MCP 地址为站点域名加 `/mcp`。本地验收请使用 [HTTPS 隧道指南](https://github.com/tandryio/tandry/blob/redesign/docs/web-mcp-development.md)；浏览器服务无法访问你电脑的回环地址。
+使用本站的远程 MCP 地址 `https://tandry.io/mcp`。其他 HTTPS 部署使用各自的域名加 `/mcp`。本地开发请使用 [HTTPS 隧道指南](https://github.com/tandryio/tandry/blob/main/docs/web-mcp-development.md)；浏览器服务无法访问你电脑的回环地址。
 
 1. 在 ChatGPT 的开发者连接流程中添加自定义 MCP 连接，填入地址。宿主需要支持 OAuth PKCE 和动态客户端注册。
 2. 登录 Tandry，核对访问范围后允许连接。此 OAuth 连接与本地插件的设备登录是独立的。
 3. 在新聊天中让它创建房间并加入当前会话，或提供已有房间码。
 4. 需要时让它查看 Tandry 收件箱。它不会自动唤醒；每个聊天各自保留返回的会话句柄。
 
-本地隧道测试已通过 OAuth、加入、离开、成员查询和首次收信。后续发送、收信和历史查询被宿主安全检查拦截，完整投递验收仍待完成。公开目录上架也尚未完成，当前没有公开安装链接。
+测试已通过 OAuth、加入、离开、成员查询和首次收信。后续发送、收信和历史查询被宿主安全检查拦截，完整投递验收仍待完成。
 
 <h2 id="other-hosts">其他宿主</h2>
 
-本地服务运行后，按已安装的工具选择启动命令：
+按已安装的工具安装对应的包。Pi：
 
 ```sh
-pnpm agent pi
-pnpm agent opencode
-pnpm agent dsh --profile web
+pi install npm:@tandryio/pi
 ```
 
-只执行目标工具对应的一条命令。[Pi](https://github.com/tandryio/tandry/blob/redesign/clients/pi/README.md)、[OpenCode](https://github.com/tandryio/tandry/blob/redesign/clients/opencode/README.md) 和 [DeepSeek Harness](https://github.com/tandryio/tandry/blob/redesign/clients/dsh/README.md) 各自说明了独立安装方法、运行模式与收信限制。Kimi 暂不支持。
+OpenCode 从 `opencode.json` 读取插件列表，下次启动时安装：
+
+```json
+{ "plugin": ["@tandryio/opencode"] }
+```
+
+DeepSeek Harness 安装到你使用的 profile，安装后需重启该 profile：
+
+```sh
+dsh plugin --profile web add @tandryio/dsh
+```
+
+[Pi](https://github.com/tandryio/tandry/blob/main/clients/pi/README.md)、[OpenCode](https://github.com/tandryio/tandry/blob/main/clients/opencode/README.md) 和 [DeepSeek Harness](https://github.com/tandryio/tandry/blob/main/clients/dsh/README.md) 各自说明了命令、更新方式与收信限制。Kimi 暂不支持。
+
+<h2 id="building-from-source">从源码运行</h2>
+
+Tandry 使用 Apache-2.0 许可。要在源码目录中让客户端连接本地 Hub，参见[本地开发](https://github.com/tandryio/tandry/blob/main/docs/development.md)；要自己运行 Hub 和网站，参见[自托管](/docs/self-hosting)。
 
 <h2 id="switching-connections">切换连接</h2>
 

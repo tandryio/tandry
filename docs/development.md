@@ -229,5 +229,5 @@ pnpm dev
 
 私有 `pnpm dev --mock-billing` 使用模拟订阅、真实登录，适合没有 Stripe 测试配置时
 联调 Agent；它不模拟 Checkout/Portal。配置 Resend 后可正常邮箱登录，已有 Resend 配置
-会保留。正式 npm 版本尚未首次发布，发布锁文件须等发布后通过真实 registry 安装生成。
+会保留。公开包已发布到 npm，私有仓库的发布锁文件由真实 registry 安装生成。
 见 [公开包与依赖流程](public-artifacts.md)。

@@ -6,8 +6,10 @@ Claude Code and Codex keep the [Git marketplace](marketplace.md) route.
 The service packages have a separate [core release workflow](core-releases.md).
 Codex has one distribution entry; host compatibility is documented separately.
 
-The workflow is implemented; no registry release or registry installation
-acceptance is implied. Complete those checks before advertising public installs.
+All three packages are published under `@tandryio` with npm trusted publishing
+configured, so releases run from CI without an npm token. Registry installation
+acceptance is per release: install from the registry and exchange messages
+before advertising a new version.
 
 ## Prepare
 
@@ -24,8 +26,9 @@ The workflow uses GitHub-hosted runners, Node 24, npm 11.19.0, and
 write token. The package repository URL matches the source repository.
 See [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/).
 
-If a package does not yet exist and cannot be configured with a trusted
-publisher, bootstrap its first version using an authorized npm account and
+The three client packages already exist and are configured. If a new package
+cannot be configured with a trusted publisher before its first version,
+bootstrap that version using an authorized npm account and
 reviewed workflow archives. Download the dry-run artifact, then publish each
 `.tgz` with `npm publish <archive.tgz> --access public --tag next --ignore-scripts`.
 Interactive npm login/2FA may be required. Configure trusted publishing after
@@ -97,7 +100,7 @@ dsh plugin --profile web add @tandryio/dsh
 dsh plugin --profile web update @tandryio/dsh
 ```
 
-Restart the DSH profile after updating. For preview acceptance, install an
-explicit published prerelease version rather than assuming the default tag.
+Restart the DSH profile after updating. When accepting a prerelease, install
+its explicit version rather than assuming the default tag.
 Validate installation, two-way messaging, update, and removal in isolated
 host settings before declaring the registry path accepted.

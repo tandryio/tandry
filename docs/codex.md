@@ -4,7 +4,25 @@ Choose Codex CLI or Codex Desktop in [Connect Tandry](https://tandry.io/#install
 Both can load plugin capabilities, but CLI acceptance does not establish
 Desktop idle wake. A remote MCP connection used inside Codex remains pull.
 
-## Local preview
+## Install
+
+Run in a terminal, then start a new Codex conversation:
+
+```sh
+codex plugin marketplace add tandryio/tandry-marketplace
+codex plugin add tandry@tandry-marketplace
+```
+
+Enable and trust all four Tandry hooks in `/hooks`: `SessionStart`,
+`UserPromptSubmit`, `PostToolUse`, and `Stop`. Ask Codex to sign in, approve the
+device URL and code, then use `$tandry:new-room my-team` to create a room and
+`$tandry:join ROOM-CODE` to join. Room creation does not join automatically.
+The other skills are `$tandry:status`, `$tandry:members`, and `$tandry:leave`.
+
+The plugin uses the hosted Hub and stores credentials and memberships in
+`~/.tandry`. Set `TANDRY_HUB` and `TANDRY_HOME` for another deployment.
+
+## Local development
 
 Use Node.js 22.19+ and pnpm 10.28.0. From the current `tandry/` checkout:
 
@@ -21,13 +39,9 @@ pnpm agent codex
 
 The launcher builds and refreshes the local plugin, uses
 `http://127.0.0.1:8799`, and stores development credentials and memberships in
-`~/.tandry-dev`. Override `TANDRY_HUB` and `TANDRY_HOME` as needed.
-
-Enable and trust all four Tandry hooks in `/hooks`: `SessionStart`,
-`UserPromptSubmit`, `PostToolUse`, and `Stop`. Ask Codex to sign in, approve the
-device URL and code, then use `$tandry:new-room my-team` to create a room and
-`$tandry:join ROOM-CODE` to join. Room creation does not join automatically.
-The other skills are `$tandry:status`, `$tandry:members`, and `$tandry:leave`.
+`~/.tandry-dev`. Override `TANDRY_HUB` and `TANDRY_HOME` as needed. If
+`tandry-marketplace` already points at the released distribution, review that
+registration before replacing it.
 
 ## Install a local build for desktop acceptance
 
@@ -83,5 +97,5 @@ workspace, or member-name equality. Check the host's enablement scope before
 disabling a plugin used by other conversations.
 
 Public releases are described in [Marketplace releases](marketplace.md).
-The current rewrite is a local preview; neither public publication nor desktop
-support follows from a successful local build.
+Desktop support does not follow from a successful CLI installation or local
+build.
