@@ -92,6 +92,10 @@ export async function new_room(hub: HubContext, who: Principal, input: ParsedInp
 }
 
 export async function update_room(hub: HubContext, who: Principal, input: ParsedInput<"update_room">): Promise<Output<"update_room">> {
+  // Every field is optional so that a caller can change one of them, but a call
+  // that changes nothing would report an update that never happened.
+  if (input.name === undefined && input.description === undefined && !input.rotateCode)
+    throw new TandryError("invalid_input", "Pass a name, a description, or rotateCode");
   const room = await hub.directory.roomById(input.room);
   if (!room) throw new TandryError("no_such_room", "No such room");
   if (room.ownerAccountId !== who.accountId) throw new TandryError("forbidden", "Only the room's owner may change it");

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { MemberAddress, MemberName, MessageId, ROOM_ADDRESS } from "./nouns";
-import { INTRO_LIMIT } from "./operations";
+import { INTRO_LIMIT, ROOM_DESCRIPTION_LIMIT, ROOM_NAME_LIMIT } from "./operations";
 
 /**
  * What an agent sees. A tool is not an operation: the binding that implements
@@ -48,6 +48,17 @@ export const tools = {
     }),
     connector: true,
   }),
+  update_room: tool({
+    name: "update_room",
+    description:
+      "Change the room this conversation is in: its name, its description, or its code. Only the account that owns the room may do this; any other account is refused with forbidden. Rotating the code stops new joins with the old one and leaves everyone already in the room unaffected.",
+    params: z.object({
+      name: z.string().trim().min(1).max(ROOM_NAME_LIMIT).optional().describe("What people call the room. Shown to members; not unique."),
+      description: z.string().trim().max(ROOM_DESCRIPTION_LIMIT).optional().describe("What the room is for. Every joining member reads it."),
+      rotateCode: z.boolean().optional().describe("Replace the room's code. The old code stops admitting new members."),
+    }),
+    connector: true,
+  }),
   join: tool({
     name: "join",
     description:
@@ -71,6 +82,15 @@ export const tools = {
     description:
       "Who is in the room: each member's introduction, host, workspace, whether it can be reached right now, and how many of your messages it has not read yet.",
     params: none,
+    connector: true,
+  }),
+  rename: tool({
+    name: "rename",
+    description:
+      "Rename this conversation's member in the room. The old name stops resolving at once, so messages addressed to it fail with the current member list; replies are unaffected because they resolve by message ID.",
+    params: z.object({
+      name: MemberName.describe("The new member name. Lowercase letters, digits and inner hyphens."),
+    }),
     connector: true,
   }),
   send: tool({

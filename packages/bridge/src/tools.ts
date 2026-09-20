@@ -1,7 +1,7 @@
 import os from "node:os";
 import {
   TandryError, newId, newNonce, normalizeCode, renderError, renderHistory, renderInbox, renderJoin, renderLeft, renderLoginStart,
-  renderMembers, renderNewRoom, renderSent, renderStatus, toolInputSchema, tools,
+  renderMembers, renderNewRoom, renderRenamed, renderRoomUpdated, renderSent, renderStatus, toolInputSchema, tools,
   type ConversationRef, type Output, type RoomSummary, type ToolName, type ToolParams,
 } from "@tandryio/protocol";
 import { deleteCredentials, readCredentials, writeCredentials, type Credentials } from "./credentials";
@@ -23,6 +23,8 @@ export interface Session {
   marker(): JoinedMarker | null;
   /** Joined: remember the room and go online. */
   enter(marker: JoinedMarker): void;
+  /** Fields the Hub has just changed. Rewrites the marker only: the room, its code, unread mail and the link all stand. */
+  remark(patch: Partial<JoinedMarker>): void;
   /** No longer in the room: drop the marker and the link. */
   forget(): void;
   /** Credentials appeared: go online if this conversation is in a room. */
@@ -36,7 +38,7 @@ export interface Session {
   loginPollFloorMs: number;
 }
 
-/** The nine tools an agent sees. Each is one or more operations plus the local bookkeeping around them. */
+/** The eleven tools an agent sees. Each is one or more operations plus the local bookkeeping around them. */
 export function createTools(session: Session): Tool[] {
   const { hub, ops } = session;
   let lastRead: Promise<unknown> = Promise.resolve();
@@ -127,6 +129,24 @@ export function createTools(session: Session): Tool[] {
       return renderNewRoom(await ops("new_room", { id: newId("r"), ...params }));
     },
 
+    async update_room(params) {
+      // The agent names the room it is already in; the marker is the only room it can mean.
+      // Account scope: authority is the room's owner account, checked on the Hub.
+      const marker = needRoom();
+      const result = await ops("update_room", { room: marker.room, ...params });
+      // The marker holds the room's name and its code, and the call may have
+      // changed either. This refreshes this conversation's copy only: a link
+      // frame carries a count, a position and who from, never room metadata, so
+      // another member's marker keeps the old name and the old code until it
+      // joins again. For this conversation the code is what matters, because the
+      // check in join compares it: the stale one would let a join through to the
+      // Hub as no_such_room for the room this conversation is already sitting in.
+      // The result carries the code in its displayed form, while the marker and
+      // that check compare normalized codes.
+      session.remark({ roomName: result.name, ...(result.code ? { code: normalizeCode(result.code) } : {}) });
+      return renderRoomUpdated(result, params.rotateCode === true);
+    },
+
     async join(params) {
       const ref = needConversation();
       needLogin();
@@ -157,6 +177,17 @@ export function createTools(session: Session): Tool[] {
     async members() {
       needRoom();
       return renderMembers(await inRoom(() => ops("members", {})), Date.now());
+    },
+
+    async rename(params) {
+      needRoom();
+      // Omitted `member` renames this conversation's own member, which is the
+      // only one it may rename: the Hub refuses another account's.
+      const result = await inRoom(() => ops("rename", { name: params.name }));
+      // The marker holds the address, so a later status or join message would
+      // otherwise name a member that no longer exists.
+      session.remark({ member: result.member });
+      return renderRenamed(result);
     },
 
     async send(params) {

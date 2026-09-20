@@ -104,9 +104,9 @@ async function room() {
   return { code, call };
 }
 
-test("the bundle loads in pi with nine native tools, shared commands and proper tool errors", async () => {
+test("the bundle loads in pi with eleven native tools, shared commands and proper tool errors", async () => {
   const pi = await host();
-  assert.deepEqual(pi.session.getActiveToolNames().sort(), ["history", "inbox", "join", "leave", "login", "members", "new_room", "send", "status"].map(n => `tandry_${n}`).sort());
+  assert.deepEqual(pi.session.getActiveToolNames().sort(), ["history", "inbox", "join", "leave", "login", "members", "new_room", "rename", "send", "status", "update_room"].map(n => `tandry_${n}`).sort());
   assert.match(await pi.call("status"), /alice/);
   assert.match(await pi.call("inbox", {}, true), /not_in_room/);
   assert.equal(readMarker("pi", pi.manager.getSessionId()), null);

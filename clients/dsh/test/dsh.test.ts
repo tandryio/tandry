@@ -121,7 +121,7 @@ async function room() {
 test("standalone bundle registers native tools and shared skills in the real dsh runtime", async () => {
   const dsh = await host();
   const receiver = await dsh.open();
-  assert.equal(dsh.ctx.tools.schemas(receiver.agent).filter(t => t.name.startsWith("tandry_")).length, 9);
+  assert.equal(dsh.ctx.tools.schemas(receiver.agent).filter(t => t.name.startsWith("tandry_")).length, 11);
   assert.match(await receiver.call("status"), /alice/);
   assert.match(await receiver.call("inbox", {}, true), /not_in_room/);
   assert.equal(readMarker("dsh", receiver.agent.id), null);
