@@ -1,4 +1,5 @@
 import { useWebOptions } from "../options";
+import { Link } from "@tanstack/react-router";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { authClient } from "../lib/auth-client";
 import { useProfile } from "../lib/profile";
@@ -61,32 +62,32 @@ export function AccountNav() {
                 {label}
               </DropdownMenu.Label>
               <DropdownMenu.Item asChild>
-                <a href="/account">
+                <Link to="/account">
                   <Icon name="user" />
                   {m.account_title()}
-                </a>
+                </Link>
               </DropdownMenu.Item>
               <DropdownMenu.Item asChild>
-                <a href="/rooms">
+                <Link to="/rooms">
                   <Icon name="rooms" />
                   {m.nav_my_rooms()}
-                </a>
+                </Link>
               </DropdownMenu.Item>
 
               {links.map((item) => (
                 <DropdownMenu.Item asChild key={item.href}>
-                  <a href={item.href}>
+                  <Link to={item.href}>
                     {item.icon && <Icon name={item.icon} />}
                     {item.label()}
-                  </a>
+                  </Link>
                 </DropdownMenu.Item>
               ))}
               <DropdownMenu.Separator className="ui-menu-separator" />
               <DropdownMenu.Item asChild>
-                <a href="/install">
+                <Link to="/install">
                   <Icon name="code" />
                   {m.nav_install_plugin()}
-                </a>
+                </Link>
               </DropdownMenu.Item>
             </DropdownMenu.Content>
           </DropdownMenu.Portal>

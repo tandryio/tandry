@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useWebOptions } from "../../options";
 import { m } from "../../paraglide/messages";
@@ -26,9 +27,9 @@ export function SiteHeader({ landing = false }: { landing?: boolean }) {
   const navigation = (
     <>
       {links.map((link) => (
-        <a key={link.href} href={link.href} onClick={() => setOpen(false)}>
+        <Link key={link.href} to={link.href} onClick={() => setOpen(false)}>
           {link.label}
-        </a>
+        </Link>
       ))}
       <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
         <svg
@@ -51,9 +52,9 @@ export function SiteHeader({ landing = false }: { landing?: boolean }) {
       </a>
       <header className="site-header" data-scrolled={scrolled || undefined}>
         <div className="header-inner">
-          <a href="/" aria-label={m.nav_home_label()} className="brand">
+          <Link to="/" aria-label={m.nav_home_label()} className="brand">
             <Brand />
-          </a>
+          </Link>
           <nav className="header-nav" aria-label={m.nav_main_label()}>
             {navigation}
           </nav>

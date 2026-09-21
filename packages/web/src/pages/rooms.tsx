@@ -1,5 +1,6 @@
 import { newId, RoomId, type RoomSummary } from "@tandryio/protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { m } from "../paraglide/messages";
 import { errorText } from "../lib/i18n";
@@ -251,12 +252,13 @@ function RoomCard({ room }: { room: RoomSummary }) {
         </span>
         <div className="room-card-heading">
           <h2>
-            <a
+            <Link
               className="room-card-link"
-              href={`/rooms?room=${encodeURIComponent(room.id)}`}
+              to="/rooms"
+              search={{ room: room.id }}
             >
               {room.name}
-            </a>
+            </Link>
           </h2>
           {room.code && (
             <button

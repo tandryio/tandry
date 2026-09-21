@@ -7,6 +7,7 @@ import {
   AccordionTrigger,
 } from "../ui/accordion";
 import { Kicker } from "../ui/kicker";
+import { SiteLink } from "../ui/site-link";
 import { Container } from "../layout/section";
 import { REPO_URL } from "../layout/site-header";
 import { Reveal, Stagger, StaggerItem } from "../motion/reveal";
@@ -31,13 +32,13 @@ export function Faq() {
           <p className="mt-5 mb-6 max-w-xs text-[15px] leading-relaxed text-ink/55">
             {m.landing_faq_lead()}
           </p>
-          <a
+          <SiteLink
             href="/docs"
             className="inline-flex items-center gap-1 text-sm text-accent underline-offset-4 hover:underline"
           >
             {m.landing_read_docs()}
             <ArrowUpRight className="size-4" aria-hidden="true" />
-          </a>
+          </SiteLink>
         </Reveal>
         <Stagger stagger={0.07}>
           <Accordion

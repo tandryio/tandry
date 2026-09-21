@@ -10,6 +10,8 @@ export function webRouterOptions(options: WebOptions = {}) {
   });
   return {
     scrollRestoration: true,
+    // Load a page's code while the pointer is still on its link.
+    defaultPreload: "intent" as const,
     Wrap: ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>
         {/* Honour the OS reduced-motion preference for every Motion animation. */}

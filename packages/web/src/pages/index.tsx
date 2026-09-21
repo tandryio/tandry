@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { SiteHeader } from "../components/layout/site-header";
 import { SiteFooter } from "../components/layout/site-footer";
 import { Hero } from "../components/landing/hero";
@@ -47,9 +48,9 @@ export function Landing() {
         <Faq />
         <section className="product-next">
           <h2>{m.landing_next_title()}</h2>
-          <a href="/install" className="text-link">
+          <Link to="/install" className="text-link">
             {m.nav_get_started()} →
-          </a>
+          </Link>
         </section>
       </main>
       <SiteFooter />

@@ -1,6 +1,8 @@
+import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { m } from "../../paraglide/messages";
 import { Button } from "../ui/button";
+import { SiteLink } from "../ui/site-link";
 import { AsciiField } from "../motion/ascii-field";
 import { Reveal } from "../motion/reveal";
 import { TerminalConversation } from "./terminal-conversation";
@@ -13,14 +15,14 @@ export function Hero() {
         <p className="hero-lead">{m.landing_hero_lead()}</p>
         <div className="hero-actions">
           <Button asChild variant="primary" size="lg">
-            <a href="/install">
+            <Link to="/install">
               {m.landing_hero_cta()}
               <ArrowRight size={16} />
-            </a>
+            </Link>
           </Button>
-          <a className="text-link" href="/docs">
+          <SiteLink className="text-link" href="/docs">
             {m.nav_docs()} <span aria-hidden="true">↗</span>
-          </a>
+          </SiteLink>
         </div>
       </Reveal>
       <Reveal className="hero-demo" delay={0.15}>

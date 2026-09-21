@@ -3,6 +3,7 @@ import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { Check, Copy } from "lucide-react";
 import { m } from "../../paraglide/messages";
 import { Reveal } from "../motion/reveal";
+import { SiteLink } from "../ui/site-link";
 
 /** The hosted site's remote MCP endpoint; other HTTPS deployments use their own origin. */
 const HOSTED_MCP = "https://tandry.io/mcp";
@@ -398,7 +399,9 @@ export function Installation() {
                 </ol>
                 <footer>
                   <p>{host.note()}</p>
-                  <a href={host.guide}>{m.install_guide_link()} →</a>
+                  <SiteLink href={host.guide}>
+                    {m.install_guide_link()} →
+                  </SiteLink>
                 </footer>
               </TabsPrimitive.Content>
             ))}
@@ -413,7 +416,7 @@ export function Installation() {
               <span className="editorial-label">0{index + 1}</span>
               <h2>{item.title}</h2>
               <p>{item.body}</p>
-              <a href={item.href}>{item.link} →</a>
+              <SiteLink href={item.href}>{item.link} →</SiteLink>
             </article>
           </Reveal>
         ))}

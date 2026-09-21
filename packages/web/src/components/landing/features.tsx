@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { m } from "../../paraglide/messages";
 import { Section, SectionHeading } from "../layout/section";
+import { SiteLink } from "../ui/site-link";
 import { Stagger, StaggerItem } from "../motion/reveal";
 import { SpotlightCard } from "../motion/spotlight";
 
@@ -157,13 +158,13 @@ export function Features() {
                 {feature.body()}
               </p>
               {feature.link && (
-                <a
+                <SiteLink
                   href={feature.link.href}
                   className="mt-5 inline-flex items-center gap-1 text-sm text-accent/90 underline-offset-4 transition-colors hover:text-accent hover:underline"
                 >
                   {feature.link.label()}
                   <ArrowUpRight className="size-3.5" aria-hidden="true" />
-                </a>
+                </SiteLink>
               )}
             </SpotlightCard>
           </StaggerItem>

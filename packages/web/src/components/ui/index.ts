@@ -13,3 +13,4 @@ export {
 } from "./accordion";
 export { Glass, glassVariants } from "./glass";
 export { Kicker, Eyebrow } from "./kicker";
+export { SiteLink } from "./site-link";

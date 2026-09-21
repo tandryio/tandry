@@ -1,7 +1,9 @@
+import { Link } from "@tanstack/react-router";
 import { m } from "../../paraglide/messages";
 import { Brand } from "./brand";
 import { Container } from "./section";
 import { REPO_URL } from "./site-header";
+import { SiteLink } from "../ui/site-link";
 
 export function SiteFooter() {
   const columns = [
@@ -27,13 +29,13 @@ export function SiteFooter() {
       <Container className="py-14 md:py-16">
         <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(2,0.8fr)]">
           <div>
-            <a
-              href="/"
+            <Link
+              to="/"
               aria-label={m.nav_home_label()}
               className="inline-block rounded-md"
             >
               <Brand />
-            </a>
+            </Link>
             <p className="mt-5 max-w-[17rem] text-sm leading-relaxed text-ink/45">
               {m.meta_description()}
             </p>
@@ -43,18 +45,29 @@ export function SiteFooter() {
               <p className="mb-4 font-mono text-[11px] tracking-[0.18em] text-ink/35 uppercase">
                 {column.title}
               </p>
-              {column.links.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  {...(link.external
-                    ? { target: "_blank", rel: "noopener noreferrer" }
-                    : {})}
-                  className="block py-1.5 text-sm text-ink/55 transition-colors duration-200 hover:text-ink"
-                >
-                  {link.label}
-                </a>
-              ))}
+              {column.links.map((link) => {
+                const className =
+                  "block py-1.5 text-sm text-ink/55 transition-colors duration-200 hover:text-ink";
+                return link.external ? (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={className}
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <SiteLink
+                    key={link.href}
+                    href={link.href}
+                    className={className}
+                  >
+                    {link.label}
+                  </SiteLink>
+                );
+              })}
             </nav>
           ))}
         </div>

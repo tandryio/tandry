@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { m } from "../../paraglide/messages";
 import { Marquee } from "../motion/marquee";
 import { HOSTS } from "./hosts";
@@ -14,9 +15,10 @@ export function HostMarquee() {
       <Marquee duration={38}>
         {(copy) =>
           HOSTS.map((host) => (
-            <a
+            <Link
               key={host.id}
-              href={`/install#${host.id}`}
+              to="/install"
+              hash={host.id}
               tabIndex={copy ? -1 : undefined}
               className="inline-flex items-center gap-3 text-xl font-medium tracking-tight whitespace-nowrap text-ink/45 no-underline transition-colors duration-300 hover:text-ink"
             >
@@ -27,7 +29,7 @@ export function HostMarquee() {
                 <img src={host.logo} alt="" className="size-5" />
               </span>
               {host.name}
-            </a>
+            </Link>
           ))
         }
       </Marquee>

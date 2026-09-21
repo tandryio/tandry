@@ -18,6 +18,7 @@ import type {
 import { baseOptions, docsProviderProps } from "../lib/docs/layout";
 import { getMDXComponents } from "../components/docs/mdx";
 import { SiteHeader } from "../components/layout/site-header";
+import { SiteLink } from "../components/ui/site-link";
 import { m } from "../paraglide/messages";
 
 type Page = MacroAsyncDocEntry<{ title?: string; description?: string }>;
@@ -62,9 +63,9 @@ export function Documentation({
 /** The site header carries the brand, links and language; the sidebar only names the section. */
 function DocsNavTitle() {
   return (
-    <a href="/docs" className="docs-nav-title">
+    <SiteLink href="/docs" className="docs-nav-title">
       {m.nav_docs()}
-    </a>
+    </SiteLink>
   );
 }
 

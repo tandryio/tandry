@@ -1,9 +1,9 @@
 import { useWebOptions } from "../options";
 import type { ReactNode } from "react";
-import { useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { m } from "../paraglide/messages";
 import { SiteHeader, REPO_URL } from "./layout/site-header";
-import { Icon } from "./ui";
+import { Icon, SiteLink } from "./ui";
 
 export function Shell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (state) => state.location.pathname });
@@ -20,43 +20,43 @@ export function Shell({ children }: { children: ReactNode }) {
           <aside className="workspace-sidebar">
             <p className="sidebar-label">{m.nav_workspace()}</p>
             <nav aria-label={m.nav_workspace()}>
-              <a
-                href="/account"
+              <Link
+                to="/account"
                 aria-current={path === "/account" ? "page" : undefined}
               >
                 <Icon name="user" />
                 {m.account_title()}
-              </a>
-              <a
-                href="/rooms"
+              </Link>
+              <Link
+                to="/rooms"
                 aria-current={path === "/rooms" ? "page" : undefined}
               >
                 <Icon name="rooms" />
                 {m.nav_my_rooms()}
-              </a>
+              </Link>
               {links.map((item) => (
-                <a
+                <Link
                   key={item.href}
-                  href={item.href}
+                  to={item.href}
                   aria-current={path === item.href ? "page" : undefined}
                 >
                   {item.icon && <Icon name={item.icon} />}
                   {item.label()}
-                </a>
+                </Link>
               ))}
             </nav>
             <div className="sidebar-help">
               <Icon name="link" />
               <strong>{m.nav_connect_agents()}</strong>
               <p>{m.nav_connect_agents_hint()}</p>
-              <a href="/install">
+              <Link to="/install">
                 {m.nav_install_plugin()} <Icon name="arrow" />
-              </a>
+              </Link>
             </div>
-            <a className="sidebar-docs" href="/docs">
+            <SiteLink className="sidebar-docs" href="/docs">
               <Icon name="book" />
               {m.landing_read_docs()}
-            </a>
+            </SiteLink>
           </aside>
         )}
         <main id="main" className="account-page">
