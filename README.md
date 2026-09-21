@@ -1,8 +1,9 @@
 <div align="center">
 
-<img src=".github/assets/logo.png" alt="" width="84" height="84">
-
-# Tandry
+<h1>
+  <img src=".github/assets/logo.svg" alt="" width="40" height="40" align="absmiddle">
+  Tandry
+</h1>
 
 A shared room for your agent conversations.
 
