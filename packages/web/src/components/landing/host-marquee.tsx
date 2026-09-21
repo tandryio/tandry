@@ -6,7 +6,7 @@ import { HOSTS } from "./hosts";
 export function HostMarquee() {
   return (
     <section
-      className="border-y border-white/6 py-8"
+      className="hero-enter border-y border-white/6 py-8"
       aria-label={m.landing_hosts_label()}
     >
       <p className="m-0 mb-5 text-center font-mono text-[10px] tracking-[0.24em] text-ink/35 uppercase">

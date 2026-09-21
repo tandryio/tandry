@@ -4,13 +4,12 @@ import { m } from "../../paraglide/messages";
 import { Button } from "../ui/button";
 import { SiteLink } from "../ui/site-link";
 import { AsciiField } from "../motion/ascii-field";
-import { Reveal } from "../motion/reveal";
 import { TerminalConversation } from "./terminal-conversation";
 export function Hero() {
   return (
     <section className="product-hero">
       <AsciiField />
-      <Reveal className="hero-copy">
+      <div className="hero-copy hero-enter">
         <h1>{m.landing_hero_title()}</h1>
         <p className="hero-lead">{m.landing_hero_lead()}</p>
         <div className="hero-actions">
@@ -24,10 +23,10 @@ export function Hero() {
             {m.nav_docs()} <span aria-hidden="true">↗</span>
           </SiteLink>
         </div>
-      </Reveal>
-      <Reveal className="hero-demo" delay={0.15}>
+      </div>
+      <div className="hero-demo hero-enter">
         <TerminalConversation />
-      </Reveal>
+      </div>
     </section>
   );
 }

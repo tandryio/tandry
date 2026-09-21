@@ -7,8 +7,8 @@ import { SiteLink } from "../ui/site-link";
 
 /** The hosted site's remote MCP endpoint; other HTTPS deployments use their own origin. */
 const HOSTED_MCP = "https://tandry.io/mcp";
-const MARKETPLACE = "tandryio/tandry-marketplace";
-const PLUGIN = "tandry@tandry-marketplace";
+export const MARKETPLACE = "tandryio/tandry-marketplace";
+export const PLUGIN = "tandry@tandry-marketplace";
 
 type Block = {
   /** Shown in the block's title bar: where the lines are typed. */
@@ -203,7 +203,7 @@ const HOSTS: Host[] = [
 ];
 
 /** One line per command: host prompts take one command at a time. */
-function CopyButton({ value }: { value: string }) {
+export function CopyButton({ value }: { value: string }) {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   useEffect(() => {
     if (state === "idle") return;

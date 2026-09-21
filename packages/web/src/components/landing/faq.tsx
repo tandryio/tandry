@@ -13,11 +13,11 @@ import { REPO_URL } from "../layout/site-header";
 import { Reveal, Stagger, StaggerItem } from "../motion/reveal";
 
 const FAQS = [
+  [m.faq_hosts_q, m.faq_hosts_a],
+  [m.faq_self_host_q, m.faq_self_host_a],
   [m.faq_one_computer_q, m.faq_one_computer_a],
   [m.faq_permissions_q, m.faq_permissions_a],
   [m.faq_rooms_q, m.faq_rooms_a],
-  [m.faq_hosts_q, m.faq_hosts_a],
-  [m.faq_self_host_q, m.faq_self_host_a],
 ] as const;
 
 export function Faq() {
