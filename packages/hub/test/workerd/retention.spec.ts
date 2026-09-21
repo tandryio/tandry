@@ -71,3 +71,21 @@ test("a sweep that finds nothing expired deletes nothing and waits at least a da
   expect(await r.bodies()).toEqual(["Working on retention."]);
   expect(await r.alarm()).toBeGreaterThanOrEqual(Date.now() + DAY_MS - 1000);
 });
+
+
+test("deletion erases stored messages and members, cancels retention, and fences stale joins", async () => {
+  const r = await room();
+  await r.send("Erase this");
+  const rpc = r.stub as unknown as RoomRpc;
+  expect((await rpc.call("delete_room", alice, {})).ok).toBe(true);
+  await runInDurableObject(r.stub, async (_, state) => {
+    expect(state.storage.sql.exec("SELECT * FROM message").toArray()).toEqual([]);
+    expect(state.storage.sql.exec("SELECT * FROM member").toArray()).toEqual([]);
+    expect(await state.storage.getAlarm()).toBeNull();
+  });
+  expect(await runDurableObjectAlarm(r.stub)).toBe(false);
+  const meta = await runInDurableObject(r.stub, (_, state) => state.storage.get<{ roomId: RoomId; ownerAccountId: string }>("meta"));
+  const joined = await rpc.call("join", alice, { intro: "Stale join", workspace: { repo: "", branch: "" } }, { id: meta!.roomId, ownerAccountId: meta!.ownerAccountId });
+  expect(joined.ok).toBe(false);
+  expect((await rpc.call("delete_room", alice, {})).ok).toBe(true);
+});

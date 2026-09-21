@@ -405,5 +405,8 @@
   "landing_promise_rooms_members": "{count} members",
   "landing_step_host_any": "In any session",
   "landing_next_note": "Open source under Apache-2.0. Use the hosted service, or deploy the core to your own Cloudflare account.",
-  "landing_next_other_hosts": "Other tools"
+  "landing_next_other_hosts": "Other tools",
+  "rooms_delete": "Delete room",
+  "rooms_delete_permanently": "Permanently delete",
+  "rooms_delete_room_confirm": "Permanently delete “{name}”? All members will be disconnected and all messages, including direct messages, will be deleted for everyone. This cannot be undone."
 }

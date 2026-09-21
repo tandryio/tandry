@@ -13,9 +13,11 @@ import { MessageHistory } from "./message-history";
 export function RoomDetail({
   room,
   userId,
+  onDeleted,
 }: {
   room: RoomSummary;
   userId: string;
+  onDeleted: () => Promise<void>;
 }) {
   const [fullscreen, setFullscreen] = useState(false);
   const container = useRef<HTMLDivElement>(null);
@@ -165,6 +167,9 @@ export function RoomDetail({
           </span>
         </div>
       </header>
+      {room.role === "owner" && (
+        <RoomDelete room={room} userId={userId} onDeleted={onDeleted} />
+      )}
       {copied === "failed" && <Status error>{m.rooms_copy_failed()}</Status>}
       <div className="room-chat-body">
         <aside className="room-chat-side">
@@ -358,5 +363,56 @@ function RoomCodeReset({
       />
       {update.error && <Status error>{update.error}</Status>}
     </details>
+  );
+}
+
+function RoomDelete({
+  room,
+  userId,
+  onDeleted,
+}: {
+  room: RoomSummary;
+  userId: string;
+  onDeleted: () => Promise<void>;
+}) {
+  const client = useQueryClient();
+  const [confirming, setConfirming] = useState(false);
+  const deletion = useAction(() => call("delete_room", { room: room.id }), {
+    onSuccess: async () => {
+      await client.cancelQueries({ queryKey: ["room", userId, room.id] });
+      client.removeQueries({ queryKey: ["room", userId, room.id] });
+      await onDeleted();
+      await client.invalidateQueries({ queryKey: ["rooms", userId] });
+    },
+  });
+  return (
+    <div className="room-delete-action">
+      {confirming ? (
+        <div role="group" aria-label={m.rooms_delete()}>
+          <p>{m.rooms_delete_room_confirm({ name: room.name })}</p>
+          <Button
+            variant="danger"
+            size="sm"
+            busy={deletion.busy}
+            onClick={deletion.run}
+          >
+            {m.rooms_delete_permanently()}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={deletion.busy}
+            onClick={() => setConfirming(false)}
+          >
+            {m.common_cancel()}
+          </Button>
+        </div>
+      ) : (
+        <Button variant="ghost" size="sm" onClick={() => setConfirming(true)}>
+          {m.rooms_delete()}
+        </Button>
+      )}
+      {deletion.error && <Status error>{deletion.error}</Status>}
+    </div>
   );
 }

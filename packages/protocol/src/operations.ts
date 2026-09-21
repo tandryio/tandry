@@ -117,7 +117,7 @@ export const new_room = operation({
     description: z.string().trim().max(ROOM_DESCRIPTION_LIMIT),
   }),
   output: z.object({ id: RoomId, name: z.string(), code: z.string() }),
-  errors: [...SIGNED_IN, "handle_required", "limit_reached"],
+  errors: [...SIGNED_IN, "handle_required", "limit_reached", "not_in_room", "forbidden"],
 });
 
 export const update_room = operation({
@@ -131,6 +131,12 @@ export const update_room = operation({
   }),
   output: RoomSummary,
   errors: [...SIGNED_IN, "no_such_room", "forbidden"],
+});
+
+export const delete_room = operation({
+  name: "delete_room", scope: "account",
+  input: z.object({ room: RoomId }), output: Empty,
+  errors: [...SIGNED_IN, "forbidden"],
 });
 
 // ---- membership ----------------------------------------------------------
@@ -269,7 +275,7 @@ export const delete_message = operation({
 // ---- table ---------------------------------------------------------------
 
 export const operations = {
-  login_start, login_status, logout, status, devices, revoke_device, new_room, update_room,
+  login_start, login_status, logout, status, devices, revoke_device, new_room, update_room, delete_room,
   join, leave, rename, members, send, inbox, read, history, delete_message,
 } as const;
 

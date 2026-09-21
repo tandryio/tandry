@@ -49,6 +49,7 @@ export interface RoomMeta {
 /** Idempotent. Later versions add guarded ALTERs below and bump RoomMeta.schema. */
 export function migrate(sql: SqlStorage): void {
   sql.exec(`
+    CREATE TABLE IF NOT EXISTS room_deleted (singleton INTEGER PRIMARY KEY CHECK(singleton=1));
     CREATE TABLE IF NOT EXISTS member (
       id TEXT PRIMARY KEY, account_id TEXT NOT NULL, account_handle TEXT NOT NULL, name TEXT NOT NULL, intro TEXT NOT NULL,
       host TEXT NOT NULL, host_conversation_id TEXT NOT NULL, workspace_repo TEXT NOT NULL, workspace_branch TEXT NOT NULL,

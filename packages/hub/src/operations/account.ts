@@ -80,11 +80,17 @@ export async function new_room(hub: HubContext, who: Principal, input: ParsedInp
     const { rooms } = await hub.policy.limits(who.accountId);
     if (rooms !== "unlimited" && (await hub.directory.ownedCount(who.accountId)) >= rooms) throw new TandryError("limit_reached", `This account may own at most ${rooms} rooms`);
   }
+  // Initialise before publishing the directory entry: a deleted ID cannot be reused.
+  const initialised = await roomStub(hub.env, input.id).call("init", { accountId: who.accountId, handle: who.handle, protocol: 0 }, {}, { id: input.id, ownerAccountId: who.accountId });
+  if (!initialised.ok) throw TandryError.from(initialised.error);
   const room = await hub.directory.createRoom(who.accountId, input, hub.now());
   if (room.ownerAccountId !== who.accountId) throw new TandryError("invalid_input", "This room ID is already in use");
-  // Both steps are idempotent, so a retry after a failure between them completes the room.
-  const initialised = await roomStub(hub.env, room.id).call("init", { accountId: who.accountId, handle: who.handle, protocol: 0 }, {}, room);
-  if (!initialised.ok) throw TandryError.from(initialised.error);
+  // A concurrent deletion may have finished while the catalogue write was pending.
+  const active = await roomStub(hub.env, room.id).call("init", { accountId: who.accountId, handle: who.handle, protocol: 0 }, {}, room);
+  if (!active.ok) {
+    if (active.error.code === "not_in_room") await hub.env.AUTH_DB.prepare("DELETE FROM rooms WHERE id=? AND owner_account_id=?").bind(room.id, who.accountId).run();
+    throw TandryError.from(active.error);
+  }
   if (!existing) {
     try { await hub.policy.onUsage({ type: "room_created", account: who.accountId, room: room.id }); } catch { /* metering never fails creation */ }
   }
@@ -100,4 +106,15 @@ export async function update_room(hub: HubContext, who: Principal, input: Parsed
   if (!room) throw new TandryError("no_such_room", "No such room");
   if (room.ownerAccountId !== who.accountId) throw new TandryError("forbidden", "Only the room's owner may change it");
   return summary(await hub.directory.updateRoom(room.id, input), who.accountId);
+}
+
+export async function delete_room(hub: HubContext, who: Principal, input: ParsedInput<"delete_room">): Promise<Output<"delete_room">> {
+  const room = await hub.directory.roomById(input.room);
+  if (!room) return {};
+  if (room.ownerAccountId !== who.accountId) throw new TandryError("forbidden", "Only the room's owner may delete it");
+  // The tombstone fences in-flight joins and retries before the catalogue disappears.
+  const deleted = await roomStub(hub.env, room.id).call("delete_room", { accountId: who.accountId, handle: who.handle, protocol: 0 }, {});
+  if (!deleted.ok) throw TandryError.from(deleted.error);
+  await hub.env.AUTH_DB.prepare("DELETE FROM rooms WHERE id=? AND owner_account_id=?").bind(room.id, who.accountId).run();
+  return {};
 }

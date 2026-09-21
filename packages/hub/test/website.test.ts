@@ -229,3 +229,26 @@ test("storing a picture needs this origin, a signed-in account, and bytes that a
   assert.equal((await fetch(`${hub.baseUrl}/api/avatar/not-a-key`)).status, 404);
   assert.equal((await fetch(`${hub.baseUrl}/api/avatar/${"0".repeat(32)}`)).status, 404);
 });
+
+test("only the owner can permanently delete a room; links close and retries cannot resurrect it", async () => {
+  const { alice, bob, room, context, a, b } = await fixture();
+  await call(alice, "send", { id: newId("m"), to: ["bob/main"], body: "Private data", dm: true }, a);
+  await assert.rejects(call(bob, "delete_room", { room: room.id }), fails("forbidden"));
+  assert.ok((await call(bob, "history", {}, context)).messages.length);
+  const socket = new WebSocket(hub.baseUrl.replace(/^http/, "ws") + "/v1/link", {
+    headers: contextHeaders({ ...b, token: bob.token }), closeTimeout: 100,
+  } as WebSocket.ClientOptions);
+  await new Promise<void>((resolve, reject) => { socket.once("open", resolve); socket.once("error", reject); });
+  const closed = new Promise<number>((resolve) => socket.once("close", resolve));
+  await call(alice, "delete_room", { room: room.id });
+  assert.equal(await closed, 4003);
+  await call(alice, "delete_room", { room: room.id });
+  for (const account of [alice, bob]) {
+    assert.ok(!(await call(account, "status", {})).rooms.some((r) => r.id === room.id));
+    await assert.rejects(call(account, "history", {}, context), fails("not_in_room"));
+  }
+  await assert.rejects(call(bob, "inbox", {}, b), fails("not_in_room"));
+  await assert.rejects(call(bob, "join", { code: room.code, intro: "Retry", workspace: { repo: "", branch: "" } }, b), fails("no_such_room"));
+  await assert.rejects(call(alice, "new_room", { id: room.id, name: "Retry", description: "" }), fails("not_in_room"));
+  assert.ok(!(await call(alice, "status", {})).rooms.some((r) => r.id === room.id));
+});

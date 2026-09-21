@@ -446,4 +446,18 @@ export function runHubSuite(start: () => Promise<HubUnderTest>): void {
       fails("already_in_room"),
     );
   });
+
+  test("room deletion removes every account's access and cannot be undone by creation retries", async () => {
+    const owner = { account: hub.accounts.alice };
+    const room = await newRoom();
+    const member = await joined(hub.accounts.bob, room.code, "deletion-review");
+    await assert.rejects(call(member, "delete_room", { room: room.id }), fails("forbidden"));
+    await call(owner, "delete_room", { room: room.id });
+    await call(owner, "delete_room", { room: room.id });
+    await assert.rejects(call(member, "history", {}), fails("not_in_room"));
+    await assert.rejects(call(owner, "new_room", { id: room.id, name: "Retry", description: "" }), fails("not_in_room"));
+    for (const actor of [owner, member])
+      assert.ok(!(await call(actor, "status", {})).rooms.some((item) => item.id === room.id));
+  });
+
 }

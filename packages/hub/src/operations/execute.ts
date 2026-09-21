@@ -56,6 +56,7 @@ export async function execute(hub: HubContext, request: OperationRequest): Promi
       case "devices": return { ok: true, result: await account.devices(hub, who) };
       case "revoke_device": return { ok: true, result: await account.revoke_device(hub, who, input) };
       case "new_room": return { ok: true, result: await account.new_room(hub, who, input) };
+      case "delete_room": return { ok: true, result: await account.delete_room(hub, who, input) };
       case "update_room": return { ok: true, result: await account.update_room(hub, who, input) };
       case "join":
         if (!request.conversation) return fail("invalid_input", "join needs the calling conversation");

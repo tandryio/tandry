@@ -405,5 +405,8 @@
   "landing_promise_rooms_members": "{count} 位成员",
   "landing_step_host_any": "在任意会话里",
   "landing_next_note": "基于 Apache-2.0 开源。使用托管服务，或把核心部署到你自己的 Cloudflare 账号。",
-  "landing_next_other_hosts": "其他工具"
+  "landing_next_other_hosts": "其他工具",
+  "rooms_delete": "删除房间",
+  "rooms_delete_permanently": "永久删除",
+  "rooms_delete_room_confirm": "永久删除「{name}」？所有成员将断开连接，全部消息（包括私信）将对所有人永久删除，无法恢复。"
 }

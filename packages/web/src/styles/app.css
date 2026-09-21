@@ -1889,3 +1889,19 @@ textarea.room-inline-input {
     opacity: 1;
   }
 }
+
+.room-delete-action {
+  margin-bottom: 12px;
+}
+.room-delete-action > button {
+  color: var(--color-rose-300, #fda4af);
+}
+.room-delete-action > [role="group"] {
+  padding: 12px 16px;
+  border: 1px solid #fb718540;
+  border-radius: 8px;
+  background: #fb718508;
+}
+.room-delete-action p {
+  margin: 0 0 12px;
+}

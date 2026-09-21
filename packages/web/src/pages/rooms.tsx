@@ -105,6 +105,7 @@ function RoomList({
           <RoomDetail
             key={selectedRoom.id}
             room={selectedRoom}
+            onDeleted={() => selectRoom()}
             userId={userId}
           />
         ) : (

@@ -16,7 +16,7 @@ const POLICY_TTL_MS = 60_000;
 const DAY_MS = 86_400_000;
 
 /** What the Worker may ask of a room. `init` is the Worker's own; the rest are protocol operations. */
-export type RoomOperation = "init" | "join" | "leave" | "rename" | "members" | "send" | "inbox" | "read" | "history" | "delete_message";
+export type RoomOperation = "delete_room" | "init" | "join" | "leave" | "rename" | "members" | "send" | "inbox" | "read" | "history" | "delete_message";
 
 /** The room as the Worker sees it: one method, plus fetch for the link upgrade. */
 export interface RoomRpc {
@@ -26,7 +26,7 @@ export interface RoomRpc {
   memberCandidates(owner: AccountId): Promise<{ id: string; name: string; host: string; lastActive: number }[]>;
 }
 
-const handlers: Record<Exclude<RoomOperation, "init" | "join">, (room: RoomContext, caller: ResolvedCaller, input: never) => Handled<unknown>> = {
+const handlers: Record<Exclude<RoomOperation, "init" | "join" | "delete_room">, (room: RoomContext, caller: ResolvedCaller, input: never) => Handled<unknown>> = {
   leave, rename, members, send, inbox, read, history, delete_message,
 };
 
@@ -65,14 +65,24 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
       return this.meta;
     }
 
+    deleted(): boolean {
+      return !!this.meta && this.ctx.storage.sql.exec("SELECT 1 FROM room_deleted").toArray().length > 0;
+    }
+
+    assertActive(): void {
+      if (this.deleted()) throw new TandryError("not_in_room", "This room has been deleted");
+    }
+
     /** The owner's limits, resolved outside the transaction and cached briefly. */
     async context(meta: RoomMeta): Promise<RoomContext> {
+      this.assertActive();
       const now = Date.now();
       if (this.policy.room || !this.cached || now - this.cached.at > POLICY_TTL_MS) {
         const limits = await this.policy.limits(meta.ownerAccountId);
         const retentionDays = await this.policy.retention(meta.ownerAccountId, meta.roomId);
         const access = await this.policy.room?.(meta.ownerAccountId, meta.roomId);
         if (access && access.validUntil <= Date.now()) throw new TandryError("unavailable", "Room policy expired; retry");
+        this.assertActive();
         this.access = access;
         this.cached = { limits: access ? { ...limits, membersPerRoom: access.members } : limits, at: now };
         this.applyAccess();
@@ -86,6 +96,7 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
         }
         await this.scheduleRetention();
       }
+      this.assertActive();
       if (this.access?.enabled === false) throw new TandryError("forbidden", "This room is disabled by its owner’s policy");
       return { sql: this.ctx.storage.sql, meta: this.meta!, links: this.links, now, limits: this.cached.limits, admission: this.access?.admission };
     }
@@ -136,8 +147,27 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
       try {
         const meta = await this.ensure(op === "init" || op === "join" ? room : undefined);
         if (!meta) return fail("not_in_room", "No such room");
-        if (op === "init") return { ok: true, result: {} };
+        if (op === "delete_room") {
+          if (meta.ownerAccountId !== caller.accountId) return fail("forbidden", "Only the room's owner may delete it");
+          this.ctx.storage.transactionSync(() => {
+            this.ctx.storage.sql.exec("INSERT OR IGNORE INTO room_deleted VALUES (1)");
+            this.ctx.storage.sql.exec("DELETE FROM message");
+            this.ctx.storage.sql.exec("DELETE FROM member");
+          });
+          for (const socket of this.ctx.getWebSockets()) {
+            const member = this.links.memberOf(socket);
+            if (member) this.links.close(member, CLOSE_CODES.not_in_room, "room_deleted");
+          }
+          await this.ctx.storage.deleteAlarm();
+          return { ok: true, result: {} };
+        }
+        this.assertActive();
+        if (op === "init") {
+          if (meta.ownerAccountId !== caller.accountId) return fail("forbidden", "This room ID is already in use");
+          return { ok: true, result: {} };
+        }
         const context = await this.context(meta);
+        this.assertActive();
         const handled = this.ctx.storage.transactionSync(() =>
           op === "join"
             ? join(context, caller, input as never)
@@ -177,9 +207,12 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
       if (caller.protocol < OLDEST_SUPPORTED_PROTOCOL)
         return reject({ code: "upgrade_required", message: "This Tandry plugin is too old for the Hub. Update it from the host's plugin marketplace." }, 426);
       if (!this.meta) return reject({ code: "not_in_room", message: "No such room" }, 409);
-      const context = await this.context(this.meta);
+      if (this.deleted()) return reject({ code: "not_in_room", message: "This room has been deleted" }, 409);
+      let context: RoomContext;
       let member: MemberRow;
       try {
+        context = await this.context(this.meta);
+        this.assertActive();
         const resolved = resolveCaller(context, caller);
         if (resolved.kind !== "member") return reject({ code: "invalid_input", message: "A room link needs the calling conversation" }, 400);
         member = resolved.member;
@@ -204,7 +237,7 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
 
     webSocketClose(socket: WebSocket, code: number): void {
       const memberId = this.links.memberOf(socket);
-      if (memberId && this.meta) this.ctx.storage.sql.exec("UPDATE member SET last_active_at=? WHERE id=? AND left_at IS NULL", Date.now(), memberId);
+      if (memberId && this.meta && !this.deleted()) this.ctx.storage.sql.exec("UPDATE member SET last_active_at=? WHERE id=? AND left_at IS NULL", Date.now(), memberId);
       // Complete the closing handshake. 1005 and 1006 mean "no code" and cannot be sent back.
       if (this.links.closedByHub(socket)) return;
       try { socket.close(code === 1005 || code === 1006 ? 1000 : code); } catch { /* already closed */ }
@@ -222,7 +255,7 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
      * that has been emptied, or keeps messages forever, is never woken again.
      */
     async scheduleRetention(): Promise<void> {
-      if (!this.meta) return;
+      if (!this.meta || this.deleted()) return;
       const now = Date.now();
       const deadlines: number[] = [];
       if (this.access?.nextChangeAt && this.access.nextChangeAt > now) deadlines.push(this.access.nextChangeAt);
@@ -231,6 +264,7 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
         if (oldest !== null) deadlines.push(Math.max(now + DAY_MS, oldest + this.meta.retentionDays * DAY_MS));
       }
       const current = await this.ctx.storage.getAlarm();
+      if (this.deleted()) return;
       if (deadlines.length) {
         const next = Math.min(...deadlines);
         if (current === null || next < current) await this.ctx.storage.setAlarm(next);
@@ -238,14 +272,16 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
     }
 
     async alarm(): Promise<void> {
-      if (!this.meta) return;
+      if (!this.meta || this.deleted()) return;
       try {
         await this.invalidatePolicy();
+        if (this.deleted()) return;
         if (this.meta.retentionDays !== "unlimited")
           this.ctx.storage.sql.exec("DELETE FROM message WHERE created_at<?", Date.now() - this.meta.retentionDays * DAY_MS);
         await this.ctx.storage.deleteAlarm();
         await this.scheduleRetention();
       } catch (error) {
+        if (this.deleted()) return;
         // Platform retries are bounded. Preserve a future wake through provider outages.
         await this.ctx.storage.setAlarm(Date.now() + 30_000);
         throw error;
