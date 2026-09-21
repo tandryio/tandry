@@ -13,11 +13,9 @@ const packageName = host => `@tandryio/${host}`;
 const output = path.join(root, '.local/npm');
 const run = (command, args, cwd = root) => execFileSync(command, args, { cwd, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
 
-export function releaseOptions(version, tag = 'next') {
+export function releaseOptions(version) {
   assert.ok(version && semver.valid(version) === version, 'RELEASE_VERSION must be canonical semver.');
-  assert.ok(['latest', 'next'].includes(tag), 'NPM_TAG must be latest or next.');
-  assert.ok(tag !== 'latest' || !semver.prerelease(version), 'Prereleases cannot use latest.');
-  return { version, tag };
+  return { version };
 }
 
 export function checkPackage(pkg, host, version, files) {
@@ -87,7 +85,6 @@ export async function unpublishedPackages(packages, version, lookup = fetch) {
 async function publish(options, dryRun) {
   const release = JSON.parse(fs.readFileSync(path.join(output, 'release.json'), 'utf8'));
   assert.equal(release.version, options.version);
-  assert.equal(release.tag, options.tag);
   assert.deepEqual(release.packages.map(pkg => pkg.host), selected);
   if (!dryRun) assert.equal(release.source.dirty, false, 'Publish only from a clean checkout.');
   for (const pkg of release.packages) {
@@ -99,7 +96,8 @@ async function publish(options, dryRun) {
   const pending = dryRun ? release.packages : await unpublishedPackages(release.packages, options.version);
   for (const pkg of pending) {
     const archive = path.join(output, pkg.filename);
-    execFileSync('npm', ['publish', archive, '--access', 'public', '--tag', options.tag,
+    // Every release is what an unqualified install gets. npm refuses a prerelease without an explicit tag.
+    execFileSync('npm', ['publish', archive, '--access', 'public', '--tag', 'latest',
       '--registry', 'https://registry.npmjs.org/', '--ignore-scripts',
       ...(dryRun ? ['--dry-run'] : ['--provenance'])], { cwd: root, stdio: 'inherit' });
   }
@@ -107,7 +105,7 @@ async function publish(options, dryRun) {
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const action = process.argv[2];
-  const options = releaseOptions(process.env.RELEASE_VERSION, process.env.NPM_TAG);
+  const options = releaseOptions(process.env.RELEASE_VERSION);
   assert.ok(['validate', 'pack', 'dry-run', 'publish'].includes(action), 'Expected validate, pack, dry-run or publish.');
   if (action === 'pack') pack(options);
   if (action === 'dry-run' || action === 'publish') await publish(options, action === 'dry-run');

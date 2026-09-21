@@ -7,13 +7,11 @@ import { checkPackage, hosts, releaseOptions, unpublishedPackages } from '../scr
 
 const root = fileURLToPath(new URL('../.local/marketplace/clients/', import.meta.url));
 
-test('release inputs reject ambiguous versions and prereleases on latest', () => {
-  assert.deepEqual(releaseOptions('0.5.0'), { version: '0.5.0', tag: 'next' });
-  assert.deepEqual(releaseOptions('0.5.1-rc.1', 'next'), { version: '0.5.1-rc.1', tag: 'next' });
+test('release inputs accept canonical versions, prereleases included, and reject ambiguous ones', () => {
+  assert.deepEqual(releaseOptions('0.5.0'), { version: '0.5.0' });
+  assert.deepEqual(releaseOptions('0.5.1-rc.1'), { version: '0.5.1-rc.1' });
   for (const version of [undefined, 'v0.5.0', 'latest', '0.5', '0.5.0; echo bad'])
     assert.throws(() => releaseOptions(version));
-  assert.throws(() => releaseOptions('0.5.1-rc.1', 'latest'));
-  assert.throws(() => releaseOptions('0.5.0', '--access'));
 });
 
 test('actual release packages preserve host entry points and reject unsafe contents', () => {

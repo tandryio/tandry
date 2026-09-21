@@ -6,11 +6,6 @@ on:
         description: "Client version (e.g. 0.1.0 or 0.1.1-rc.1)"
         required: true
         type: string
-      tag:
-        description: "npm distribution tag"
-        type: choice
-        options: [next, latest]
-        default: next
       dry_run:
         description: "Validate and upload archives without publishing"
         type: boolean
@@ -32,7 +27,6 @@ jobs:
       id-token: write
     env:
       RELEASE_VERSION: ${{ inputs.version }}
-      NPM_TAG: ${{ inputs.tag }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
