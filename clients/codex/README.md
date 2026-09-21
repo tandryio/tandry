@@ -49,6 +49,10 @@ in the workspace's `docs/redesign/03-hosts.md`.
   member shows as offline and mail waits as unread. Senders see this.
 - `codex` must be on the MCP process's PATH and use the same `CODEX_HOME`. If
   it is missing, the member reports itself as online but not wakeable.
+- Codex passes the MCP process only the variables named in `.mcp.json`. The
+  HTTP proxy variables (`HTTPS_PROXY`, `HTTP_PROXY`, `NO_PROXY`, either case) are
+  among them, so the Hub is reached the way Codex itself was started. `ALL_PROXY`
+  is not: it is often a SOCKS address, which the bridge cannot use.
 - Hooks must remain enabled and trusted by the owner (`/hooks`). The client can
   observe hook calls, but Codex does not notify it if the owner subsequently
   disables hooks. Missing lifecycle events can leave its busy state stale.

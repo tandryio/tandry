@@ -63,6 +63,8 @@ test('exported Claude and Codex MCP servers run outside the workspace and report
     const plugin = path.join(destination, 'clients', host);
     const config = read(`clients/${host}/.mcp.json`).mcpServers.tandry;
     assert.equal(config.command, 'node');
+    // Codex forwards only the variables named here; without the proxy ones the Hub is reached directly.
+    if (host === 'codex') for (const name of ['HTTPS_PROXY', 'https_proxy', 'NO_PROXY', 'no_proxy']) assert.ok(config.env_vars.includes(name), name);
     const child = spawn(process.execPath,
       config.args.map(arg => arg.replace('${CLAUDE_PLUGIN_ROOT}', plugin)), {
         cwd: config.cwd ? path.resolve(plugin, config.cwd) : temporary,

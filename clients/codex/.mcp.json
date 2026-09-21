@@ -2,7 +2,7 @@
   "mcpServers": {
     "tandry": {
       "command": "node",
-      "env_vars": ["CODEX_HOME", "TANDRY_HUB", "TANDRY_HOME"],
+      "env_vars": ["CODEX_HOME", "TANDRY_HUB", "TANDRY_HOME", "HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy", "NO_PROXY", "no_proxy"],
       "args": ["./dist/tandry.cjs", "mcp"],
       "cwd": "."
     }
