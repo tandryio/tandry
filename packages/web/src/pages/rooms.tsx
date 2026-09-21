@@ -1,7 +1,7 @@
 import { newId, RoomId, type RoomSummary } from "@tandryio/protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { m } from "../paraglide/messages";
 import { errorText } from "../lib/i18n";
 import { call } from "../lib/hub";
@@ -60,6 +60,13 @@ function RoomList({
   const [search, setSearch] = useState("");
   // Keep the same ID across a failed request; a retry cannot create a duplicate room.
   const [draftId, setDraftId] = useState(() => newId("r"));
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (!creating) return;
+    dialog.current?.showModal();
+    // showModal focuses the first control, which is the close button.
+    dialog.current?.querySelector("input")?.focus();
+  }, [creating]);
   const create = useAction(
     () => call("new_room", { id: draftId, name: roomName, description }),
     {
@@ -145,62 +152,89 @@ function RoomList({
           size="sm"
           className="room-create"
           onClick={() => {
-            setCreating(!creating);
+            setCreating(true);
             create.reset();
           }}
-          aria-expanded={creating}
+          aria-haspopup="dialog"
         >
           <Icon name="plus" />
           {m.common_create_room()}
         </Button>
       </div>
       {creating && (
-        <form
-          className="account-card room-entry"
-          onSubmit={(event) => {
-            event.preventDefault();
-            create.run();
+        <dialog
+          ref={dialog}
+          className="room-dialog"
+          aria-labelledby="room-dialog-title"
+          onClose={() => setCreating(false)}
+          onCancel={(event) => {
+            if (create.busy) event.preventDefault();
+          }}
+          onMouseDown={(event) => {
+            // The dialog has no padding, so only the backdrop targets it.
+            if (event.target === event.currentTarget && !create.busy)
+              event.currentTarget.close();
           }}
         >
-          <h2>{m.common_create_room()}</h2>
-          <p className="muted">{m.rooms_create_hint()}</p>
-          <label>
-            {m.rooms_name_label()}
-            <Input
-              autoFocus
-              required
-              maxLength={80}
-              value={roomName}
-              onChange={(event) => setRoomName(event.target.value)}
-              disabled={create.busy}
-            />
-          </label>
-          <label>
-            {m.rooms_description()}
-            <textarea
-              className="ui-input"
-              rows={3}
-              maxLength={500}
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              disabled={create.busy}
-            />
-          </label>
-          <div className="actions">
-            <Button variant="primary" type="submit" busy={create.busy}>
-              {m.rooms_create_button()}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={create.busy}
-              onClick={() => setCreating(false)}
-            >
-              {m.common_cancel()}
-            </Button>
-          </div>
-          {create.error && <Status error>{create.error}</Status>}
-        </form>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              create.run();
+            }}
+          >
+            <header className="room-dialog-heading">
+              <div>
+                <h2 id="room-dialog-title">{m.common_create_room()}</h2>
+                <p className="muted">{m.rooms_create_hint()}</p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={m.common_cancel()}
+                disabled={create.busy}
+                onClick={() => dialog.current?.close()}
+              >
+                <Icon name="close" />
+              </Button>
+            </header>
+            <label>
+              {m.rooms_name_label()}
+              <Input
+                required
+                maxLength={80}
+                value={roomName}
+                onChange={(event) => setRoomName(event.target.value)}
+                disabled={create.busy}
+              />
+            </label>
+            <label>
+              {m.rooms_description()}
+              <textarea
+                className="ui-input"
+                rows={3}
+                maxLength={500}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                disabled={create.busy}
+              />
+            </label>
+            {create.error && <Status error>{create.error}</Status>}
+            <div className="actions">
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={create.busy}
+                onClick={() => dialog.current?.close()}
+              >
+                {m.common_cancel()}
+              </Button>
+              <Button variant="primary" type="submit" busy={create.busy}>
+                {m.rooms_create_button()}
+              </Button>
+            </div>
+          </form>
+        </dialog>
       )}
       {!visible.length ? (
         <section className="account-card empty">

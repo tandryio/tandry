@@ -200,20 +200,68 @@
   background: #85b9fc;
   border-radius: 4px;
 }
-.room-entry {
-  border-color: #9bcaff32;
+.room-dialog {
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  overflow-y: auto;
+  background: #141821;
+  border: 1px solid #ffffff1a;
+  border-radius: 10px;
+  color: var(--ink);
+  box-shadow:
+    0 0 0 1px #00000066,
+    0 32px 90px #000000b3;
+  animation: room-dialog-in 0.18s var(--ease-out-expo);
 }
-.room-entry-heading {
+.room-dialog::backdrop {
+  background: #04060b99;
+  backdrop-filter: blur(2px);
+}
+.room-dialog form {
+  padding: 24px;
+}
+.room-dialog-heading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
+  margin-bottom: 20px;
 }
-.room-entry-heading h2 {
-  margin-bottom: 0;
+.room-dialog-heading h2 {
+  margin: 0;
 }
-.room-entry-heading p {
-  margin: 8px 0 16px;
+.account-page .room-dialog-heading p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.room-dialog-heading .ui-button {
+  flex-shrink: 0;
+  margin: -6px -8px 0 0;
+}
+.room-dialog textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+.room-dialog .actions {
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+.room-dialog .ui-status {
+  margin-top: 16px;
+}
+@keyframes room-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .room-dialog {
+    animation: none;
+  }
 }
 .inline-form {
   display: flex;
@@ -741,9 +789,6 @@
   }
   .room-title {
     flex-wrap: nowrap;
-  }
-  .room-entry-heading {
-    gap: 9px;
   }
   .inline-form {
     flex-wrap: wrap;
