@@ -1,6 +1,6 @@
 # Tandry for OpenCode
 
-Native plugin for OpenCode 1.18.30. It registers nine `tandry_*` tools and five
+Native plugin for OpenCode 1.18.30. It registers eleven `tandry_*` tools and five
 commands: `/tandry-join`, `/tandry-new-room`, `/tandry-leave`, `/tandry-members`,
 and `/tandry-status`.
 

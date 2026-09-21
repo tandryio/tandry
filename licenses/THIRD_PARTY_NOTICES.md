@@ -704,7 +704,6 @@ Cloudflare-generated runtime declarations also retain their upstream headers.
 - [why-is-node-running@2.3.0](https://registry.npmjs.org/why-is-node-running/-/why-is-node-running-2.3.0.tgz) — MIT; [notice 6a134e51aa31](#license-6a134e51aa31)
 - [workerd@1.20260911.1](https://registry.npmjs.org/workerd/-/workerd-1.20260911.1.tgz) — Apache-2.0; [notice bb28c48e3e07](#license-bb28c48e3e07)
 - [workerd@1.20260916.1](https://registry.npmjs.org/workerd/-/workerd-1.20260916.1.tgz) — Apache-2.0; [notice bb28c48e3e07](#license-bb28c48e3e07)
-- [wrangler@4.131.1](https://registry.npmjs.org/wrangler/-/wrangler-4.131.1.tgz) — MIT OR Apache-2.0; [notice b30df9a48463](#license-b30df9a48463), [notice 9bb3b077cc86](#license-9bb3b077cc86)
 - [wrangler@4.133.0](https://registry.npmjs.org/wrangler/-/wrangler-4.133.0.tgz) — MIT OR Apache-2.0; [notice b30df9a48463](#license-b30df9a48463), [notice 9bb3b077cc86](#license-9bb3b077cc86)
 - [wrappy@1.0.2](https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz) — ISC; [notice 4ec3d4c66cd8](#license-4ec3d4c66cd8)
 - [ws@8.21.0](https://registry.npmjs.org/ws/-/ws-8.21.0.tgz) — MIT; [notice 2b29dcfe0d64](#license-2b29dcfe0d64)
@@ -11956,7 +11955,6 @@ SOFTWARE.
 - @cloudflare/vitest-plugin@1.1.11: https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT
 - miniflare@5.20260911.0-alpha: https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT
 - miniflare@5.20260916.0-alpha: https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT
-- wrangler@4.131.1: https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT
 - wrangler@4.133.0: https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT
 
 ```text
@@ -13372,7 +13370,6 @@ SOFTWARE.
 
 - @cloudflare/kv-asset-handler@0.5.0: https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-APACHE
 - @cloudflare/unenv-preset@2.16.1: https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-APACHE
-- wrangler@4.131.1: https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-APACHE
 - wrangler@4.133.0: https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-APACHE
 
 ```text

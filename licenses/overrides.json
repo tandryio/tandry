@@ -29,31 +29,13 @@
       "source": "https://raw.githubusercontent.com/drizzle-team/drizzle-orm/0.45.2/LICENSE"
     }
   ],
-  "workerd@1.20260908.1": [
-    {
-      "file": "upstream/workerd-Apache.txt",
-      "source": "https://raw.githubusercontent.com/cloudflare/workerd/main/LICENSE"
-    }
-  ],
   "workerd@1.20260911.1": [
     {
       "file": "upstream/workerd-Apache.txt",
       "source": "https://raw.githubusercontent.com/cloudflare/workerd/main/LICENSE"
     }
   ],
-  "@cloudflare/workers-types@5.20260911.1": [
-    {
-      "file": "upstream/workerd-Apache.txt",
-      "source": "https://raw.githubusercontent.com/cloudflare/workerd/main/LICENSE"
-    }
-  ],
   "@cloudflare/vite-plugin@1.54.8": [
-    {
-      "file": "upstream/cloudflare-MIT.txt",
-      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
-    }
-  ],
-  "miniflare@5.20260908.0-alpha": [
     {
       "file": "upstream/cloudflare-MIT.txt",
       "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
@@ -76,26 +58,6 @@
     }
   ],
   "@cloudflare/unenv-preset@2.16.1": [
-    {
-      "file": "upstream/cloudflare-MIT.txt",
-      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
-    },
-    {
-      "file": "upstream/cloudflare-Apache.txt",
-      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-APACHE"
-    }
-  ],
-  "wrangler@4.130.0": [
-    {
-      "file": "upstream/cloudflare-MIT.txt",
-      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
-    },
-    {
-      "file": "upstream/cloudflare-Apache.txt",
-      "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-APACHE"
-    }
-  ],
-  "wrangler@4.131.1": [
     {
       "file": "upstream/cloudflare-MIT.txt",
       "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"

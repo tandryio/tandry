@@ -15,7 +15,11 @@ Other Tandry marks in this directory tree:
 - `../logo.svg`: the bare mark, 48x48, transparent. Rendered by `BrandMark` in the header.
 - `../favicon.svg`: the same mark on a rounded `#131821` tile, 64x64. Linked from `root.tsx`.
 
-All three share one geometry; edit `logo.svg` first and mirror the paths into the others.
+The repository README shows `.github/assets/logo.svg`: `avatar.svg` with the corner
+rounding GitHub applies to the organisation avatar, so both marks on the repository page
+match.
+
+All of them share one geometry; edit `logo.svg` first and mirror the paths into the others.
 
 Third-party host marks live in `../hosts/` and `../host-icons/` and are not Tandry
 branding. See `../host-icons/README.md` for their provenance.

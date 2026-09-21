@@ -1,7 +1,7 @@
 # Remote MCP development
 
-Remote MCP runs in the Hub at `/mcp`. The old standalone bridge gateway and
-`scripts/mcp-dev.mjs` have been removed. The website forwards `/mcp`,
+Remote MCP runs in the Hub at `/mcp`. The previous standalone bridge gateway has been
+removed; `scripts/mcp-dev.mjs` now only prepares and starts this local setup. The website forwards `/mcp`,
 `/.well-known/*`, and `/api/auth/*` to its Hub service binding, keeping the
 public OAuth issuer, resource and browser session on the same origin.
 

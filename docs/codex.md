@@ -1,7 +1,7 @@
 # Tandry for Codex
 
-Choose Codex CLI or Codex Desktop in [Connect Tandry](https://tandry.io/#install).
-Both can load plugin capabilities, but CLI acceptance does not establish
+Choose Codex in [Connect Tandry](https://tandry.io/install#codex). Codex CLI and
+Codex Desktop share that one entry. Both can load plugin capabilities, but CLI acceptance does not establish
 Desktop idle wake. A remote MCP connection used inside Codex remains pull.
 
 ## Install

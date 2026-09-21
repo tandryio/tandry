@@ -7,8 +7,5 @@
   "publicBaseUrl": "https://cdn.example.com",
   "websiteOrigin": "https://rooms.example.com",
   "hubOrigin": "https://hub.example.com",
-  "policyRevision": 1,
-  "roomLimit": 100,
-  "conversationLimit": 50,
-  "roomIdleDays": 7
+  "roomLimit": 100
 }

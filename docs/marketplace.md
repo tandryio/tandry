@@ -9,7 +9,7 @@ of each build.
 ## Connection and distribution
 
 Tandry is one product with host-specific connections. The website’s
-[Connect Tandry](https://tandry.io/#install) entry recommends one setup per
+[Connect Tandry](https://tandry.io/install) entry recommends one setup per
 host and records its delivery limits. Local adapters share the Hub with the
 remote OAuth MCP connection at the website’s `/mcp` endpoint. A remote
 connection remains pull even inside Codex; installing a local marketplace

@@ -8,7 +8,7 @@ Use `webRouterOptions(options)` to compose the shared pages with additional
 main/workspace navigation and explicit login destinations. Options are scoped to the
 React provider; there is no global edition flag or private dependency.
 
-Published packages contain generated locale modules, ready for the consuming Vite
+Packed archives contain generated locale modules, ready for the consuming Vite
 build. Run `pnpm build` when editing catalogs locally. The website Vite config uses
 `webConfig()` for shared assets and singleton dependencies. Consumer Fumadocs source
 loads `node_modules/@tandryio/web/content/docs`.

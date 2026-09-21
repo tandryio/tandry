@@ -63,37 +63,30 @@ so use `pnpm website:deploy` to rebuild with the intended target before deployme
 
 ## Connect the agents
 
-Set `TANDRY_HUB=wss://hub.example.com` before starting your host. Alternatively,
-set the `hub` property in your existing `~/.tandry/config.json`, preserving other
-properties. A Claude plugin-specific Hub option takes precedence over this setting.
-Restart the host/plugin after changing it, then log in to your own instance and join
+Set `TANDRY_HUB=https://hub.example.com` before starting your host. Restart the host/plugin after changing it, then log in to your own instance and join
 or create a room normally. Each Hub has its own credentials; changing the endpoint
 does not reuse credentials from the official service. Hosts on the same machine still
 share the same local account state for the selected Hub.
 
 Visit the website to complete device approval and account setup. Test two conversations
-joining one room, message delivery, owner archive/activation and session revocation.
+joining one room, message delivery, member removal and device revocation.
 Room codes locate rooms; they do not replace an authenticated account.
 
 ## Limits, state and upgrades
 
-`roomLimit` applies to each owner's enabled rooms. `conversationLimit` applies within
-each room. These are administrator configuration, not paid plans. Raise
-`policyRevision` whenever changing limits; reusing a revision with different limits
-fails closed. Changes apply on protected activity after the bounded cache expires.
-No periodic authentication or billing alarm is required. Retention/deferred delivery
-still use alarms for actual work.
-
-Lowering limits retains the most recently active eligible resources. Disabled rooms
-can be activated or swapped within quota from the rooms page. Manually archived rooms
-remain archived. Disabling does not immediately delete history; the configured idle
-retention still applies (7 days by default), so it is not a permanent archival service.
+`roomLimit` is the number of rooms each account may own; it becomes the Hub's
+`ROOM_LIMIT` variable. The default policy also reads `MEMBERS_PER_ROOM`,
+`BODY_BYTES`, `SEND_BUCKET_SIZE`, `SEND_REFILL_PER_MINUTE`, `RETENTION_DAYS` and
+`PULL_ONLINE_MINUTES` from the Hub Worker's variables; add them to the generated
+`.self-host/hub.json` to change their defaults. These are administrator
+configuration, not paid plans. `RETENTION_DAYS` (30 by default, or `unlimited`)
+deletes old messages, not rooms; alarms run only while a message exists that will
+expire.
 
 Before an upgrade, back up D1 and follow the release's schema/deployment ordering.
-Keep your Worker names, `TEAM_ROOM` binding, `TeamRoom` class and migration history
-stable for an existing instance. Renaming them can select a different DO namespace.
-Do not deploy an old room-creation writer alongside the new resource-catalog writer:
-complete catalog migration under the new gateway before enabling new resource policies.
+Keep your Worker names, the `ROOM` Durable Object binding, the `RoomDO` class and
+migration history stable for an existing instance. Renaming them can select a
+different DO namespace and lose room state.
 Rolling code back does not roll database schema or room state back.
 
 References: [Wrangler configuration](https://developers.cloudflare.com/workers/wrangler/configuration/),

@@ -8310,22 +8310,6 @@
     },
     {
       "name": "wrangler",
-      "version": "4.131.1",
-      "license": "MIT OR Apache-2.0",
-      "source": "https://registry.npmjs.org/wrangler/-/wrangler-4.131.1.tgz",
-      "notices": [
-        {
-          "sha256": "b30df9a48463d1c99c6a66cdee623b1b0832c3811d58a80b338268d71cea190e",
-          "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-APACHE"
-        },
-        {
-          "sha256": "9bb3b077cc8628334bab25961223dd8207252c8a56aa054195be38f1c042aaf4",
-          "source": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/LICENSE-MIT"
-        }
-      ]
-    },
-    {
-      "name": "wrangler",
       "version": "4.133.0",
       "license": "MIT OR Apache-2.0",
       "source": "https://registry.npmjs.org/wrangler/-/wrangler-4.133.0.tgz",

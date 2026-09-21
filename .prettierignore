@@ -1,2 +1,2 @@
-website/src/paraglide/
+packages/web/src/paraglide/
 website/src/routeTree.gen.ts

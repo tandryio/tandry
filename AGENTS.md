@@ -10,10 +10,11 @@ This pnpm workspace contains:
 - `packages/bridge/`: the library a host's client embeds. `createBridge` is its whole interface: HTTP operations, the room link, the two unread numbers, the wake state machine, the tools, the joined marker. Entries: `.` , `./stdio` (MCP server over `bridge.tools`), `./local` (files only; what hooks import).
 - `clients/codex/`: the Codex client, bundled to `dist/tandry.cjs`.
 - `clients/claude/`: the Claude Code client: `dist/main.cjs` (`mcp`, `monitor`) and the small `dist/hook.cjs`. Its three kinds of process talk only through the files in `src/files.ts`; host measurements are in `../docs/redesign/03-hosts.md`.
-- `clients/commands.ts` is the one source for every host's slash commands and skills (`pnpm generate:commands`). The other hosts are not rewritten yet (step 6 of `04-codebase.md`).
+- `clients/pi/`, `clients/opencode/`, `clients/dsh/`: in-process native plugins that import the bridge directly and register `tandry_*` tools; released to npm. `clients/web/` holds the remote MCP connection guide and has no code. Kimi is not shipped (step 6 of `04-codebase.md`).
+- `clients/commands.ts` is the one source for every host's slash commands and skills. `pnpm generate:commands` writes files for Claude Code, Codex and dsh; pi and OpenCode register them at runtime.
 - `packages/web/`: shared frontend pages, components, styles, locales, docs and assets.
 - `website/`: thin self-host TanStack Start application. Room history, correspondence and management use the protocol through `lib/hub.ts`; auth/config routes use `lib/api.ts`. Browser calls are account observers and never consume inboxes.
-- `docs/`: mostly describes the previous design; trust `../docs/redesign/` where they differ.
+- `docs/`: operator and contributor guides for the current code (authentication, self-hosting, development, releases). The design itself stays in `../docs/redesign/`.
 
 Dependency direction is checked by `pnpm check:source`: hub, bridge and web import only `@tandryio/protocol`; website imports protocol and web; a client imports only `@tandryio/bridge`; clients never import each other.
 

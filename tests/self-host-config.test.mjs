@@ -9,12 +9,11 @@ const config = {
   databaseId: '00000000-0000-0000-0000-000000000001',
 };
 
-test('self-host configuration accepts explicit zero limits and parses distinct custom domains', () => {
-  const parsed = SelfHostConfig.parse({ ...config, roomLimit: 0, conversationLimit: 0 });
+test('self-host configuration accepts an explicit zero room limit and parses distinct custom domains', () => {
+  const parsed = SelfHostConfig.parse({ ...config, roomLimit: 0 });
   assert.equal(parsed.websiteOrigin.hostname, 'rooms.example.com');
   assert.equal(parsed.hubOrigin.origin, 'https://hub.example.com');
   assert.equal(parsed.roomLimit, 0);
-  assert.equal(parsed.conversationLimit, 0);
   assert.equal(parsed.bucketName, 'my-tandry-public');
   assert.equal(parsed.publicBaseUrl, 'https://cdn.example.com');
 });
@@ -38,10 +37,9 @@ test('self-host configuration rejects secrets, malformed origins and invalid pol
     { websiteOrigin: config.hubOrigin },
     { websiteOrigin: 123 },
     { roomLimit: -1 },
-    { conversationLimit: 100001 },
-    { policyRevision: 0 },
-    { policyRevision: '1' },
-    { roomIdleDays: 1.5 },
+    { roomLimit: 100001 },
+    { roomLimit: '1' },
+    { roomLimit: 1.5 },
     { bucketName: 'Not A Bucket' },
     { publicBaseUrl: 'http://cdn.example.com' },
     { publicBaseUrl: 'https://cdn.example.com/' },

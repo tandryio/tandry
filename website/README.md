@@ -98,5 +98,4 @@ Devices use non-secret session IDs; the page never needs other sessions' tokens.
 Revocation immediately blocks subsequent HTTP calls. Existing notification-only
 links may stay open until the client reconnects; immediate link closure remains
 outside this step. Browser validation used an isolated built website Worker and
-real Hub service binding, in English and Chinese at desktop and mobile widths;
-see the workspace's `.scratch/experiments/website-20260918/`.
+real Hub service binding, in English and Chinese at desktop and mobile widths.

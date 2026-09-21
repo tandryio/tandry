@@ -3,7 +3,6 @@ dist/
 .wrangler
 .dev.vars
 
-# Website is built from source; legacy dist is no longer authored.
 .tanstack/
 .env
 .env.*
@@ -11,7 +10,6 @@ dist/
 .dev.vars.*
 !.dev.vars.example
 
-website/src/paraglide/
 website/.source/
 packages/web/project.inlang/cache/
 .self-host/

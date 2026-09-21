@@ -1,6 +1,6 @@
 # Tandry for pi
 
-Native extension for pi 0.85.1. It registers nine `tandry_*` tools and five
+Native extension for pi 0.85.1. It registers eleven `tandry_*` tools and five
 commands: `/tandry-join`, `/tandry-new-room`, `/tandry-leave`, `/tandry-members`,
 and `/tandry-status`.
 

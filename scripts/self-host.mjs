@@ -22,10 +22,7 @@ export const SelfHostConfig = z.strictObject({
   publicBaseUrl: z.url({ protocol: /^https$/ }).refine(value => !value.endsWith('/'), 'Drop the trailing slash').optional(),
   websiteOrigin: origin,
   hubOrigin: origin,
-  policyRevision: z.int().min(1).max(100000),
   roomLimit: z.int().min(0).max(100000),
-  conversationLimit: z.int().min(0).max(100000),
-  roomIdleDays: z.int().min(1).max(3650),
 }).refine(config => config.websiteOrigin.origin !== config.hubOrigin.origin, 'Website and Hub need distinct domains');
 
 function configure(input) {
@@ -44,10 +41,9 @@ function configure(input) {
   hub.d1_databases = [{ binding: 'AUTH_DB', database_name: databaseName, database_id: database, migrations_dir: '../packages/hub/migrations' }];
   if (config.bucketName) hub.r2_buckets = [{ binding: 'PUBLIC_BUCKET', bucket_name: config.bucketName }];
   else delete hub.r2_buckets;
-  hub.vars = { DEPLOYMENT_MODE: 'self-hosted', BETTER_AUTH_URL: website.origin,
+  hub.vars = { BETTER_AUTH_URL: website.origin,
     ...(config.publicBaseUrl ? { PUBLIC_BASE_URL: config.publicBaseUrl } : {}),
-    RESOURCE_POLICY_REVISION: String(config.policyRevision), ROOM_LIMIT: String(config.roomLimit),
-    CONVERSATION_LIMIT: String(config.conversationLimit), ROOM_IDLE_DAYS: String(config.roomIdleDays) };
+    ROOM_LIMIT: String(config.roomLimit) };
   web.main = '../website/src/server.ts';
   web.services = [{ binding: 'ROOM_HUB', service: hub.name }];
   fs.mkdirSync(destination, { recursive: true });

@@ -1,10 +1,8 @@
 # 本地开发
 
-The redesign currently packages Claude Code and Codex. Remote MCP and OAuth
-run in the Hub. For project-local tunnel setup and `pnpm dev:mcp`, see
-[Remote MCP development](web-mcp-development.md). The previous standalone
-`mcp:dev` gateway has been removed.
-Sections below that describe other hosts or the old room API await their rewrite.
+The workspace packages five clients: Claude Code, Codex, pi, OpenCode and dsh.
+Remote MCP and OAuth run in the Hub. For project-local tunnel setup and
+`pnpm dev:mcp`, see [Remote MCP development](web-mcp-development.md).
 
 ## 准备环境
 
@@ -15,7 +13,7 @@ pnpm install --frozen-lockfile
 pnpm build
 ```
 
-`pnpm build` 检查 protocol，分别构建 Claude 和 Codex 客户端，并导出
+`pnpm build` 检查 protocol，分别构建五个客户端（Claude Code、Codex、pi、OpenCode、dsh），并导出
 `.local/marketplace/`。它不包含网站构建。
 
 ## 配置 Hub
@@ -128,10 +126,9 @@ Vite 支持热更新，Wrangler 会监听 Hub 源码变化。
 ```sh
 curl http://127.0.0.1:8799/health
 curl http://127.0.0.1:4173/api/config
-curl http://127.0.0.1:4173/api/rooms
 ```
 
-前两项应返回健康状态和已配置的登录方式；未登录时第三项应返回 401。
+两项应分别返回健康状态和已配置的登录方式。
 如果默认端口被占用，先处理旧服务；变更网站端口时也必须同步 OAuth 回调和认证 origin。
 
 ## 联调宿主插件
@@ -160,9 +157,8 @@ pnpm agent codex
 如需手动启动，在启动宿主的终端设置：
 
 ```sh
-export TANDRY_HUB=ws://127.0.0.1:8799
+export TANDRY_HUB=http://127.0.0.1:8799
 export TANDRY_HOME="$HOME/.tandry-dev"
-export TANDRY_AUTH_HOME="$TANDRY_HOME"
 ```
 
 这会把测试账号凭据、会话状态和消息与日常 `~/.tandry` 分开。
@@ -191,22 +187,16 @@ pnpm --filter @tandryio/bridge test
 
 网站构建会生成路由类型，首次运行类型检查前先执行它。
 测试使用临时目录、模拟宿主和本地 Hub，无需真实 OAuth 凭据，也不调用生产服务或付费模型。
-原生适配器可以直接测试 TS 源码，无需先构建：
-
-```sh
-pnpm --filter @tandryio/bridge test:native
-```
-
 构建后可单独验证解压到仓库外的发布包：
 
 ```sh
-pnpm --filter @tandryio/bridge test:packages
+pnpm test:marketplace
 ```
 
 只运行一个测试文件，例如：
 
 ```sh
-node --test packages/bridge/scripts/auth.test.mjs
+pnpm --filter @tandryio/bridge exec tsx --test test/bridge.test.ts
 ```
 
 前端格式化使用 `pnpm format:web`。不要直接修改生成的插件 bundle 或 `routeTree.gen.ts`。
@@ -229,5 +219,5 @@ pnpm dev
 
 私有 `pnpm dev --mock-billing` 使用模拟订阅、真实登录，适合没有 Stripe 测试配置时
 联调 Agent；它不模拟 Checkout/Portal。配置 Resend 后可正常邮箱登录，已有 Resend 配置
-会保留。公开包已发布到 npm，私有仓库的发布锁文件由真实 registry 安装生成。
+会保留。protocol、hub、web 不发布到 npm；私有仓库按 `core.json` 钉住的公开提交从源码构建。
 见 [公开包与依赖流程](public-artifacts.md)。
