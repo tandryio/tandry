@@ -5,20 +5,21 @@ import { allowAvatarUpload } from "../auth/rate-limit";
 import type { Env } from "../env";
 import type { HubApp } from "../hub";
 import {
-  avatarBase,
+  AVATAR_ROUTE,
   avatarResponse,
   imageType,
   MAX_AVATAR_BYTES,
+  publicBase,
   putAvatar,
 } from "./avatars";
 
 type AvatarContext = Context<{ Bindings: Env }>;
 
-/** POST /api/avatars: the raw picture, already squared and shrunk by the browser. */
+/** POST /api/avatar: the raw picture, already squared and shrunk by the browser. */
 async function upload(c: AvatarContext): Promise<Response> {
   if (!originAllowed(c.env, c.req.raw))
     return c.json({ error: "Origin not allowed" }, 403);
-  const bucket = c.env.AVATARS;
+  const bucket = c.env.PUBLIC_BUCKET;
   if (!bucket)
     return c.json(
       {
@@ -59,7 +60,7 @@ async function upload(c: AvatarContext): Promise<Response> {
     bytes,
     contentType,
     Date.now(),
-    avatarBase(c.env.AVATAR_BASE_URL),
+    publicBase(c.env.PUBLIC_BASE_URL),
   );
   c.header("Cache-Control", "no-store");
   return c.json({ image });
@@ -71,10 +72,10 @@ async function upload(c: AvatarContext): Promise<Response> {
  * is the capability, and it is random.
  */
 export function avatarRoutes(app: HubApp) {
-  app.post("/api/avatars", upload);
-  app.get("/api/avatars/:key", (c) =>
-    c.env.AVATARS
-      ? avatarResponse(c.env.AVATARS, c.req.param("key"), c.req.raw)
+  app.post(AVATAR_ROUTE, upload);
+  app.get(`${AVATAR_ROUTE}/:id`, (c) =>
+    c.env.PUBLIC_BUCKET
+      ? avatarResponse(c.env.PUBLIC_BUCKET, c.req.param("id"), c.req.raw)
       : c.notFound(),
   );
 }

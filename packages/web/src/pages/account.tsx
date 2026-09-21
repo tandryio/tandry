@@ -111,7 +111,7 @@ function ProfileCard({ user, profile }: { user: User; profile: Profile }) {
       const blob = await avatarBlob(file).catch(() => {
         throw new Error(m.account_avatar_invalid());
       });
-      await upload<{ image: string }>("/avatars", blob);
+      await upload<{ image: string }>("/avatar", blob);
       // The Hub wrote the account row itself; re-read the session to see it.
       authClient.$store.notify("$sessionSignal");
     },

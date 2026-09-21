@@ -15,8 +15,8 @@ test('self-host configuration accepts explicit zero limits and parses distinct c
   assert.equal(parsed.hubOrigin.origin, 'https://hub.example.com');
   assert.equal(parsed.roomLimit, 0);
   assert.equal(parsed.conversationLimit, 0);
-  assert.equal(parsed.bucketName, 'my-tandry-avatars');
-  assert.equal(parsed.avatarBaseUrl, 'https://cdn.example.com/api/avatars');
+  assert.equal(parsed.bucketName, 'my-tandry-public');
+  assert.equal(parsed.publicBaseUrl, 'https://cdn.example.com');
 });
 
 test('self-host configuration deploys without account pictures when no bucket is named', () => {
@@ -43,8 +43,8 @@ test('self-host configuration rejects secrets, malformed origins and invalid pol
     { policyRevision: '1' },
     { roomIdleDays: 1.5 },
     { bucketName: 'Not A Bucket' },
-    { avatarBaseUrl: 'http://cdn.example.com/api/avatars' },
-    { avatarBaseUrl: 'https://cdn.example.com/api/avatars/' },
+    { publicBaseUrl: 'http://cdn.example.com' },
+    { publicBaseUrl: 'https://cdn.example.com/' },
   ]) {
     assert.equal(SelfHostConfig.safeParse({ ...config, ...overrides }).success, false, JSON.stringify(overrides));
   }

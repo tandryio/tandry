@@ -1,11 +1,19 @@
 import { parseAddress, type MemberView } from "@tandryio/protocol";
 
 /**
- * Account pictures in R2. The account row keeps the URL, not the bytes, so
- * `user.image` holds either one of ours or the one an identity provider gave
- * us; both are just a URL to whoever renders them.
+ * Account pictures in the public bucket. The account row keeps the URL, not the
+ * bytes, so `user.image` holds either one of ours or the one an identity
+ * provider gave us; both are just a URL to whoever renders them.
+ *
+ * The bucket holds every kind of object that is public by capability, each
+ * under its own scope, so a second kind never has to change how the first is
+ * addressed. Everything in it is readable by key, so a kind that needs a
+ * reader checked belongs in a different bucket, not a different scope.
  */
-export const AVATAR_PATH = "/api/avatars/";
+const SCOPE = "avatar";
+/** This Worker's own path, for a deployment that publishes no domain. */
+const WORKER_BASE = "/api";
+export const AVATAR_ROUTE = `${WORKER_BASE}/${SCOPE}`;
 export const MAX_AVATAR_BYTES = 128 * 1024;
 
 /** The key is random, so an object may be cached forever and never enumerated. */
@@ -41,47 +49,56 @@ export function imageType(bytes: Uint8Array): string | null {
 }
 
 /**
- * Where pictures are publicly served, when that is somewhere other than this
- * Worker's own path. Its own route stays either way, so a row written before a
- * domain existed keeps resolving. An unusable value falls back to that route
- * rather than writing a URL nobody can open.
+ * Where the bucket is publicly served: a domain on the bucket itself, so that
+ * reading an object costs no Worker call and its key is the whole path. Unset,
+ * or unusable, means this Worker's own route serves them instead. A deployment
+ * answers at one of the two, so that is also the only base its rows carry.
  */
-export function avatarBase(value: string | undefined): string | undefined {
+export function publicBase(value: string | undefined): string | undefined {
   if (!value) return undefined;
-  let url;
   try {
-    url = new URL(value);
+    const url = new URL(value);
+    if (url.protocol !== "https:") return undefined;
+    return url.origin + url.pathname.replace(/\/+$/, "");
   } catch {
     return undefined;
   }
-  const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
-  if (url.protocol !== "https:" && !(url.protocol === "http:" && loopback))
-    return undefined;
-  return url.origin + url.pathname.replace(/\/+$/, "");
 }
 
-function avatarUrl(base: string | undefined, key: string): string {
-  return base ? `${base}/${key}` : AVATAR_PATH + key;
+/** Every URL this Hub writes is its base followed by the object's own key. */
+function publicUrl(base: string | undefined, key: string): string {
+  return `${base ?? WORKER_BASE}/${key}`;
 }
 
-/** The key inside an image value this Hub stored, or null for anything else. */
+/** The object key inside an image value this Hub stored, or null otherwise. */
 function ownKey(
   image: string | null | undefined,
   base: string | undefined,
 ): string | null {
-  if (!image) return null;
-  for (const prefix of base ? [AVATAR_PATH, `${base}/`] : [AVATAR_PATH]) {
-    if (!image.startsWith(prefix)) continue;
-    const key = image.slice(prefix.length);
-    if (KEY.test(key)) return key;
-  }
-  return null;
+  const start = `${base ?? WORKER_BASE}/${SCOPE}/`;
+  if (!image?.startsWith(start)) return null;
+  const id = image.slice(start.length);
+  return KEY.test(id) ? `${SCOPE}/${id}` : null;
+}
+
+/**
+ * Everything the bytes need to be served correctly, carried on the object
+ * itself: a bucket published on its own domain answers without this Worker,
+ * and then object metadata is the only thing setting response headers.
+ */
+function metadata(contentType: string): R2HTTPMetadata {
+  return {
+    contentType,
+    cacheControl: IMMUTABLE,
+    contentDisposition: "inline",
+  };
 }
 
 function newKey(): string {
-  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) =>
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) =>
     byte.toString(16).padStart(2, "0"),
   ).join("");
+  return `${SCOPE}/${id}`;
 }
 
 /**
@@ -99,14 +116,12 @@ export async function putAvatar(
   base?: string,
 ): Promise<string> {
   const key = newKey();
-  await bucket.put(key, bytes, {
-    httpMetadata: { contentType, cacheControl: IMMUTABLE },
-  });
+  await bucket.put(key, bytes, { httpMetadata: metadata(contentType) });
   const previous = await db
     .prepare("SELECT image FROM user WHERE id=?")
     .bind(accountId)
     .first<{ image: string | null }>();
-  const image = avatarUrl(base, key);
+  const image = publicUrl(base, key);
   await db
     .prepare("UPDATE user SET image=?, updatedAt=? WHERE id=?")
     .bind(image, now, accountId)
@@ -117,14 +132,16 @@ export async function putAvatar(
   return image;
 }
 
-/** GET /api/avatars/:key. Public, immutable, and never executed by a browser. */
+/** GET /api/avatar/:id. Public, immutable, and never executed by a browser. */
 export async function avatarResponse(
   bucket: R2Bucket,
-  key: string,
+  id: string,
   request: Request,
 ): Promise<Response> {
-  if (!KEY.test(key)) return new Response("Not found", { status: 404 });
-  const object = await bucket.get(key, { onlyIf: request.headers });
+  if (!KEY.test(id)) return new Response("Not found", { status: 404 });
+  const object = await bucket.get(`${SCOPE}/${id}`, {
+    onlyIf: request.headers,
+  });
   if (!object) return new Response("Not found", { status: 404 });
   const headers = new Headers({
     "Cache-Control": IMMUTABLE,
@@ -173,12 +190,9 @@ export async function withAvatars(
   });
 }
 
-/** A picture held by someone else: an identity provider's, not one of ours. */
-export function isForeign(
-  image: string | null | undefined,
-  base: string | undefined,
-): image is string {
-  return !!image && /^https?:\/\//.test(image) && !ownKey(image, base);
+/** A picture held by someone else: the one an identity provider just gave us. */
+export function isForeign(image: string | null | undefined): image is string {
+  return !!image && /^https?:\/\//.test(image);
 }
 
 /**
@@ -213,14 +227,12 @@ export async function adoptForeignAvatar(
   if (!contentType) return;
 
   const key = newKey();
-  await bucket.put(key, bytes, {
-    httpMetadata: { contentType, cacheControl: IMMUTABLE },
-  });
+  await bucket.put(key, bytes, { httpMetadata: metadata(contentType) });
   // Only while the account still points at the URL we fetched: a picture the
   // owner uploaded in the meantime is the newer answer and wins.
   const written = await db
     .prepare("UPDATE user SET image=?, updatedAt=? WHERE id=? AND image=?")
-    .bind(avatarUrl(base, key), now, accountId, url)
+    .bind(publicUrl(base, key), now, accountId, url)
     .run();
   if (!written.meta.changes) await bucket.delete(key).catch(() => {});
 }

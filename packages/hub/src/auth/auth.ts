@@ -7,7 +7,7 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
 import * as oauthSchema from "./oauth-schema";
-import { adoptForeignAvatar, avatarBase, isForeign } from "../avatars/avatars";
+import { adoptForeignAvatar, isForeign, publicBase } from "../avatars/avatars";
 
 const MINUTE_SECONDS = 60;
 const DAY_SECONDS = 24 * 60 * MINUTE_SECONDS;
@@ -26,8 +26,8 @@ export interface AuthConfig extends Pick<
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   /** Where an identity provider's picture is copied to. Absent: it is left where it is. */
-  AVATARS?: R2Bucket;
-  AVATAR_BASE_URL?: string;
+  PUBLIC_BUCKET?: R2Bucket;
+  PUBLIC_BASE_URL?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM?: string;
   DEV_EMAIL_OTP?: string;
@@ -68,15 +68,14 @@ async function adoptPicture(
   options: AuthOptions,
   user: { id: string; image?: string | null },
 ): Promise<void> {
-  const base = avatarBase(env.AVATAR_BASE_URL);
-  if (!env.AVATARS || !isForeign(user.image, base)) return;
+  if (!env.PUBLIC_BUCKET || !isForeign(user.image)) return;
   const work = adoptForeignAvatar(
-    env.AVATARS,
+    env.PUBLIC_BUCKET,
     env.AUTH_DB,
     user.id,
     user.image,
     Date.now(),
-    base,
+    publicBase(env.PUBLIC_BASE_URL),
   ).catch(() => {});
   if (options.waitUntil) options.waitUntil(work);
   else await work;
@@ -120,7 +119,7 @@ export function authFor(env: AuthConfig, options: AuthOptions = {}) {
       user: { create: { after: (user) => adoptPicture(env, options, user) } },
     },
     // A picture reaches every observer of every room its account is in, so the
-    // row holds only what a provider wrote or what POST /api/avatars stored,
+    // row holds only what a provider wrote or what POST /api/avatar stored,
     // never a URL a client picked.
     hooks: {
       before: createAuthMiddleware(async (ctx) => {

@@ -18,8 +18,8 @@ export const SelfHostConfig = z.strictObject({
   databaseName: z.string().regex(/^[a-zA-Z0-9_-]{1,63}$/),
   /** Omit to deploy without account pictures; uploading then reports that this Hub stores none. */
   bucketName: z.string().regex(/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/).optional(),
-  /** Where pictures are publicly served. Omit to serve them from the website origin. */
-  avatarBaseUrl: z.url({ protocol: /^https$/ }).refine(value => !value.endsWith('/'), 'Drop the trailing slash').optional(),
+  /** Where that bucket is published. Omit to serve it from the website origin. */
+  publicBaseUrl: z.url({ protocol: /^https$/ }).refine(value => !value.endsWith('/'), 'Drop the trailing slash').optional(),
   websiteOrigin: origin,
   hubOrigin: origin,
   policyRevision: z.int().min(1).max(100000),
@@ -42,10 +42,10 @@ function configure(input) {
   }
   hub.main = '../packages/hub/src/index.ts';
   hub.d1_databases = [{ binding: 'AUTH_DB', database_name: databaseName, database_id: database, migrations_dir: '../packages/hub/migrations' }];
-  if (config.bucketName) hub.r2_buckets = [{ binding: 'AVATARS', bucket_name: config.bucketName }];
+  if (config.bucketName) hub.r2_buckets = [{ binding: 'PUBLIC_BUCKET', bucket_name: config.bucketName }];
   else delete hub.r2_buckets;
   hub.vars = { DEPLOYMENT_MODE: 'self-hosted', BETTER_AUTH_URL: website.origin,
-    ...(config.avatarBaseUrl ? { AVATAR_BASE_URL: config.avatarBaseUrl } : {}),
+    ...(config.publicBaseUrl ? { PUBLIC_BASE_URL: config.publicBaseUrl } : {}),
     RESOURCE_POLICY_REVISION: String(config.policyRevision), ROOM_LIMIT: String(config.roomLimit),
     CONVERSATION_LIMIT: String(config.conversationLimit), ROOM_IDLE_DAYS: String(config.roomIdleDays) };
   web.main = '../website/src/server.ts';

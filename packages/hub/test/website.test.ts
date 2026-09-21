@@ -188,7 +188,7 @@ test("self-hosted accounts can create more than 100 rooms by default", async () 
 // A real 1×1 PNG: the route sniffs the bytes, so a plausible header is not enough.
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
 function storePicture(account: TestAccount | null, body: BodyInit, headers: Record<string, string> = {}) {
-  return fetch(`${hub.baseUrl}/api/avatars`, {
+  return fetch(`${hub.baseUrl}/api/avatar`, {
     method: "POST", body,
     headers: { Origin: hub.baseUrl, "Content-Type": "image/png", ...(account ? { Cookie: cookie(account) } : {}), ...headers },
   });
@@ -199,7 +199,7 @@ test("a picture is stored once, served immutably, and reaches the room's member 
   const stored = await storePicture(alice, PNG);
   assert.equal(stored.status, 200);
   const { image } = (await stored.json()) as { image: string };
-  assert.match(image, /^\/api\/avatars\/[0-9a-f]{32}$/);
+  assert.match(image, /^\/api\/avatar\/[0-9a-f]{32}$/);
 
   const served = await fetch(hub.baseUrl + image);
   assert.equal(served.status, 200);
@@ -226,6 +226,6 @@ test("storing a picture needs this origin, a signed-in account, and bytes that a
   assert.equal((await storePicture(alice, '<svg xmlns="http://www.w3.org/2000/svg"/>', { "Content-Type": "image/svg+xml" })).status, 400);
   assert.equal((await storePicture(alice, PNG, { Origin: "https://elsewhere.test" })).status, 403);
   assert.equal((await storePicture(null, PNG)).status, 401);
-  assert.equal((await fetch(`${hub.baseUrl}/api/avatars/not-a-key`)).status, 404);
-  assert.equal((await fetch(`${hub.baseUrl}/api/avatars/${"0".repeat(32)}`)).status, 404);
+  assert.equal((await fetch(`${hub.baseUrl}/api/avatar/not-a-key`)).status, 404);
+  assert.equal((await fetch(`${hub.baseUrl}/api/avatar/${"0".repeat(32)}`)).status, 404);
 });

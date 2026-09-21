@@ -15,38 +15,44 @@ identities belong to the private cloud repository; do not reuse them for a new i
 
 1. In your own Cloudflare account, create a D1 database (for example with
    `pnpm --filter @tandryio/hub exec wrangler d1 create my-tandry-accounts`) and an R2
-   bucket for account pictures (`pnpm --filter @tandryio/hub exec wrangler r2 bucket create
-   my-tandry-avatars`). Record the database ID, the bucket name and your account ID.
+   bucket for public objects (`pnpm --filter @tandryio/hub exec wrangler r2 bucket create
+   my-tandry-public`). Record the database ID, the bucket name and your account ID.
    The bucket holds uploaded pictures and copies of the ones GitHub and Google
-   provide, so that reading a room never calls an identity provider. It is optional:
-   leave `bucketName` out of the configuration and the Hub runs without it, keeping
+   provide, so that reading a room never calls an identity provider. Each kind of
+   object lives under its own scope, pictures under `avatar/`; everything in the
+   bucket is readable by key, so a kind that needs its reader checked belongs in a
+   separate bucket rather than another scope. The bucket is optional: leave
+   `bucketName` out of the configuration and the Hub runs without it, keeping
    provider pictures where they are and reporting that it stores none on upload.
-   Pictures are served from the website origin unless `avatarBaseUrl` names another
-   one, such as `https://cdn.example.com/api/avatars`. Point that domain at the Hub
-   Worker, not at the bucket: served by the Worker they keep `X-Content-Type-Options`
-   and their content policy, which object metadata cannot carry. A separate domain
-   keeps session cookies off every picture request and keeps uploaded bytes out of
-   the website's origin. The Worker's own `/api/avatars/` path answers either way,
-   so changing or dropping the domain leaves existing accounts working.
    Choose separate website and Hub custom domains in a zone you control, such as
    `rooms.example.com` and `hub.example.com`.
-2. Copy `deploy/self-host.example.json` outside tracked source (for example to `/tmp`),
+2. Objects are served from the website origin unless `publicBaseUrl` names another,
+   such as `https://cdn.example.com`. Publish the bucket on that domain and set it
+   here: a picture is then one object read at the edge, with no Worker call, and its
+   key, scope included, is the whole path. A domain of its own is also what keeps
+   session cookies off every request for one and keeps uploaded bytes out of the
+   website's origin, which is worth more than the `X-Content-Type-Options` and
+   content-policy headers the Worker adds and object metadata cannot carry — add
+   those as a Transform Rule on that domain if you want them too. Accounts record
+   the base in force when their picture was stored, so changing this setting later
+   leaves those rows pointing at the old one and their objects behind.
+3. Copy `deploy/self-host.example.json` outside tracked source (for example to `/tmp`),
    fill in the IDs, domains, names and resource limits, then run:
    `pnpm self-host:configure /tmp/my-tandry.json`.
    This only writes ignored `.self-host/hub.json` and `.self-host/website.json`.
-3. Configure authentication on the Hub. Use a random `BETTER_AUTH_SECRET` of at least
+4. Configure authentication on the Hub. Use a random `BETTER_AUTH_SECRET` of at least
    32 characters. Configure at least one complete provider pair: GitHub client ID/secret,
    Google client ID/secret, or Resend API key/from address. Upload secrets with
    `pnpm --filter @tandryio/hub exec wrangler secret put KEY --config ../../.self-host/hub.json`.
    `KEY` is the setting name; enter its value at the prompt. Do not put secret values in
    the JSON configuration. Wrangler secret changes affect the target Worker.
-4. Set OAuth callback URLs to the **website** origin followed by
+5. Set OAuth callback URLs to the **website** origin followed by
    `/api/auth/callback/github` or `/api/auth/callback/google`. `BETTER_AUTH_URL` is the
    website origin, not the WebSocket Hub domain. Resend needs a verified sending domain.
-5. Inspect `.self-host` and run `pnpm self-host:check`. This builds the website with
+6. Inspect `.self-host` and run `pnpm self-host:check`. This builds the website with
    the selected service binding and performs both Worker deployment dry runs; it does
    not create domains, upload secrets, deploy code or validate remote login providers.
-6. When ready to deploy to your account, apply schema migrations first:
+7. When ready to deploy to your account, apply schema migrations first:
    `pnpm --filter @tandryio/hub exec wrangler d1 migrations apply AUTH_DB --remote --config ../../.self-host/hub.json`.
    Then run `pnpm hub:deploy`, followed by `pnpm website:deploy`.
 

@@ -17,8 +17,8 @@
   ],
   "r2_buckets": [
     {
-      "binding": "AVATARS",
-      "bucket_name": "tandry-avatars"
+      "binding": "PUBLIC_BUCKET",
+      "bucket_name": "tandry-public"
     }
   ],
   "vars": {
