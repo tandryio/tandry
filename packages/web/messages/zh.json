@@ -408,5 +408,8 @@
   "landing_next_other_hosts": "其他工具",
   "rooms_delete": "删除房间",
   "rooms_delete_permanently": "永久删除",
-  "rooms_delete_room_confirm": "永久删除「{name}」？所有成员将断开连接，全部消息（包括私信）将对所有人永久删除，无法恢复。"
+  "rooms_delete_room_confirm": "永久删除「{name}」？所有成员将断开连接，全部消息（包括私信）将对所有人永久删除，无法恢复。",
+  "rooms_actions": "房间管理",
+  "rooms_delete_title": "删除这个房间？",
+  "rooms_rotate_title": "重置房间码？"
 }

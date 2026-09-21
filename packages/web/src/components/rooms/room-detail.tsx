@@ -5,7 +5,8 @@ import { m } from "../../paraglide/messages";
 import { call } from "../../lib/hub";
 import { errorText } from "../../lib/i18n";
 import { useAction } from "../../lib/action";
-import { ConfirmAction } from "../confirm-action";
+import { RoomActions } from "./room-actions";
+import { MembersSkeleton } from "./room-skeleton";
 import { Badge, Button, Icon, Status } from "../ui";
 import { MemberList } from "./member-list";
 import { MessageHistory } from "./message-history";
@@ -41,6 +42,11 @@ export function RoomDetail({
       if (node.parentElement === document.body) break;
     }
     const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        container.current?.querySelector("dialog[open], [role=menu]")
+      )
+        return;
       if (event.key === "Escape") {
         event.preventDefault();
         setFullscreen(false);
@@ -149,9 +155,6 @@ export function RoomDetail({
               <Icon name={copied === "done" ? "check" : "copy"} />
             </button>
           )}
-          {room.role === "owner" && (
-            <RoomCodeReset room={room} userId={userId} />
-          )}
           <Button
             ref={fullscreenButton}
             variant="ghost"
@@ -162,14 +165,14 @@ export function RoomDetail({
             <Icon name={fullscreen ? "minimize" : "maximize"} />
             {fullscreen ? m.rooms_exit_fullscreen() : m.rooms_fullscreen()}
           </Button>
+          {room.role === "owner" && (
+            <RoomActions room={room} userId={userId} onDeleted={onDeleted} />
+          )}
           <span className="sr-only" aria-live="polite">
             {copied === "done" ? m.rooms_code_copied() : ""}
           </span>
         </div>
       </header>
-      {room.role === "owner" && (
-        <RoomDelete room={room} userId={userId} onDeleted={onDeleted} />
-      )}
       {copied === "failed" && <Status error>{m.rooms_copy_failed()}</Status>}
       <div className="room-chat-body">
         <aside className="room-chat-side">
@@ -178,9 +181,7 @@ export function RoomDetail({
             {count !== undefined && <span className="count">{count}</span>}
           </h3>
           {members.isPending ? (
-            <p className="chat-side-empty" role="status">
-              {m.common_loading()}
-            </p>
+            <MembersSkeleton />
           ) : members.error ? (
             <Status error>{errorText(members.error)}</Status>
           ) : (
@@ -329,90 +330,5 @@ function RoomField({
         </span>
       )}
     </span>
-  );
-}
-
-function RoomCodeReset({
-  room,
-  userId,
-}: {
-  room: RoomSummary;
-  userId: string;
-}) {
-  const client = useQueryClient();
-  const update = useAction(
-    () => call("update_room", { room: room.id, rotateCode: true }),
-    {
-      onSuccess: () =>
-        client.invalidateQueries({ queryKey: ["rooms", userId] }),
-    },
-  );
-  return (
-    <details key={room.code} className="room-code-options">
-      <summary
-        aria-label={m.rooms_code_options()}
-        title={m.rooms_code_options()}
-      >
-        <Icon name="chevron" />
-      </summary>
-      <ConfirmAction
-        label={m.rooms_rotate_code()}
-        description={m.rooms_rotate_confirm()}
-        busy={update.busy}
-        onConfirm={update.run}
-      />
-      {update.error && <Status error>{update.error}</Status>}
-    </details>
-  );
-}
-
-function RoomDelete({
-  room,
-  userId,
-  onDeleted,
-}: {
-  room: RoomSummary;
-  userId: string;
-  onDeleted: () => Promise<void>;
-}) {
-  const client = useQueryClient();
-  const [confirming, setConfirming] = useState(false);
-  const deletion = useAction(() => call("delete_room", { room: room.id }), {
-    onSuccess: async () => {
-      await client.cancelQueries({ queryKey: ["room", userId, room.id] });
-      client.removeQueries({ queryKey: ["room", userId, room.id] });
-      await onDeleted();
-      await client.invalidateQueries({ queryKey: ["rooms", userId] });
-    },
-  });
-  return (
-    <div className="room-delete-action">
-      {confirming ? (
-        <div role="group" aria-label={m.rooms_delete()}>
-          <p>{m.rooms_delete_room_confirm({ name: room.name })}</p>
-          <Button
-            variant="danger"
-            size="sm"
-            busy={deletion.busy}
-            onClick={deletion.run}
-          >
-            {m.rooms_delete_permanently()}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={deletion.busy}
-            onClick={() => setConfirming(false)}
-          >
-            {m.common_cancel()}
-          </Button>
-        </div>
-      ) : (
-        <Button variant="ghost" size="sm" onClick={() => setConfirming(true)}>
-          {m.rooms_delete()}
-        </Button>
-      )}
-      {deletion.error && <Status error>{deletion.error}</Status>}
-    </div>
   );
 }

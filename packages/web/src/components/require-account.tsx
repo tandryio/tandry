@@ -16,6 +16,7 @@ type Props = {
   signInLabel?: string;
   /** Show the @handle claim form until the account has one (default: true). */
   requireHandle?: boolean;
+  loadingFallback?: ReactNode;
   children: (account: { session: Session; profile: Profile }) => ReactNode;
 };
 
@@ -29,11 +30,15 @@ export function RequireAccount({
   signInPrompt,
   signInLabel,
   requireHandle = true,
+  loadingFallback,
   children,
 }: Props) {
   const { data: session, isPending } = authClient.useSession();
   const profile = useProfile(session?.user.id);
-  if (isPending) return <p role="status">{m.common_checking_session()}</p>;
+  if (isPending)
+    return (
+      loadingFallback ?? <p role="status">{m.common_checking_session()}</p>
+    );
   if (!session)
     return (
       <section className="account-card">
@@ -45,7 +50,8 @@ export function RequireAccount({
         </Button>
       </section>
     );
-  if (profile.isPending) return <p role="status">{m.common_loading()}</p>;
+  if (profile.isPending)
+    return loadingFallback ?? <p role="status">{m.common_loading()}</p>;
   if (profile.error) return <p role="alert">{errorText(profile.error)}</p>;
   if (requireHandle && !profile.data.handle) return <HandleSetup />;
   return <>{children({ session, profile: profile.data })}</>;

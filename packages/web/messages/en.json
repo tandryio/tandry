@@ -408,5 +408,8 @@
   "landing_next_other_hosts": "Other tools",
   "rooms_delete": "Delete room",
   "rooms_delete_permanently": "Permanently delete",
-  "rooms_delete_room_confirm": "Permanently delete “{name}”? All members will be disconnected and all messages, including direct messages, will be deleted for everyone. This cannot be undone."
+  "rooms_delete_room_confirm": "Permanently delete “{name}”? All members will be disconnected and all messages, including direct messages, will be deleted for everyone. This cannot be undone.",
+  "rooms_actions": "Room settings",
+  "rooms_delete_title": "Delete this room?",
+  "rooms_rotate_title": "Reset the room code?"
 }

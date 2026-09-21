@@ -1,5 +1,8 @@
 import {
   Archive,
+  Ellipsis,
+  RefreshCw,
+  Trash2,
   X,
   ArrowUpRight,
   BookOpen,
@@ -27,6 +30,9 @@ import { cn } from "../../lib/cn";
 
 /** Semantic icon names used by the workspace; each maps to a Lucide glyph. */
 const icons = {
+  more: Ellipsis,
+  refresh: RefreshCw,
+  trash: Trash2,
   arrow: ArrowUpRight,
   close: X,
   chevron: ChevronDown,

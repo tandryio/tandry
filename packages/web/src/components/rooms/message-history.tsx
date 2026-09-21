@@ -10,6 +10,7 @@ import { errorText } from "../../lib/i18n";
 import { ConfirmAction } from "../confirm-action";
 import { Badge, Button, Icon, Status } from "../ui";
 import { MemberAvatar } from "./host-avatar";
+import { MessagesSkeleton } from "./room-skeleton";
 import { MarkdownBody } from "./markdown";
 
 /** Consecutive messages from one sender within this gap share a header. */
@@ -57,14 +58,14 @@ export function MessageHistory({
   const last = messages.at(-1)?.id;
   useLayoutEffect(() => {
     const element = scroller.current;
-    if (!element) return;
+    if (!element || history.isPending) return;
     if (heightBeforeOlder.current !== null) {
       element.scrollTop += element.scrollHeight - heightBeforeOlder.current;
       heightBeforeOlder.current = null;
     } else if (following.current) {
       element.scrollTop = element.scrollHeight;
     }
-  }, [first, last]);
+  }, [first, last, history.isPending]);
 
   const locale = getLocale();
   const today = new Date().toDateString();
@@ -84,9 +85,7 @@ export function MessageHistory({
         }}
       >
         {history.isPending ? (
-          <p className="chat-empty" role="status">
-            {m.common_loading()}
-          </p>
+          <MessagesSkeleton />
         ) : history.error ? (
           <Status error>
             {errorText(history.error)}{" "}

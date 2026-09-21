@@ -8,6 +8,7 @@ import { call } from "../lib/hub";
 import { useAction } from "../lib/action";
 import { Shell } from "../components/shell";
 import { RequireAccount } from "../components/require-account";
+import { RoomsSkeleton } from "../components/rooms/room-skeleton";
 import { RoomDetail } from "../components/rooms/room-detail";
 import { Badge, Button, Icon, Input, Status } from "../components/ui";
 
@@ -24,6 +25,7 @@ export function Rooms({
       <RequireAccount
         next={room ? `/rooms?room=${encodeURIComponent(room)}` : "/rooms"}
         signInPrompt={m.rooms_sign_in_prompt()}
+        loadingFallback={<RoomsSkeleton detail={!!room} />}
       >
         {({ session }) => (
           <RoomList
@@ -82,7 +84,7 @@ function RoomList({
   );
   const all = rooms.data?.rooms ?? [];
   const selectedRoom = all.find((room) => room.id === selected);
-  if (rooms.isPending) return <p role="status">{m.rooms_loading()}</p>;
+  if (rooms.isPending) return <RoomsSkeleton detail={!!selected} />;
   if (rooms.error)
     return (
       <Status error>
