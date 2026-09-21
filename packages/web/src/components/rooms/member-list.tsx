@@ -87,6 +87,7 @@ function MemberRow({
             address={member.address}
             host={member.host}
             owned={member.owned}
+            avatar={member.avatar}
           />
           <span className="member-summary">
             <strong>{member.address}</strong>

@@ -6,7 +6,7 @@ import { useRef, useState, type MouseEvent } from "react";
 import { authClient, unwrap } from "../lib/auth-client";
 import { call } from "../lib/hub";
 import { ConfirmAction } from "../components/confirm-action";
-import { api } from "../lib/api";
+import { api, upload } from "../lib/api";
 import { useAction } from "../lib/action";
 import { PROVIDER_LABELS, SOCIAL_PROVIDERS, useConfig } from "../lib/config";
 import type { Profile } from "../lib/profile";
@@ -35,8 +35,12 @@ export function Account() {
   );
 }
 
-/** Square-crop and shrink an image so it can be stored as the account's image. */
-async function avatarDataUrl(file: File, size = 128): Promise<string> {
+/**
+ * Square-crop and shrink a picture before it leaves the browser. Re-encoding
+ * is also what strips whatever else the original file carried: the Hub stores
+ * these bytes and serves them back, so it never stores the file as chosen.
+ */
+async function avatarBlob(file: File, size = 128): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
   const side = Math.min(bitmap.width, bitmap.height);
   const canvas = document.createElement("canvas");
@@ -55,11 +59,13 @@ async function avatarDataUrl(file: File, size = 128): Promise<string> {
       size,
     );
   bitmap.close();
-  const webp = canvas.toDataURL("image/webp", 0.85);
+  const encode = (type: string) =>
+    new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, 0.85));
   // Browsers that cannot encode WebP fall back to PNG; JPEG is smaller.
-  return webp.startsWith("data:image/webp")
-    ? webp
-    : canvas.toDataURL("image/jpeg", 0.85);
+  const webp = await encode("image/webp");
+  const blob = webp?.type === "image/webp" ? webp : await encode("image/jpeg");
+  if (!blob) throw new Error(m.account_avatar_invalid());
+  return blob;
 }
 
 function ProfileCard({ user, profile }: { user: User; profile: Profile }) {
@@ -102,10 +108,12 @@ function ProfileCard({ user, profile }: { user: User; profile: Profile }) {
     async (file: File) => {
       if (!file.type.startsWith("image/"))
         throw new Error(m.account_avatar_invalid());
-      const image = await avatarDataUrl(file).catch(() => {
+      const blob = await avatarBlob(file).catch(() => {
         throw new Error(m.account_avatar_invalid());
       });
-      unwrap(await authClient.updateUser({ image }));
+      await upload<{ image: string }>("/avatars", blob);
+      // The Hub wrote the account row itself; re-read the session to see it.
+      authClient.$store.notify("$sessionSignal");
     },
     { onSuccess: () => setNotice(m.account_profile_updated()) },
   );

@@ -61,6 +61,7 @@ export async function startLocalHub(options: StartOptions = {}): Promise<HubUnde
     compatibility_date: "2026-09-13",
     compatibility_flags: ["nodejs_compat"],
     d1_databases: [{ binding: "AUTH_DB", database_name: "tandry-test", database_id: "00000000-0000-0000-0000-000000000001" }],
+    r2_buckets: [{ binding: "AVATARS", bucket_name: "tandry-avatars-test" }],
     durable_objects: { bindings: [{ name: "ROOM", class_name: "RoomDO" }] },
     migrations: [{ tag: "v1", new_sqlite_classes: ["RoomDO"] }],
     vars: {

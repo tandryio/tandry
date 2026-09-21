@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { authRoutes } from "./auth/routes";
+import { avatarRoutes } from "./avatars/routes";
 import { httpBinding } from "./bindings/http";
 import { linkBinding } from "./bindings/link";
 import { mcpBinding } from "./bindings/mcp";
@@ -34,6 +35,7 @@ export function createHub<E extends Env = Env>(options: HubOptions<E>) {
   app.get("/health", (c) => c.json({ ok: true, now: Date.now() }));
 
   authRoutes(app as unknown as HubApp, options.navigation ?? []);
+  avatarRoutes(app as unknown as HubApp);
   for (const configure of options.routes ?? []) configure(app);
 
   app.get(LINK_PATH, (c) => linkBinding(c as never));

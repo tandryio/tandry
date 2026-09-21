@@ -32,6 +32,9 @@ const byCode: Record<string, () => string> = {
   POLICY_UNAVAILABLE: m.error_policy_unavailable,
   CONVERSATION_LIMIT: m.error_conversation_limit,
   AUTH_CHECK_UNAVAILABLE: m.error_auth_unavailable,
+  AVATAR_INVALID: m.account_avatar_invalid,
+  AVATAR_TOO_LARGE: m.error_avatar_too_large,
+  AVATAR_STORAGE_UNCONFIGURED: m.error_avatar_storage,
 };
 // Upstream messages without a code. User content is never translated.
 const byMessage: Record<string, () => string> = {

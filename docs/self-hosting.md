@@ -1,10 +1,11 @@
 # Self-hosting Tandry
 
-This edition runs on your Cloudflare account: two Workers, D1 and one SQLite Durable
-Object namespace. It includes account login, device approval, room management and
-all host adapters. It does not require an Tandry Cloud account, subscription,
-license server or private repository. Cloudflare and your email/OAuth providers have
-their own service requirements and charges. A Docker/VPS deployment is not implemented.
+This edition runs on your Cloudflare account: two Workers, D1, one SQLite Durable
+Object namespace and, for account pictures, one R2 bucket. It includes account login,
+device approval, room management and all host adapters. It does not require an Tandry
+Cloud account, subscription, license server or private repository. Cloudflare and your
+email/OAuth providers have their own service requirements and charges. A Docker/VPS
+deployment is not implemented.
 
 ## Configure your deployment
 
@@ -13,9 +14,22 @@ The checked-in Wrangler configurations are for local development. Official deplo
 identities belong to the private cloud repository; do not reuse them for a new instance.
 
 1. In your own Cloudflare account, create a D1 database (for example with
-   `pnpm --filter @tandryio/hub exec wrangler d1 create my-tandry-accounts`).
-   Record its database ID and your account ID. Choose separate website and Hub custom
-   domains in a zone you control, such as `rooms.example.com` and `hub.example.com`.
+   `pnpm --filter @tandryio/hub exec wrangler d1 create my-tandry-accounts`) and an R2
+   bucket for account pictures (`pnpm --filter @tandryio/hub exec wrangler r2 bucket create
+   my-tandry-avatars`). Record the database ID, the bucket name and your account ID.
+   The bucket holds uploaded pictures and copies of the ones GitHub and Google
+   provide, so that reading a room never calls an identity provider. It is optional:
+   leave `bucketName` out of the configuration and the Hub runs without it, keeping
+   provider pictures where they are and reporting that it stores none on upload.
+   Pictures are served from the website origin unless `avatarBaseUrl` names another
+   one, such as `https://cdn.example.com/api/avatars`. Point that domain at the Hub
+   Worker, not at the bucket: served by the Worker they keep `X-Content-Type-Options`
+   and their content policy, which object metadata cannot carry. A separate domain
+   keeps session cookies off every picture request and keeps uploaded bytes out of
+   the website's origin. The Worker's own `/api/avatars/` path answers either way,
+   so changing or dropping the domain leaves existing accounts working.
+   Choose separate website and Hub custom domains in a zone you control, such as
+   `rooms.example.com` and `hub.example.com`.
 2. Copy `deploy/self-host.example.json` outside tracked source (for example to `/tmp`),
    fill in the IDs, domains, names and resource limits, then run:
    `pnpm self-host:configure /tmp/my-tandry.json`.

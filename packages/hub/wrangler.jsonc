@@ -15,6 +15,12 @@
       "migrations_dir": "migrations"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "AVATARS",
+      "bucket_name": "tandry-avatars"
+    }
+  ],
   "vars": {
     "BETTER_AUTH_URL": "http://127.0.0.1:4173",
     "ROOM_LIMIT": "unlimited",

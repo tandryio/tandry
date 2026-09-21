@@ -1,7 +1,8 @@
 import {
   OLDEST_SUPPORTED_PROTOCOL, TandryError, fail, isOperationName, operations,
-  type ConversationKey, type Result, type RoomId,
+  type ConversationKey, type Output, type Result, type RoomId,
 } from "@tandryio/protocol";
+import { withAvatars } from "../avatars/avatars";
 import type { Principal } from "../auth/principal";
 import type { Directory } from "../directory/directory";
 import type { Env } from "../env";
@@ -69,6 +70,11 @@ export async function execute(hub: HubContext, request: OperationRequest): Promi
       input,
     );
     if (result.ok && definition.name === "leave") return { ok: true, result: await afterLeave(hub, request.room, result.result as LeaveResult) };
+    // Pictures are for the website's member list; a conversation reads addresses.
+    if (result.ok && definition.name === "members" && !request.conversation) {
+      const { members } = result.result as Output<"members">;
+      return { ok: true, result: { members: await withAvatars(hub.env.AUTH_DB, members) } };
+    }
     return result;
   } catch (error) {
     if (error instanceof TandryError) return { ok: false, error: error.toBody() };

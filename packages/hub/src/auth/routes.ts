@@ -65,8 +65,20 @@ async function handleAuth(c: AuthContext): Promise<Response> {
   // Better Auth awaits email delivery but swallows callback exceptions. Keep a
   // request-local flag so the UI never claims a rejected send succeeded.
   let emailDeliveryFailed = false;
-  const response = await authFor(c.env, () => {
-    emailDeliveryFailed = true;
+  // Copying a provider's picture happens after the response where it can; a
+  // composition without an execution context waits for it instead.
+  let waitUntil: ((work: Promise<unknown>) => void) | undefined;
+  try {
+    const executionCtx = c.executionCtx;
+    waitUntil = (work) => executionCtx.waitUntil(work);
+  } catch {
+    waitUntil = undefined;
+  }
+  const response = await authFor(c.env, {
+    onEmailDeliveryFailure: () => {
+      emailDeliveryFailed = true;
+    },
+    waitUntil,
   }).handler(c.req.raw);
   if (emailDeliveryFailed)
     return c.json(

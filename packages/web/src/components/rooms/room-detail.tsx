@@ -79,6 +79,14 @@ export function RoomDetail({
     refetchInterval: 5_000,
   });
   const count = members.data?.members.length;
+  // History names senders by address; their pictures come with the member list.
+  const avatars = new Map(
+    (members.data?.members ?? []).flatMap((member) =>
+      member.avatar
+        ? [[member.address.split("/")[0]!, member.avatar] as const]
+        : [],
+    ),
+  );
   return (
     <div
       ref={container}
@@ -186,6 +194,7 @@ export function RoomDetail({
           roomId={room.id}
           userId={userId}
           view={view}
+          avatars={avatars}
         />
       </div>
     </div>

@@ -35,23 +35,27 @@ export function HostBadge({
 
 /**
  * A member's picture: the owning account's avatar with its host badge in the
- * corner. Only the signed-in account's own image is known to the website, so
- * other owners show their handle's initial on a colour derived from it.
+ * corner. The member list carries the picture of every owner in the room; a
+ * sender with none, or one who has since left, shows their handle's initial on
+ * a colour derived from it.
  */
 export function MemberAvatar({
   address,
   host,
   owned,
+  avatar,
   className,
 }: {
   address: string;
   host: HostKind;
   owned?: boolean;
+  avatar?: string;
   className?: string;
 }) {
   const { data: session } = authClient.useSession();
   const handle = address.split("/")[0] ?? address;
-  const image = owned ? session?.user.image : undefined;
+  // The session is the fresher source for this account, right after an upload.
+  const image = (owned ? session?.user.image : undefined) ?? avatar;
   let hash = 0;
   for (const char of handle) hash = (hash * 31 + char.charCodeAt(0)) | 0;
   return (

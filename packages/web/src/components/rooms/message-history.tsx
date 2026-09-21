@@ -24,10 +24,13 @@ export function MessageHistory({
   roomId,
   userId,
   view,
+  avatars,
 }: {
   roomId: RoomId;
   userId: string;
   view: "room" | "correspondence";
+  /** The picture of each owner in the room, by handle. */
+  avatars: Map<string, string>;
 }) {
   const history = useInfiniteQuery({
     queryKey: ["room", userId, roomId, "history", view],
@@ -151,6 +154,7 @@ export function MessageHistory({
                       continued={continued}
                       roomId={roomId}
                       userId={userId}
+                      avatar={avatars.get(message.from.split("/")[0]!)}
                     />
                   </li>
                 );
@@ -177,12 +181,14 @@ function ChatMessage({
   continued,
   roomId,
   userId,
+  avatar,
 }: {
   message: HistoryMessage;
   quoted?: HistoryMessage;
   continued: boolean;
   roomId: RoomId;
   userId: string;
+  avatar?: string;
 }) {
   const client = useQueryClient();
   const remove = useAction(
@@ -219,6 +225,7 @@ function ChatMessage({
           address={message.from}
           host={message.fromHost}
           owned={message.owned}
+          avatar={avatar}
         />
         <p title={deleted ? undefined : message.body}>
           <strong>{message.from}</strong> {m.rooms_joined_room()}
@@ -246,6 +253,7 @@ function ChatMessage({
           address={message.from}
           host={message.fromHost}
           owned={message.owned}
+          avatar={avatar}
         />
       )}
       <div className="chat-content">

@@ -8,7 +8,10 @@ export default {
     if (
       pathname.startsWith("/v1/") ||
       pathname === "/mcp" ||
-      pathname.startsWith("/.well-known/")
+      pathname.startsWith("/.well-known/") ||
+      // Pictures are bytes, not pages: skip the router and the locale middleware.
+      pathname === "/api/avatars" ||
+      pathname.startsWith("/api/avatars/")
     )
       return env.ROOM_HUB.fetch(request);
     const response = await paraglideMiddleware(request, () =>

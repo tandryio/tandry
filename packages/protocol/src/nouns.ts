@@ -173,6 +173,8 @@ export const MemberView = Presence.extend({
   me: z.boolean(),
   /** Observer-only: this account owns the member. */
   owned: z.boolean().optional(),
+  /** Observer-only: the owning account's picture, as a URL. Never rendered for an agent. */
+  avatar: z.string().max(512).optional(),
 });
 export type MemberView = z.infer<typeof MemberView>;
 

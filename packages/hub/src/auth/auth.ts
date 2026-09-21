@@ -2,11 +2,12 @@ import emailMessages from "./messages/email.json";
 import { betterAuth } from "better-auth";
 import { bearer, deviceAuthorization, emailOTP, jwt } from "better-auth/plugins";
 import { mcp } from "@better-auth/mcp";
-import { APIError } from "better-auth/api";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
 import * as oauthSchema from "./oauth-schema";
+import { adoptForeignAvatar, avatarBase, isForeign } from "../avatars/avatars";
 
 const MINUTE_SECONDS = 60;
 const DAY_SECONDS = 24 * 60 * MINUTE_SECONDS;
@@ -24,6 +25,9 @@ export interface AuthConfig extends Pick<
   GITHUB_CLIENT_SECRET?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
+  /** Where an identity provider's picture is copied to. Absent: it is left where it is. */
+  AVATARS?: R2Bucket;
+  AVATAR_BASE_URL?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM?: string;
   DEV_EMAIL_OTP?: string;
@@ -48,8 +52,38 @@ export function emailEnabled(env: AuthConfig) {
   return consoleEmailEnabled(env) || !!(env.RESEND_API_KEY && env.RESEND_FROM);
 }
 
+export interface AuthOptions {
+  onEmailDeliveryFailure?: () => void;
+  /** Hands work to the Worker so a provider's picture is not fetched in the sign-in path. */
+  waitUntil?: (work: Promise<unknown>) => void;
+}
+
+/**
+ * A picture an identity provider wrote at sign-up becomes ours. Sign-in never
+ * fails over it: the copy is deferred where the caller can defer, and swallowed
+ * either way. A provider that is unreachable just leaves its own URL in place.
+ */
+async function adoptPicture(
+  env: AuthConfig,
+  options: AuthOptions,
+  user: { id: string; image?: string | null },
+): Promise<void> {
+  const base = avatarBase(env.AVATAR_BASE_URL);
+  if (!env.AVATARS || !isForeign(user.image, base)) return;
+  const work = adoptForeignAvatar(
+    env.AVATARS,
+    env.AUTH_DB,
+    user.id,
+    user.image,
+    Date.now(),
+    base,
+  ).catch(() => {});
+  if (options.waitUntil) options.waitUntil(work);
+  else await work;
+}
+
 /** Construct per request: D1 and request-scoped bindings must not escape the request. */
-export function authFor(env: AuthConfig, onEmailDeliveryFailure?: () => void) {
+export function authFor(env: AuthConfig, options: AuthOptions = {}) {
   if (
     !env.BETTER_AUTH_SECRET ||
     env.BETTER_AUTH_SECRET.length < MIN_SECRET_LENGTH
@@ -77,6 +111,24 @@ export function authFor(env: AuthConfig, onEmailDeliveryFailure?: () => void) {
       additionalFields: {
         handle: { type: "string", required: false, input: false },
       },
+    },
+    // The one moment a provider writes a picture: provisioning the account.
+    // Later writes carry a provider's picture only under `overrideUserInfo` or
+    // `updateUserInfoOnLink`, which are off here, and a client's own profile
+    // update is refused a picture below, so there is nothing later to adopt.
+    databaseHooks: {
+      user: { create: { after: (user) => adoptPicture(env, options, user) } },
+    },
+    // A picture reaches every observer of every room its account is in, so the
+    // row holds only what a provider wrote or what POST /api/avatars stored,
+    // never a URL a client picked.
+    hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path === "/update-user" && ctx.body && "image" in ctx.body)
+          throw new APIError("BAD_REQUEST", {
+            message: "Upload the picture instead",
+          });
+      }),
     },
     trustedOrigins: [env.BETTER_AUTH_URL],
     disabledPaths: ["/token"],
@@ -177,7 +229,7 @@ export function authFor(env: AuthConfig, onEmailDeliveryFailure?: () => void) {
                   if (!response.ok) throw new Error("Resend rejected email");
                   await response.body?.cancel();
                 } catch {
-                  onEmailDeliveryFailure?.();
+                  options.onEmailDeliveryFailure?.();
                   // Never log the API key, recipient, OTP, or Resend response body.
                   throw new APIError("SERVICE_UNAVAILABLE", {
                     message: "Could not send the code; try again later",

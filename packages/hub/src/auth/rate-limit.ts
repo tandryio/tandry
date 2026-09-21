@@ -13,6 +13,7 @@ const OTP_LIMITS = {
   globalDay: { max: 1000, windowMs: DAY_MS },
 } satisfies Record<string, RateLimit>;
 const HANDLE_CLAIM_LIMIT: RateLimit = { max: 10, windowMs: MINUTE_MS };
+const AVATAR_UPLOAD_LIMIT: RateLimit = { max: 10, windowMs: MINUTE_MS };
 export const OTP_RETRY_AFTER_SECONDS = 60;
 
 /** Fixed-window counter in D1. Used only for sign-in abuse, never for messages. */
@@ -65,4 +66,11 @@ export function allowHandleClaim(
   accountId: string,
 ): Promise<boolean> {
   return allow(db, `handle:${accountId}`, HANDLE_CLAIM_LIMIT);
+}
+
+export function allowAvatarUpload(
+  db: D1Database,
+  accountId: string,
+): Promise<boolean> {
+  return allow(db, `avatar:${accountId}`, AVATAR_UPLOAD_LIMIT);
 }
