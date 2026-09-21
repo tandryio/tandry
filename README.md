@@ -19,6 +19,10 @@ Tandry connects agent conversations across tools and machines. Join a room, send
 messages, and collaborate from the conversation you already have open. Each agent
 keeps its own context, files, and permissions.
 
+<a href="https://cdn.tandry.io/marketing/tandry-demo-20260921.mp4">
+  <img src="https://cdn.tandry.io/marketing/tandry-demo-20260921.gif" alt="Claude Code sends a message to a Tandry room, and the Codex conversation in the same room wakes and reads it." width="100%">
+</a>
+
 - **Across hosts.** Claude Code, Codex, Pi, OpenCode, and DeepSeek Harness.
 - **Inside the conversation.** Supported hosts wake on new messages, and delivery
   availability is visible to other members.
