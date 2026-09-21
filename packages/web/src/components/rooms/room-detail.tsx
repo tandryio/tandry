@@ -1,12 +1,12 @@
 import type { RoomSummary } from "@tandryio/protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { m } from "../../paraglide/messages";
 import { call } from "../../lib/hub";
 import { errorText } from "../../lib/i18n";
 import { useAction } from "../../lib/action";
 import { ConfirmAction } from "../confirm-action";
-import { Badge, Button, Icon, Input, Status } from "../ui";
+import { Badge, Button, Icon, Status } from "../ui";
 import { MemberList } from "./member-list";
 import { MessageHistory } from "./message-history";
 
@@ -17,8 +17,61 @@ export function RoomDetail({
   room: RoomSummary;
   userId: string;
 }) {
+  const [fullscreen, setFullscreen] = useState(false);
+  const container = useRef<HTMLDivElement>(null);
+  const fullscreenButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!fullscreen || !container.current) return;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const siblings: Array<{ element: HTMLElement; inert: boolean }> = [];
+    for (
+      let node: HTMLElement | null = container.current;
+      node?.parentElement;
+      node = node.parentElement
+    ) {
+      for (const sibling of node.parentElement.children) {
+        if (sibling !== node && sibling instanceof HTMLElement) {
+          siblings.push({ element: sibling, inert: sibling.inert });
+          sibling.inert = true;
+        }
+      }
+      if (node.parentElement === document.body) break;
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setFullscreen(false);
+      }
+      if (event.key === "Tab") {
+        const controls = Array.from(
+          container.current?.querySelectorAll<HTMLElement>(
+            'button:not(:disabled), a[href], input:not(:disabled), textarea:not(:disabled), select:not(:disabled), [tabindex="0"]',
+          ) ?? [],
+        ).filter(
+          (element) =>
+            element.getClientRects().length && !element.closest("[inert]"),
+        );
+        const first = controls[0];
+        const last = controls.at(-1);
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = overflow;
+      for (const { element, inert } of siblings) element.inert = inert;
+      document.removeEventListener("keydown", onKeyDown);
+      fullscreenButton.current?.focus();
+    };
+  }, [fullscreen]);
   const [view, setView] = useState<"room" | "correspondence">("room");
-  const [panel, setPanel] = useState<"members" | "settings">("members");
   const [copied, setCopied] = useState<"" | "done" | "failed">("");
   const members = useQuery({
     queryKey: ["room", userId, room.id, "members"],
@@ -27,16 +80,26 @@ export function RoomDetail({
   });
   const count = members.data?.members.length;
   return (
-    <div className="room-chat">
+    <div
+      ref={container}
+      className={`room-chat${fullscreen ? " room-chat-fullscreen" : ""}`}
+      role={fullscreen ? "dialog" : undefined}
+      aria-modal={fullscreen || undefined}
+      aria-label={fullscreen ? room.name : undefined}
+    >
       <header className="room-chat-header">
         <div className="room-chat-title">
           <h2>
-            {room.name}
+            <RoomField room={room} userId={userId} field="name" />
             <Badge>
               {room.role === "owner" ? m.rooms_owner() : m.rooms_member_role()}
             </Badge>
           </h2>
-          {room.description && <p>{room.description}</p>}
+          {(room.description || room.role === "owner") && (
+            <div className="room-description-line">
+              <RoomField room={room} userId={userId} field="description" />
+            </div>
+          )}
         </div>
         <div className="room-chat-tools">
           <div
@@ -76,6 +139,19 @@ export function RoomDetail({
               <Icon name={copied === "done" ? "check" : "copy"} />
             </button>
           )}
+          {room.role === "owner" && (
+            <RoomCodeReset room={room} userId={userId} />
+          )}
+          <Button
+            ref={fullscreenButton}
+            variant="ghost"
+            size="sm"
+            aria-pressed={fullscreen}
+            onClick={() => setFullscreen(!fullscreen)}
+          >
+            <Icon name={fullscreen ? "minimize" : "maximize"} />
+            {fullscreen ? m.rooms_exit_fullscreen() : m.rooms_fullscreen()}
+          </Button>
           <span className="sr-only" aria-live="polite">
             {copied === "done" ? m.rooms_code_copied() : ""}
           </span>
@@ -83,42 +159,12 @@ export function RoomDetail({
       </header>
       {copied === "failed" && <Status error>{m.rooms_copy_failed()}</Status>}
       <div className="room-chat-body">
-        <MessageHistory
-          key={view}
-          roomId={room.id}
-          userId={userId}
-          view={view}
-        />
         <aside className="room-chat-side">
-          {room.role === "owner" ? (
-            <div
-              className="segmented-control"
-              role="group"
-              aria-label={m.rooms_views()}
-            >
-              <Button
-                aria-pressed={panel === "members"}
-                onClick={() => setPanel("members")}
-              >
-                {m.rooms_members()}
-                {count !== undefined && <span className="count">{count}</span>}
-              </Button>
-              <Button
-                aria-pressed={panel === "settings"}
-                onClick={() => setPanel("settings")}
-              >
-                {m.rooms_settings()}
-              </Button>
-            </div>
-          ) : (
-            <h3 className="room-chat-side-title">
-              {m.rooms_members()}
-              {count !== undefined && <span className="count">{count}</span>}
-            </h3>
-          )}
-          {panel === "settings" && room.role === "owner" ? (
-            <RoomSettings room={room} userId={userId} />
-          ) : members.isPending ? (
+          <h3 className="room-chat-side-title">
+            {m.rooms_members()}
+            {count !== undefined && <span className="count">{count}</span>}
+          </h3>
+          {members.isPending ? (
             <p className="chat-side-empty" role="status">
               {m.common_loading()}
             </p>
@@ -135,75 +181,173 @@ export function RoomDetail({
             </>
           )}
         </aside>
+        <MessageHistory
+          key={view}
+          roomId={room.id}
+          userId={userId}
+          view={view}
+        />
       </div>
     </div>
   );
 }
 
-function RoomSettings({ room, userId }: { room: RoomSummary; userId: string }) {
+function RoomField({
+  room,
+  userId,
+  field,
+}: {
+  room: RoomSummary;
+  userId: string;
+  field: "name" | "description";
+}) {
   const client = useQueryClient();
-  const [name, setName] = useState(room.name);
-  const [description, setDescription] = useState(room.description);
-  const [notice, setNotice] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(room[field]);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const label =
+    field === "name" ? m.rooms_edit_name() : m.rooms_edit_description();
+  const close = () => {
+    setEditing(false);
+    requestAnimationFrame(() => trigger.current?.focus());
+  };
   const update = useAction(
-    (rotateCode: boolean) =>
-      call(
-        "update_room",
-        rotateCode
-          ? { room: room.id, rotateCode: true }
-          : { room: room.id, name, description },
-      ),
+    () => call("update_room", { room: room.id, [field]: draft }),
     {
       onSuccess: async () => {
-        setNotice(m.rooms_saved());
         await client.invalidateQueries({ queryKey: ["rooms", userId] });
+        close();
       },
     },
   );
+  const save = () => {
+    if (update.busy || (field === "name" && !draft.trim())) return;
+    if (draft === room[field]) close();
+    else update.run();
+  };
+  if (room.role !== "owner") return <span>{room[field]}</span>;
   return (
-    <section className="room-settings">
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          update.run(false);
-        }}
+    <span className={`room-inline-field room-inline-field-${field}`}>
+      {editing ? (
+        <span
+          className="room-inline-editor"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              if (!update.busy) close();
+            } else if (
+              event.key === "Enter" &&
+              !event.shiftKey &&
+              !event.nativeEvent.isComposing
+            ) {
+              event.preventDefault();
+              save();
+            }
+          }}
+        >
+          {field === "name" ? (
+            <input
+              autoFocus
+              aria-label={label}
+              className="room-inline-input"
+              value={draft}
+              maxLength={80}
+              disabled={update.busy}
+              onChange={(event) => setDraft(event.target.value)}
+            />
+          ) : (
+            <textarea
+              autoFocus
+              aria-label={label}
+              className="room-inline-input"
+              value={draft}
+              maxLength={500}
+              rows={2}
+              disabled={update.busy}
+              onChange={(event) => setDraft(event.target.value)}
+            />
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="room-inline-action"
+            aria-label={m.rooms_save()}
+            title={m.rooms_save()}
+            busy={update.busy}
+            disabled={field === "name" && !draft.trim()}
+            onClick={save}
+          >
+            <Icon name="check" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="room-inline-action"
+            aria-label={m.common_cancel()}
+            title={m.common_cancel()}
+            disabled={update.busy}
+            onClick={close}
+          >
+            <Icon name="close" />
+          </Button>
+        </span>
+      ) : (
+        <button
+          ref={trigger}
+          type="button"
+          className="room-inline-trigger"
+          aria-label={label}
+          title={label}
+          onClick={() => {
+            setDraft(room[field]);
+            update.reset();
+            setEditing(true);
+          }}
+        >
+          <span>{room[field] || m.rooms_add_description()}</span>
+          <Icon name="edit" />
+        </button>
+      )}
+      {editing && update.error && (
+        <span className="room-inline-error" role="alert">
+          {update.error}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function RoomCodeReset({
+  room,
+  userId,
+}: {
+  room: RoomSummary;
+  userId: string;
+}) {
+  const client = useQueryClient();
+  const update = useAction(
+    () => call("update_room", { room: room.id, rotateCode: true }),
+    {
+      onSuccess: () =>
+        client.invalidateQueries({ queryKey: ["rooms", userId] }),
+    },
+  );
+  return (
+    <details key={room.code} className="room-code-options">
+      <summary
+        aria-label={m.rooms_code_options()}
+        title={m.rooms_code_options()}
       >
-        <label>
-          {m.rooms_name_label()}
-          <Input
-            required
-            maxLength={80}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            disabled={update.busy}
-          />
-        </label>
-        <label>
-          {m.rooms_description()}
-          <textarea
-            className="ui-input"
-            maxLength={500}
-            rows={4}
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            disabled={update.busy}
-          />
-        </label>
-        <Button variant="primary" size="sm" busy={update.busy}>
-          {m.rooms_save()}
-        </Button>
-      </form>
-      <div className="room-management">
-        <ConfirmAction
-          key={room.code}
-          label={m.rooms_rotate_code()}
-          description={m.rooms_rotate_confirm()}
-          busy={update.busy}
-          onConfirm={() => update.run(true)}
-        />
-      </div>
+        <Icon name="chevron" />
+      </summary>
+      <ConfirmAction
+        label={m.rooms_rotate_code()}
+        description={m.rooms_rotate_confirm()}
+        busy={update.busy}
+        onConfirm={update.run}
+      />
       {update.error && <Status error>{update.error}</Status>}
-      {notice && !update.error && <Status>{notice}</Status>}
-    </section>
+    </details>
   );
 }

@@ -1,6 +1,6 @@
 import { newId, RoomId, type RoomSummary } from "@tandryio/protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { m } from "../paraglide/messages";
 import { errorText } from "../lib/i18n";
 import { call } from "../lib/hub";
@@ -237,18 +237,46 @@ function RoomList({
 }
 
 function RoomCard({ room }: { room: RoomSummary }) {
+  const [copied, setCopied] = useState<"" | "done" | "failed">("");
+  useEffect(() => {
+    if (!copied) return;
+    const timeout = window.setTimeout(() => setCopied(""), 1600);
+    return () => window.clearTimeout(timeout);
+  }, [copied, room.code]);
   return (
     <article className="account-card room-card">
       <div className="room-title">
         <span className="room-card-icon">
           <Icon name="rooms" />
         </span>
-        <div>
+        <div className="room-card-heading">
           <h2>
-            <a href={`/rooms?room=${encodeURIComponent(room.id)}`}>
+            <a
+              className="room-card-link"
+              href={`/rooms?room=${encodeURIComponent(room.id)}`}
+            >
               {room.name}
             </a>
           </h2>
+          {room.code && (
+            <button
+              type="button"
+              className="room-code-chip"
+              title={m.rooms_copy_code()}
+              aria-label={`${m.rooms_copy_code()}: ${room.code}`}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(room.code!);
+                  setCopied("done");
+                } catch {
+                  setCopied("failed");
+                }
+              }}
+            >
+              <code>{room.code}</code>
+              <Icon name={copied === "done" ? "check" : "copy"} />
+            </button>
+          )}
         </div>
         <Badge>
           {room.role === "owner" ? m.rooms_owner() : m.rooms_member_role()}
@@ -257,15 +285,10 @@ function RoomCard({ room }: { room: RoomSummary }) {
       <p className="muted room-description">
         {room.description || m.rooms_no_description()}
       </p>
-      {room.code && <code>{room.code}</code>}
-      <div className="actions">
-        <Button asChild variant="ghost">
-          <a href={`/rooms?room=${encodeURIComponent(room.id)}`}>
-            {m.rooms_open()}
-            <Icon name="arrow" />
-          </a>
-        </Button>
-      </div>
+      <span className="sr-only" aria-live="polite">
+        {copied === "done" ? m.rooms_code_copied() : ""}
+      </span>
+      {copied === "failed" && <Status error>{m.rooms_copy_failed()}</Status>}
     </article>
   );
 }

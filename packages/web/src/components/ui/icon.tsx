@@ -1,5 +1,6 @@
 import {
   Archive,
+  X,
   ArrowUpRight,
   BookOpen,
   Camera,
@@ -13,6 +14,8 @@ import {
   Link2,
   LogOut,
   MessagesSquare,
+  Maximize2,
+  Minimize2,
   Monitor,
   PenLine,
   Plus,
@@ -25,6 +28,7 @@ import { cn } from "../../lib/cn";
 /** Semantic icon names used by the workspace; each maps to a Lucide glyph. */
 const icons = {
   arrow: ArrowUpRight,
+  close: X,
   chevron: ChevronDown,
   check: Check,
   plus: Plus,
@@ -43,6 +47,8 @@ const icons = {
   credit: CreditCard,
   edit: PenLine,
   camera: Camera,
+  maximize: Maximize2,
+  minimize: Minimize2,
 } as const;
 
 export type IconName = keyof typeof icons;
