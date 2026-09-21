@@ -426,6 +426,7 @@ Cloudflare-generated runtime declarations also retain their upstream headers.
 - [highlight.js@10.7.3](https://registry.npmjs.org/highlight.js/-/highlight.js-10.7.3.tgz) — BSD-3-Clause; [notice 6c081431591d](#license-6c081431591d)
 - [hono@4.13.7](https://registry.npmjs.org/hono/-/hono-4.13.7.tgz) — MIT; [notice a6ab98e5c77b](#license-a6ab98e5c77b)
 - [hosted-git-info@9.0.3](https://registry.npmjs.org/hosted-git-info/-/hosted-git-info-9.0.3.tgz) — ISC; [notice c1476ec53119](#license-c1476ec53119)
+- [html-url-attributes@3.0.1](https://registry.npmjs.org/html-url-attributes/-/html-url-attributes-3.0.1.tgz) — MIT; [notice e18cf5173e92](#license-e18cf5173e92)
 - [html-void-elements@3.0.0](https://registry.npmjs.org/html-void-elements/-/html-void-elements-3.0.0.tgz) — MIT; [notice ca4662cb5d1b](#license-ca4662cb5d1b)
 - [http-errors@2.0.1](https://registry.npmjs.org/http-errors/-/http-errors-2.0.1.tgz) — MIT; [notice e59f9832204f](#license-e59f9832204f)
 - [http-proxy-agent@7.0.2](https://registry.npmjs.org/http-proxy-agent/-/http-proxy-agent-7.0.2.tgz) — MIT; [notice 71368fd0f5b4](#license-71368fd0f5b4)
@@ -488,6 +489,7 @@ Cloudflare-generated runtime declarations also retain their upstream headers.
 - [mdast-util-mdx-jsx@3.2.0](https://registry.npmjs.org/mdast-util-mdx-jsx/-/mdast-util-mdx-jsx-3.2.0.tgz) — MIT; [notice 536804b3adbf](#license-536804b3adbf)
 - [mdast-util-mdx@3.0.0](https://registry.npmjs.org/mdast-util-mdx/-/mdast-util-mdx-3.0.0.tgz) — MIT; [notice 536804b3adbf](#license-536804b3adbf)
 - [mdast-util-mdxjs-esm@2.0.1](https://registry.npmjs.org/mdast-util-mdxjs-esm/-/mdast-util-mdxjs-esm-2.0.1.tgz) — MIT; [notice 536804b3adbf](#license-536804b3adbf)
+- [mdast-util-newline-to-break@2.0.0](https://registry.npmjs.org/mdast-util-newline-to-break/-/mdast-util-newline-to-break-2.0.0.tgz) — MIT; [notice d8fc337aaf98](#license-d8fc337aaf98)
 - [mdast-util-phrasing@4.1.0](https://registry.npmjs.org/mdast-util-phrasing/-/mdast-util-phrasing-4.1.0.tgz) — MIT; [notice b6d1a4e1831b](#license-b6d1a4e1831b)
 - [mdast-util-to-hast@13.2.1](https://registry.npmjs.org/mdast-util-to-hast/-/mdast-util-to-hast-13.2.1.tgz) — MIT; [notice ca4662cb5d1b](#license-ca4662cb5d1b)
 - [mdast-util-to-markdown@2.1.2](https://registry.npmjs.org/mdast-util-to-markdown/-/mdast-util-to-markdown-2.1.2.tgz) — MIT; [notice dd1081884a92](#license-dd1081884a92)
@@ -583,6 +585,7 @@ Cloudflare-generated runtime declarations also retain their upstream headers.
 - [range-parser@1.3.0](https://registry.npmjs.org/range-parser/-/range-parser-1.3.0.tgz) — MIT; [notice f655e6291356](#license-f655e6291356)
 - [raw-body@3.0.2](https://registry.npmjs.org/raw-body/-/raw-body-3.0.2.tgz) — MIT; [notice 37876d7de8bd](#license-37876d7de8bd)
 - [react-dom@19.3.0](https://registry.npmjs.org/react-dom/-/react-dom-19.3.0.tgz) — MIT; [notice da6d3703ed11](#license-da6d3703ed11)
+- [react-markdown@10.1.0](https://registry.npmjs.org/react-markdown/-/react-markdown-10.1.0.tgz) — MIT; [notice f6196c64e144](#license-f6196c64e144)
 - [react-remove-scroll-bar@2.3.8](https://registry.npmjs.org/react-remove-scroll-bar/-/react-remove-scroll-bar-2.3.8.tgz) — MIT; [notice a79aae0c0f21](#license-a79aae0c0f21)
 - [react-remove-scroll@2.7.2](https://registry.npmjs.org/react-remove-scroll/-/react-remove-scroll-2.7.2.tgz) — MIT; [notice 30f0cfddf483](#license-30f0cfddf483)
 - [react-style-singleton@2.2.3](https://registry.npmjs.org/react-style-singleton/-/react-style-singleton-2.2.3.tgz) — MIT; [notice 30f0cfddf483](#license-30f0cfddf483)
@@ -597,6 +600,7 @@ Cloudflare-generated runtime declarations also retain their upstream headers.
 - [regex@6.1.0](https://registry.npmjs.org/regex/-/regex-6.1.0.tgz) — MIT; [notice 3d19c2b6246b](#license-3d19c2b6246b)
 - [rehype-raw@7.0.0](https://registry.npmjs.org/rehype-raw/-/rehype-raw-7.0.0.tgz) — MIT; [notice ca4662cb5d1b](#license-ca4662cb5d1b)
 - [rehype-recma@1.0.0](https://registry.npmjs.org/rehype-recma/-/rehype-recma-1.0.0.tgz) — MIT; [notice e18cf5173e92](#license-e18cf5173e92)
+- [remark-breaks@4.0.0](https://registry.npmjs.org/remark-breaks/-/remark-breaks-4.0.0.tgz) — MIT; [notice d8fc337aaf98](#license-d8fc337aaf98)
 - [remark-gfm@4.0.1](https://registry.npmjs.org/remark-gfm/-/remark-gfm-4.0.1.tgz) — MIT; [notice dd1081884a92](#license-dd1081884a92)
 - [remark-mdx@3.1.1](https://registry.npmjs.org/remark-mdx/-/remark-mdx-3.1.1.tgz) — MIT; [notice a18bf7b2118a](#license-a18bf7b2118a)
 - [remark-parse@11.0.0](https://registry.npmjs.org/remark-parse/-/remark-parse-11.0.0.tgz) — MIT; [notice 413654b0a78b](#license-413654b0a78b)
@@ -15769,6 +15773,38 @@ Copyright 2026 Alexey Zaytsev
    limitations under the License.
 ```
 
+<a id="license-d8fc337aaf98"></a>
+
+### d8fc337aaf98
+
+- mdast-util-newline-to-break@2.0.0: https://registry.npmjs.org/mdast-util-newline-to-break/-/mdast-util-newline-to-break-2.0.0.tgz (package/license)
+- remark-breaks@4.0.0: https://registry.npmjs.org/remark-breaks/-/remark-breaks-4.0.0.tgz (package/license)
+
+```text
+(The MIT License)
+
+Copyright (c) 2017 Titus Wormer <tituswormer@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
+
 <a id="license-d90bf0a089da"></a>
 
 ### d90bf0a089da
@@ -16530,6 +16566,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ### e18cf5173e92
 
+- html-url-attributes@3.0.1: https://registry.npmjs.org/html-url-attributes/-/html-url-attributes-3.0.1.tgz (package/license)
 - recma-build-jsx@1.0.0: https://registry.npmjs.org/recma-build-jsx/-/recma-build-jsx-1.0.0.tgz (package/license)
 - recma-jsx@1.0.1: https://registry.npmjs.org/recma-jsx/-/recma-jsx-1.0.1.tgz (package/license)
 - recma-parse@1.0.0: https://registry.npmjs.org/recma-parse/-/recma-parse-1.0.0.tgz (package/license)
@@ -17090,6 +17127,36 @@ Copyright (c) 2015 Douglas Christopher Wilson <doug@somethingdoug.com>
 
 Set-Cookie parsing based on https://github.com/nfriedly/set-cookie-parser
 Copyright (c) 2015 Nathan Friedly <nathan@nfriedly.com> (http://nfriedly.com/)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+<a id="license-f6196c64e144"></a>
+
+### f6196c64e144
+
+- react-markdown@10.1.0: https://registry.npmjs.org/react-markdown/-/react-markdown-10.1.0.tgz (package/license)
+
+```text
+The MIT License (MIT)
+
+Copyright (c) Espen Hovlandsdal
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

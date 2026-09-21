@@ -1001,12 +1001,106 @@
   color: #dfe7f3;
   font-size: 13px;
   line-height: 1.65;
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 .account-page .chat-body.is-deleted {
   color: var(--muted);
   font-style: italic;
+}
+
+/* Markdown a member wrote: prose that has to stay inside a chat bubble. */
+.markdown-body > :first-child {
+  margin-top: 0;
+}
+.markdown-body > :last-child {
+  margin-bottom: 0;
+}
+.account-page .markdown-body p,
+.markdown-body ul,
+.markdown-body ol,
+.markdown-body pre,
+.markdown-body blockquote,
+.markdown-table {
+  margin: 0 0 8px;
+}
+.account-page .markdown-body :is(h1, h2, h3, h4, h5, h6) {
+  margin: 12px 0 5px;
+  color: #eef3fb;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 20px;
+}
+.markdown-body li {
+  margin: 2px 0;
+}
+/* A task list carries its own marks; the list bullet would repeat them. */
+.markdown-body .contains-task-list {
+  padding-left: 2px;
+  list-style: none;
+}
+.markdown-body .task-list-item > input[type="checkbox"] {
+  margin: 0 6px 0 0;
+  vertical-align: -1px;
+}
+.markdown-body li > p {
+  margin: 0;
+}
+.markdown-body a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.markdown-body blockquote {
+  padding-left: 9px;
+  border-left: 2px solid #ffffff1f;
+  color: #b8c7dc;
+}
+.markdown-body code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #ffffff12;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+/* Code keeps its own line breaks and scrolls rather than widening the bubble. */
+.markdown-body pre {
+  padding: 8px 10px;
+  border: 1px solid #ffffff12;
+  border-radius: 6px;
+  background: #0b0f17;
+  overflow-x: auto;
+}
+.markdown-body pre code {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  line-height: 1.55;
+  overflow-wrap: normal;
+}
+.markdown-table {
+  overflow-x: auto;
+}
+.markdown-body table {
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.markdown-body :is(th, td) {
+  padding: 3px 8px;
+  border: 1px solid #ffffff14;
+  text-align: left;
+}
+.markdown-body th {
+  background: #ffffff0a;
+  font-weight: 600;
+}
+.markdown-body hr {
+  margin: 10px 0;
+  border: 0;
+  border-top: 1px solid var(--rule);
 }
 .account-page .chat-routing {
   display: flex;

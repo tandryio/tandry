@@ -10,6 +10,7 @@ import { errorText } from "../../lib/i18n";
 import { ConfirmAction } from "../confirm-action";
 import { Badge, Button, Icon, Status } from "../ui";
 import { MemberAvatar } from "./host-avatar";
+import { MarkdownBody } from "./markdown";
 
 /** Consecutive messages from one sender within this gap share a header. */
 const GROUP_GAP_MS = 5 * 60_000;
@@ -307,7 +308,7 @@ function ChatMessage({
           {deleted ? (
             <p className="chat-body is-deleted">{m.rooms_message_deleted()}</p>
           ) : (
-            <p className="chat-body">{message.body}</p>
+            <MarkdownBody className="chat-body" body={message.body} />
           )}
         </div>
         {message.owned && !deleted && (

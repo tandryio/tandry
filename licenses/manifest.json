@@ -4970,6 +4970,18 @@
       ]
     },
     {
+      "name": "html-url-attributes",
+      "version": "3.0.1",
+      "license": "MIT",
+      "source": "https://registry.npmjs.org/html-url-attributes/-/html-url-attributes-3.0.1.tgz",
+      "notices": [
+        {
+          "sha256": "e18cf5173e928f808f0cd208097fee8fbec9d28fc0255213938e4c559e29ff58",
+          "source": "https://registry.npmjs.org/html-url-attributes/-/html-url-attributes-3.0.1.tgz (package/license)"
+        }
+      ]
+    },
+    {
       "name": "html-void-elements",
       "version": "3.0.0",
       "license": "MIT",
@@ -5711,6 +5723,18 @@
         {
           "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61",
           "source": "https://registry.npmjs.org/mdast-util-mdxjs-esm/-/mdast-util-mdxjs-esm-2.0.1.tgz (package/license)"
+        }
+      ]
+    },
+    {
+      "name": "mdast-util-newline-to-break",
+      "version": "2.0.0",
+      "license": "MIT",
+      "source": "https://registry.npmjs.org/mdast-util-newline-to-break/-/mdast-util-newline-to-break-2.0.0.tgz",
+      "notices": [
+        {
+          "sha256": "d8fc337aaf98fc7a0f5498edc18b47a9df8cdfcc1a0f013519105905722c7a4c",
+          "source": "https://registry.npmjs.org/mdast-util-newline-to-break/-/mdast-util-newline-to-break-2.0.0.tgz (package/license)"
         }
       ]
     },
@@ -6855,6 +6879,18 @@
       ]
     },
     {
+      "name": "react-markdown",
+      "version": "10.1.0",
+      "license": "MIT",
+      "source": "https://registry.npmjs.org/react-markdown/-/react-markdown-10.1.0.tgz",
+      "notices": [
+        {
+          "sha256": "f6196c64e144f9a6fa9154c3a80bc8b89615a9567934b83a8951879f06ba2aef",
+          "source": "https://registry.npmjs.org/react-markdown/-/react-markdown-10.1.0.tgz (package/license)"
+        }
+      ]
+    },
+    {
       "name": "react-remove-scroll-bar",
       "version": "2.3.8",
       "license": "MIT",
@@ -7020,6 +7056,18 @@
         {
           "sha256": "e18cf5173e928f808f0cd208097fee8fbec9d28fc0255213938e4c559e29ff58",
           "source": "https://registry.npmjs.org/rehype-recma/-/rehype-recma-1.0.0.tgz (package/license)"
+        }
+      ]
+    },
+    {
+      "name": "remark-breaks",
+      "version": "4.0.0",
+      "license": "MIT",
+      "source": "https://registry.npmjs.org/remark-breaks/-/remark-breaks-4.0.0.tgz",
+      "notices": [
+        {
+          "sha256": "d8fc337aaf98fc7a0f5498edc18b47a9df8cdfcc1a0f013519105905722c7a4c",
+          "source": "https://registry.npmjs.org/remark-breaks/-/remark-breaks-4.0.0.tgz (package/license)"
         }
       ]
     },
