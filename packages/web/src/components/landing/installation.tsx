@@ -301,26 +301,6 @@ export function Installation() {
     setSelected(key);
     history.replaceState(null, "", `#${key}`);
   };
-  const more = [
-    {
-      title: m.install_other_title(),
-      body: m.install_other_body(),
-      link: m.install_other_link(),
-      href: "/docs/messaging",
-    },
-    {
-      title: m.install_switch_title(),
-      body: m.install_switch_body(),
-      link: m.install_switch_link(),
-      href: "/docs/hosts#switching-connections",
-    },
-    {
-      title: m.install_self_host_title(),
-      body: m.install_self_host_body(),
-      link: m.install_self_host_link(),
-      href: "/docs/self-hosting",
-    },
-  ];
 
   return (
     <>
@@ -411,19 +391,6 @@ export function Installation() {
             ))}
           </TabsPrimitive.Root>
         </Reveal>
-      </section>
-
-      <section className="install-more">
-        {more.map((item, index) => (
-          <Reveal key={item.href} delay={index * 0.08}>
-            <article>
-              <span className="editorial-label">0{index + 1}</span>
-              <h2>{item.title}</h2>
-              <p>{item.body}</p>
-              <SiteLink href={item.href}>{item.link} →</SiteLink>
-            </article>
-          </Reveal>
-        ))}
       </section>
     </>
   );

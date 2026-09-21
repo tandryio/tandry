@@ -259,41 +259,15 @@ img[data-host="chatgpt"] {
   line-height: 1.7;
   color: #888;
 }
-.install-panel > footer a,
-.install-more a {
+.install-panel > footer a {
   flex: none;
   font-size: 12.5px;
   color: var(--color-accent);
   text-decoration: none;
 }
-.install-panel > footer a:hover,
-.install-more a:hover {
+.install-panel > footer a:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-
-/* Edge cases */
-.install-more {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 36px;
-  max-width: 1160px;
-  margin: auto;
-  padding: 64px 28px 84px;
-  border-top: 1px solid #ffffff12;
-}
-.install-more h2 {
-  margin: 14px 0 10px;
-  font-size: 17px;
-  font-weight: 550;
-  letter-spacing: -0.02em;
-  color: #eee;
-}
-.install-more p {
-  margin: 0 0 14px;
-  font-size: 13.5px;
-  line-height: 1.8;
-  color: #999;
 }
 
 @media (max-width: 900px) {
@@ -314,10 +288,6 @@ img[data-host="chatgpt"] {
   .install-host {
     padding: 10px;
     font-size: 13px;
-  }
-  .install-more {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 32px;
   }
 }
 @media (max-width: 600px) {
@@ -349,8 +319,5 @@ img[data-host="chatgpt"] {
   .install-steps > li {
     grid-template-columns: minmax(0, 1fr);
     gap: 10px;
-  }
-  .install-more {
-    padding: 44px 16px 56px;
   }
 }
