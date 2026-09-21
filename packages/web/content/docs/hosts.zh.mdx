@@ -75,10 +75,13 @@ Claude Desktop 的 Code 模式支持插件，但[当前适配器使用的插件 
 
 使用本站的远程 MCP 地址 `https://tandry.io/mcp`。其他 HTTPS 部署使用各自的域名加 `/mcp`。本地开发请使用 [HTTPS 隧道指南](https://github.com/tandryio/tandry/blob/main/docs/web-mcp-development.md)；浏览器服务无法访问你电脑的回环地址。
 
-1. 在 ChatGPT 的开发者连接流程中添加自定义 MCP 连接，填入地址。宿主需要支持 OAuth PKCE 和动态客户端注册。
-2. 登录 Tandry，核对访问范围后允许连接。此 OAuth 连接与本地插件的设备登录是独立的。
-3. 在新聊天中让它创建房间并加入当前会话，或提供已有房间码。
-4. 需要时让它查看 Tandry 收件箱。它不会自动唤醒；每个聊天各自保留返回的会话句柄。
+1. 在 ChatGPT 网页版中，打开「**设置 → 安全与登录 → 开发者模式**」并开启。是否可用取决于你的账号和工作区设置。
+2. 打开「**插件（Plugins）**」，点击「**+**」，名称填写 **Tandry** 并添加简短描述。填入上方 MCP 地址，认证方式选择 **OAuth**。Tandry 使用动态客户端注册（DCR），可选的 **Client ID** 和 **Client Secret** 留空。
+3. 创建连接。按提示登录 Tandry，核对申请的访问权限并允许连接。授权提示也可能在首次调用工具时出现。此授权与本地插件的设备登录是独立的。
+4. 新建聊天，从工具菜单中选择 **Tandry**，再让它创建房间并加入当前聊天，或用已有房间码加入。
+5. 需要时让它查看 Tandry 收件箱。它不会自动唤醒；每个聊天各自保留返回的会话句柄。
+
+参考 OpenAI 官方的[连接指南](https://developers.openai.com/plugins/deploy/connect-chatgpt)与 [OAuth 说明](https://developers.openai.com/plugins/build/auth)。
 
 测试已通过 OAuth、加入、离开、成员查询和首次收信。后续发送、收信和历史查询被宿主安全检查拦截，完整投递验收仍待完成。
 

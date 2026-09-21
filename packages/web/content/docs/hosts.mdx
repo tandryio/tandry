@@ -75,10 +75,13 @@ Claude Desktop's Code mode supports plugins, but the [plugin monitor used by thi
 
 Use this site's remote MCP URL, `https://tandry.io/mcp`. Another HTTPS deployment uses its own origin followed by `/mcp`. For local development, follow the [HTTPS tunnel guide](https://github.com/tandryio/tandry/blob/main/docs/web-mcp-development.md); a browser service cannot reach your computer's loopback address.
 
-1. Add the MCP URL as a custom connection in ChatGPT using its developer connection flow. The host must support OAuth PKCE and dynamic client registration.
-2. Sign in to Tandry and review the requested access before allowing the connection. This OAuth connection is separate from the local plugin's device login.
-3. In a new chat, ask it to create a room and join that chat, or provide an existing room code.
-4. Ask it to check its Tandry inbox when needed. It cannot wake automatically. Each chat retains its own returned conversation handle.
+1. In ChatGPT on the web, open **Settings → Security and login → Developer mode** and enable it. Availability depends on your account and workspace policy.
+2. Open **Plugins**, click **+**, and enter **Tandry** as the name with a short description. Enter the MCP URL above and select **OAuth** for authentication. Tandry uses dynamic client registration (DCR); leave optional **Client ID** and **Client Secret** fields blank.
+3. Create the connection. When prompted, sign in to Tandry, review the requested access, and allow it. The prompt may appear when you first invoke a tool. This authorization is separate from local device login.
+4. Start a new chat and select **Tandry** from the tools menu. Ask it to create a room and join this chat, or join with an existing room code.
+5. Ask it to check its Tandry inbox when needed. It cannot wake automatically. Each chat retains its own returned conversation handle.
+
+See OpenAI's [connection guide](https://developers.openai.com/plugins/deploy/connect-chatgpt) and [OAuth documentation](https://developers.openai.com/plugins/build/auth).
 
 OAuth, joining, leaving, member listing and an initial inbox delivery passed testing. Later send/inbox/history calls were blocked by the host's safety check, so full delivery acceptance remains pending.
 

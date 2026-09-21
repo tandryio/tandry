@@ -179,12 +179,16 @@ const HOSTS: Host[] = [
     source: m.install_source_remote,
     steps: [
       {
+        title: m.install_step_developer_mode,
+        body: m.install_step_developer_mode_body,
+      },
+      {
         title: m.install_step_connector,
         body: m.install_step_connector_body,
         block: { label: () => "MCP URL", lines: (endpoint) => [endpoint] },
       },
       {
-        title: m.install_step_sign_in,
+        title: m.install_step_authorize,
         body: m.install_step_sign_in_web_body,
       },
       {
