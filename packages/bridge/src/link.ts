@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import { Frame, LINK_PATH, TandryError, contextHeaders, terminalClose, type CallContext, type ErrorCode, type StateFrame, type Unread } from "@tandryio/protocol";
+import { Frame, LINK_PATH, LINK_PING, TandryError, contextHeaders, terminalClose, type CallContext, type ErrorCode, type StateFrame, type Unread } from "@tandryio/protocol";
 import { agentFor, createOps } from "./ops";
 
 /** Why a link ended for good. A close code from the Hub, or a rejected upgrade. */
@@ -13,6 +13,8 @@ export interface LinkOptions {
   onEnd(reason: LinkEnd, message?: string): void;
   reconnectDelaysMs: readonly number[];
   closeTimeoutMs: number;
+  pingIntervalMs: number;
+  pongTimeoutMs: number;
 }
 
 const REJECTIONS: Partial<Record<ErrorCode, LinkEnd>> = {
@@ -24,10 +26,16 @@ const REJECTIONS: Partial<Record<ErrorCode, LinkEnd>> = {
  * state out. Connected means online. An ordinary drop is retried with backoff
  * and the Hub replays the notice on reconnect; operations keep working over
  * HTTP meanwhile. A terminal close code or a rejected upgrade ends it.
+ *
+ * A path that silently stops carrying data leaves both ends believing the
+ * socket is open, and the Hub's notices go nowhere. So the link pings, and one
+ * that hears nothing back in time is treated as an ordinary drop.
  */
 export class Link {
   private socket: WebSocket | null = null;
   private timer: NodeJS.Timeout | null = null;
+  private heartbeat: NodeJS.Timeout | null = null;
+  private overdue: NodeJS.Timeout | null = null;
   private attempt = 0;
   private stopped = false;
   connected = false;
@@ -50,8 +58,10 @@ export class Link {
     } as WebSocket.ClientOptions);
     this.socket = socket;
     const checkRejection = () => { checking ??= this.checkRejection(socket, context); };
-    socket.on("open", () => { opened = true; this.connected = true; this.attempt = 0; this.reportState(); });
+    socket.on("open", () => { opened = true; this.connected = true; this.attempt = 0; this.reportState(); this.beat(socket); });
     socket.on("message", (data) => {
+      // Anything the Hub sends shows the path is alive, not only the pong.
+      this.heard();
       let json: unknown;
       try { json = JSON.parse(String(data)); } catch { return; }
       const frame = Frame.safeParse(json);
@@ -99,10 +109,32 @@ export class Link {
     this.dropped(socket, end);
   }
 
+  private beat(socket: WebSocket): void {
+    this.heartbeat = setInterval(() => {
+      if (this.overdue || socket.readyState !== WebSocket.OPEN) return;
+      socket.send(LINK_PING);
+      this.overdue = setTimeout(() => this.dropped(socket, null), this.options.pongTimeoutMs);
+      this.overdue.unref?.();
+    }, this.options.pingIntervalMs);
+    this.heartbeat.unref?.();
+  }
+
+  private heard(): void {
+    if (this.overdue) clearTimeout(this.overdue);
+    this.overdue = null;
+  }
+
+  private quiet(): void {
+    if (this.heartbeat) clearInterval(this.heartbeat);
+    this.heartbeat = null;
+    this.heard();
+  }
+
   private dropped(socket: WebSocket, end: { reason: LinkEnd; message?: string } | null): void {
     if (this.socket !== socket) return;
     this.socket = null;
     this.connected = false;
+    this.quiet();
     try { socket.terminate(); } catch { /* already gone */ }
     if (this.stopped) return;
     if (end) { this.stopped = true; this.options.onEnd(end.reason, end.message); return; }
@@ -119,6 +151,7 @@ export class Link {
   stop(): void {
     this.stopped = true;
     this.connected = false;
+    this.quiet();
     if (this.timer) clearTimeout(this.timer);
     const socket = this.socket;
     this.socket = null;

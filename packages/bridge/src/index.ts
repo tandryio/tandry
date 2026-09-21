@@ -51,6 +51,8 @@ interface Timing {
   wakeRetryDelaysMs: readonly number[];
   requestTimeoutMs: number;
   closeTimeoutMs: number;
+  pingIntervalMs: number;
+  pongTimeoutMs: number;
   loginPollFloorMs: number;
 }
 
@@ -60,6 +62,8 @@ const TIMING: Timing = {
   wakeRetryDelaysMs: [1_000, 3_000, 9_000],
   requestTimeoutMs: 15_000,
   closeTimeoutMs: 2_000,
+  pingIntervalMs: 30_000,
+  pongTimeoutMs: 10_000,
   loginPollFloorMs: 2_000,
 };
 
@@ -129,6 +133,8 @@ export function createBridge(options: BridgeOptions): Bridge {
       },
       reconnectDelaysMs: timing.reconnectDelaysMs,
       closeTimeoutMs: timing.closeTimeoutMs,
+      pingIntervalMs: timing.pingIntervalMs,
+      pongTimeoutMs: timing.pongTimeoutMs,
     });
     link.start();
   }

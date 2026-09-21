@@ -355,6 +355,47 @@ test("an ordinary drop reconnects; a terminal close code does not", async () => 
   assert.equal(shell.wakes.length, 0);
 });
 
+test("a link that stops answering is replaced, and notices reach the conversation again", async () => {
+  const { made, shell } = await linked(new FakeShell(), { timing: { ...timing, pingIntervalMs: 20, pongTimeoutMs: 40 } });
+  const dead = hub.links[0]!;
+  hub.silence();
+  // Nothing closed the old socket: only the missing pong says the path is gone.
+  await until(() => hub.linkUpgrades === 2 && hub.links.length === 1 && hub.links[0] !== dead, "a new link in place of the silent one");
+  await until(() => made.inactive() === null, "the client to report the link open");
+
+  hub.notify({ unread: 1, upTo: 1, from });
+  await until(() => shell.wakes.length === 1, "the wake");
+  await settle();
+  assert.equal(hub.linkUpgrades, 2);
+});
+
+test("a quiet link that answers its pings is kept, and disposing stops the pings", async () => {
+  const { made } = await linked(new FakeShell(), { timing: { ...timing, pingIntervalMs: 10, pongTimeoutMs: 40 } });
+  await until(() => hub.pings >= 5, "several heartbeats");
+  assert.equal(hub.linkUpgrades, 1);
+  assert.equal(made.inactive(), null);
+  // Heartbeats are not state frames.
+  assert.ok(hub.states.every((state) => typeof state.wakeable === "boolean"));
+
+  made.dispose();
+  await until(() => hub.links.length === 0, "the link to close");
+  const pings = hub.pings;
+  await settle();
+  assert.equal(hub.pings, pings);
+  assert.equal(hub.linkUpgrades, 1);
+});
+
+test("traffic from the Hub counts as an answer: a notice in place of the pong keeps the link", async () => {
+  const { shell } = await linked(new FakeShell(), { timing: { ...timing, pingIntervalMs: 30, pongTimeoutMs: 60 } });
+  hub.silence();
+  await until(() => hub.pings === 1, "the first heartbeat");
+  hub.notify({ unread: 1, upTo: 1, from });
+  await until(() => shell.wakes.length === 1, "the wake");
+  // Past the first ping's deadline, and before the second's.
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  assert.equal(hub.linkUpgrades, 1);
+});
+
 test("rebound and not_in_room delete the joined marker and do not reconnect", async () => {
   const { made } = await linked();
   hub.closeLinks(CLOSE_CODES.rebound);

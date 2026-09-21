@@ -1,7 +1,7 @@
 import { once } from "node:events";
 import http from "node:http";
 import { WebSocketServer, type WebSocket } from "ws";
-import { HTTP_STATUS, type ErrorBody, type MessageView, type Output, type Unread } from "@tandryio/protocol";
+import { HTTP_STATUS, LINK_PING, LINK_PONG, type ErrorBody, type MessageView, type Output, type Unread } from "@tandryio/protocol";
 
 /**
  * A real local HTTP and WebSocket server speaking the wire protocol, scripted
@@ -16,6 +16,10 @@ export interface FakeHub {
   links: WebSocket[];
   linkUpgrades: number;
   states: { wakeable: boolean; busy?: boolean }[];
+  /** Heartbeats received. Like the real Hub, each is answered with a pong. */
+  pings: number;
+  /** The links open now stop answering, and stay open: a path that went dead without either end being told. */
+  silence(): void;
   /** Answer the next call of `op` with this instead of the default. */
   respond(op: string, reply: Reply | Promise<Reply>): void;
   /** Accept the next call of `op`, then drop the connection without answering. */
@@ -37,6 +41,7 @@ export const message = (seq: number, body = `message ${seq}`): MessageView => ({
 export async function startFakeHub(): Promise<FakeHub> {
   const scripted = new Map<string, (Reply | Promise<Reply> | "drop")[]>();
   let rejection: ErrorBody | null = null;
+  const silent = new Set<WebSocket>();
   const defaults: Record<string, (input: Record<string, unknown>) => unknown> = {
     login_start: () => ({ url: "http://hub.test/device?code=ABCD", userCode: "ABCD", deviceCode: "device-code", intervalSeconds: 0, expiresInSeconds: 600 }),
     login_status: () => ({ state: "approved", token: "device-token", account: { id: "acct", handle: "henry" } }),
@@ -82,7 +87,12 @@ export async function startFakeHub(): Promise<FakeHub> {
     }
     sockets.handleUpgrade(request, socket, head, (link) => {
       hub.links.push(link);
-      link.on("message", (data) => { hub.states.push(JSON.parse(String(data))); });
+      link.on("message", (data) => {
+        const text = String(data);
+        if (text !== LINK_PING) { hub.states.push(JSON.parse(text)); return; }
+        hub.pings++;
+        if (!silent.has(link)) link.send(LINK_PONG);
+      });
       link.on("close", () => { hub.links = hub.links.filter((open) => open !== link); });
     });
   });
@@ -91,10 +101,11 @@ export async function startFakeHub(): Promise<FakeHub> {
   await once(server, "listening");
   const hub: FakeHub = {
     url: `http://127.0.0.1:${(server.address() as { port: number }).port}`,
-    connections: 0, requests: [], links: [], linkUpgrades: 0, states: [], inboxQueue: [],
+    connections: 0, requests: [], links: [], linkUpgrades: 0, states: [], pings: 0, inboxQueue: [],
     respond: (op, reply) => { scripted.set(op, [...(scripted.get(op) ?? []), reply]); },
     drop: (op) => { scripted.set(op, [...(scripted.get(op) ?? []), "drop"]); },
     rejectLinks: (error) => { rejection = error; },
+    silence: () => { for (const link of hub.links) silent.add(link); },
     notify: (unread) => { for (const link of hub.links) link.send(JSON.stringify({ t: "notify", ...unread })); },
     closeLinks: (code) => { for (const link of hub.links) link.close(code); },
     calls: (op) => hub.requests.filter((request) => request.op === op).length,

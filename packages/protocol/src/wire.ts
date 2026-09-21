@@ -112,6 +112,13 @@ export type NotifyFrame = z.infer<typeof NotifyFrame>;
 export const Frame = z.discriminatedUnion("t", [StateFrame, NotifyFrame]);
 export type Frame = z.infer<typeof Frame>;
 
+/**
+ * The link's heartbeat, as bare text rather than frames: the Hub answers it
+ * with a WebSocket auto-response, which does not wake a sleeping room.
+ */
+export const LINK_PING = "ping";
+export const LINK_PONG = "pong";
+
 export const CLOSE_CODES = {
   /** The same conversation connected elsewhere. Stop notifying, do not reconnect. */
   superseded: 4001,

@@ -1,6 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import {
-  CLOSE_CODES, Frame, OLDEST_SUPPORTED_PROTOCOL, TandryError, fail, operations,
+  CLOSE_CODES, Frame, LINK_PING, LINK_PONG, OLDEST_SUPPORTED_PROTOCOL, TandryError, fail, operations,
   type AccountId, type ErrorBody, type Result, type RoomId,
 } from "@tandryio/protocol";
 import type { Env } from "../env";
@@ -48,7 +48,7 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
       super(state, env);
       this.policy = policyFor(env);
       this.links = new Links(state, Number(env.PULL_ONLINE_MINUTES ?? 10) * 60_000);
-      state.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
+      state.setWebSocketAutoResponse(new WebSocketRequestResponsePair(LINK_PING, LINK_PONG));
       state.blockConcurrencyWhile(async () => {
         this.meta = (await state.storage.get<RoomMeta>("meta")) ?? null;
         if (this.meta) migrate(state.storage.sql);

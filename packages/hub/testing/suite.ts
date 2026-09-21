@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import WebSocket from "ws";
 import {
-  CLOSE_CODES, HEADERS, LINK_PATH, TandryError, contextHeaders, decodeResult, encodeCall, newId,
+  CLOSE_CODES, HEADERS, LINK_PATH, LINK_PING, LINK_PONG, TandryError, contextHeaders, decodeResult, encodeCall, newId,
   type ConversationKey, type Frame, type Input, type OperationName, type Output, type RoomId,
 } from "@tandryio/protocol";
 import type { HubUnderTest, TestAccount } from "./start";
@@ -58,7 +58,12 @@ export function runHubSuite(start: () => Promise<HubUnderTest>): void {
     } as WebSocket.ClientOptions);
     const frames: Frame[] = [];
     const waiters: (() => void)[] = [];
-    socket.on("message", (data) => { frames.push(JSON.parse(String(data))); waiters.splice(0).forEach((wake) => wake()); });
+    let pongs = 0;
+    socket.on("message", (data) => {
+      if (String(data) === LINK_PONG) pongs++;
+      else frames.push(JSON.parse(String(data)));
+      waiters.splice(0).forEach((wake) => wake());
+    });
     const closed = new Promise<number>((resolve) => socket.on("close", (code) => resolve(code)));
     const rejected = new Promise<number>((resolve) => socket.on("unexpected-response", (_request, response) => resolve(response.statusCode ?? 0)));
     socket.on("error", () => {});
@@ -66,6 +71,16 @@ export function runHubSuite(start: () => Promise<HubUnderTest>): void {
       frames, closed, rejected,
       opened: new Promise<void>((resolve, reject) => { socket.on("open", () => resolve()); socket.on("error", reject); }),
       state: (wakeable: boolean) => socket.send(JSON.stringify({ t: "state", wakeable })),
+      /** Sends the heartbeat and waits for the Hub's answer to it. */
+      async ping() {
+        const expected = pongs + 1;
+        socket.send(LINK_PING);
+        const deadline = Date.now() + 5_000;
+        while (pongs < expected) {
+          if (Date.now() > deadline) throw new Error("The Hub did not answer the heartbeat");
+          await Promise.race([new Promise<void>((resolve) => waiters.push(resolve)), new Promise((resolve) => setTimeout(resolve, 100))]);
+        }
+      },
       async notify(count: number) {
         const deadline = Date.now() + 5_000;
         while (frames.filter((frame) => frame.t === "notify").length < count) {
@@ -353,6 +368,24 @@ export function runHubSuite(start: () => Promise<HubUnderTest>): void {
 
     const outsider = link({ ...bob, conversation: conversation() });
     assert.equal(await outsider.rejected, 409);
+  });
+
+  test("a link's heartbeat is answered, and is neither a frame nor a change of state", async () => {
+    const room = await newRoom();
+    const alice = await joined(hub.accounts.alice, room.code, "a");
+    const bob = await joined(hub.accounts.bob, room.code, "b");
+    const bobLink = link(bob);
+    await bobLink.opened;
+    bobLink.state(true);
+    await quiet();
+    await bobLink.ping();
+    await bobLink.ping();
+    assert.deepEqual(bobLink.frames, []);
+    const sent = await text(alice, ["bob/b"], "still there?");
+    assert.deepEqual(sent.recipients.map((recipient) => [recipient.state, recipient.wakeable]), [["online", true]]);
+    await bobLink.notify(1);
+    bobLink.close();
+    await bobLink.closed;
   });
 
   test("scenario 1: the newest link of a conversation wins; the older one is superseded", async () => {
