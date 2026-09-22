@@ -622,20 +622,6 @@
   display: grid;
   place-items: center;
 }
-.device-code {
-  display: block;
-  font:
-    500 27px ui-monospace,
-    monospace;
-  letter-spacing: 4px;
-  text-align: center;
-  border: 1px solid #9bcaff30;
-  padding: 22px;
-  border-radius: 12px;
-  background: #9bcaff08;
-  margin: 24px 0;
-  color: #c6ddff;
-}
 .profile-summary {
   display: flex;
   align-items: center;

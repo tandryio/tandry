@@ -16,7 +16,7 @@ const byCode: Record<string, () => string> = {
   name_taken: m.error_name_taken,
   limit_reached: m.error_limit_reached,
   rate_limited: m.error_rate_limited,
-  unavailable: m.error_policy_unavailable,
+  unavailable: m.error_unavailable,
   upgrade_required: m.error_upgrade_required,
   already_in_room: m.error_already_in_room,
   OTP_SEND_FAILED: m.error_email_send_failed,
@@ -40,6 +40,12 @@ const byCode: Record<string, () => string> = {
 const byMessage: Record<string, () => string> = {
   "Invalid OTP": m.error_otp_invalid,
   "OTP expired": m.error_otp_expired,
+  "Too many requests. Please try again later.": m.error_rate_limited,
+  "Invalid user code": m.device_code_invalid,
+  "User code has expired": m.device_code_expired,
+  "Device code already processed": m.device_code_used,
+  "You are not authorized to approve this device authorization":
+    m.device_not_owner,
 };
 
 type ErrorLike = { message?: string; code?: string };

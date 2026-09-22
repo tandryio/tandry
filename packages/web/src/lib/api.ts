@@ -12,12 +12,20 @@ export class ApiError extends Error {
 /** A Hub API response. Errors throw ApiError; a body that is not JSON still does. */
 async function unwrap<T>(response: Response): Promise<T> {
   const result = (await response.json().catch(() => null)) as
-    (T & { error?: unknown; message?: string; code?: unknown }) | null;
+    | (T & {
+        error?: unknown;
+        error_description?: unknown;
+        message?: string;
+        code?: unknown;
+      })
+    | null;
   if (!response.ok)
     throw new ApiError(
-      typeof result?.error === "string"
-        ? result.error
-        : (result?.message ?? response.statusText),
+      typeof result?.error_description === "string"
+        ? result.error_description
+        : typeof result?.error === "string"
+          ? result.error
+          : (result?.message ?? response.statusText),
       response.status,
       typeof result?.code === "string" ? result.code : undefined,
     );

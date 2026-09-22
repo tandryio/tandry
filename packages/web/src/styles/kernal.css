@@ -528,6 +528,151 @@ section.hero-enter {
   }
 }
 
+/* Device authorization: the sign-in card, with the code as its centerpiece. */
+.device-card h1 {
+  margin-top: 0;
+}
+.device-card > p {
+  margin: 18px 0 0;
+}
+.device-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 4px;
+}
+.device-form > p {
+  margin: 18px 0 8px;
+  color: #9a9a9a;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.device-form label {
+  display: grid;
+  gap: 8px;
+  color: #cfcfcf;
+  font-size: 12px;
+  font-weight: 500;
+}
+.auth-card .device-input {
+  min-height: 52px;
+  font: 500 20px var(--font-mono);
+  letter-spacing: 0.2em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.auth-card .device-input::placeholder {
+  font: 13px var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.device-code {
+  display: block;
+  margin: 22px 0 0;
+  padding: 26px 20px;
+  border: 1px solid #a6d8f533;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #a6d8f514, #a6d8f506);
+  box-shadow: inset 0 1px 0 #ffffff14;
+  color: #eef5ff;
+  font: 500 32px/1 var(--font-mono);
+  letter-spacing: 0.24em;
+  text-indent: 0.24em;
+  text-align: center;
+  overflow-wrap: anywhere;
+  transition: color 0.3s ease;
+}
+.device-code[aria-busy="true"] {
+  color: #7f91ab;
+}
+.device-progress {
+  margin: 14px 0 0;
+  color: #8a8a8a;
+  font-size: 12px;
+  text-align: center;
+}
+.device-card .ui-status {
+  margin: 16px 0 0;
+  font-size: 12px;
+}
+.device-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 16px 0 0;
+  color: #8f8f8f;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.device-note > .ui-icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  color: var(--color-accent);
+}
+.device-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 22px;
+}
+.device-actions:empty {
+  display: none;
+}
+.device-result {
+  display: grid;
+  justify-items: center;
+  margin-top: 8px;
+  text-align: center;
+}
+.device-result-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin: 10px 0 18px;
+  border: 1px solid #7de3d442;
+  border-radius: 50%;
+  background: #7de3d412;
+  color: var(--color-mint);
+}
+.device-result-icon.declined {
+  border-color: #ffafa942;
+  background: #ffafa912;
+  color: var(--color-danger);
+}
+.device-result-icon .ui-icon {
+  width: 22px;
+  height: 22px;
+}
+.device-result h2 {
+  margin: 0 0 8px;
+  color: #fafafa;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.device-result p {
+  margin: 0;
+  color: #9a9a9a;
+  font-size: 13px;
+  line-height: 1.7;
+}
+/* The signed-out and loading states of the account gate sit inside the card. */
+.auth-card .account-card {
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.auth-card .account-card > p,
+.auth-card > p[role="status"],
+.auth-card > p[role="alert"] {
+  margin: 18px 0 16px;
+  color: #9a9a9a;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
 /* Sign-in: one centered card over the hero's character field. */
 .auth-main {
   position: relative;
