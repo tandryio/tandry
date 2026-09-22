@@ -41,7 +41,8 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
     meta: RoomMeta | null = null;
     readonly links: Links;
     readonly policy: Policy;
-    cached: { limits: Limits; at: number } | null = null;
+    cached: { limits: Limits; validUntil: number } | null = null;
+    refreshing: Promise<void> | null = null;
     access: RoomAccess | undefined;
 
     constructor(state: DurableObjectState, env: E) {
@@ -73,32 +74,43 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
       if (this.deleted()) throw new TandryError("not_in_room", "This room has been deleted");
     }
 
-    /** The owner's limits, resolved outside the transaction and cached briefly. */
+    /**
+     * The owner's limits, resolved outside the transaction and cached until the
+     * policy's own validity ends, at most a minute. Concurrent operations share
+     * one fetch rather than each asking the deployment's policy provider.
+     */
     async context(meta: RoomMeta): Promise<RoomContext> {
       this.assertActive();
       const now = Date.now();
-      if (this.policy.room || !this.cached || now - this.cached.at > POLICY_TTL_MS) {
-        const limits = await this.policy.limits(meta.ownerAccountId);
-        const retentionDays = await this.policy.retention(meta.ownerAccountId, meta.roomId);
-        const access = await this.policy.room?.(meta.ownerAccountId, meta.roomId);
-        if (access && access.validUntil <= Date.now()) throw new TandryError("unavailable", "Room policy expired; retry");
-        this.assertActive();
-        this.access = access;
-        this.cached = { limits: access ? { ...limits, membersPerRoom: access.members } : limits, at: now };
-        this.applyAccess();
-        if (access?.transition) {
-          const departed = this.ctx.storage.sql.exec<{ account_id: string }>("SELECT DISTINCT account_id FROM member WHERE account_id NOT IN (SELECT account_id FROM member WHERE left_at IS NULL)").toArray().map(row => row.account_id);
-          if (departed.length) await this.env.AUTH_DB.prepare("DELETE FROM joined_rooms WHERE room_id=? AND account_id IN (SELECT value FROM json_each(?))").bind(meta.roomId, JSON.stringify(departed)).run();
-        }
-        if (retentionDays !== meta.retentionDays) {
-          this.meta = { ...meta, retentionDays };
-          await this.ctx.storage.put("meta", this.meta);
-        }
-        await this.scheduleRetention();
-      }
+      if (!this.cached || now >= this.cached.validUntil)
+        await (this.refreshing ??= this.refresh(meta).finally(() => { this.refreshing = null; }));
       this.assertActive();
       if (this.access?.enabled === false) throw new TandryError("forbidden", "This room is disabled by its owner’s policy");
-      return { sql: this.ctx.storage.sql, meta: this.meta!, links: this.links, now, limits: this.cached.limits, admission: this.access?.admission };
+      return { sql: this.ctx.storage.sql, meta: this.meta!, links: this.links, now, limits: this.cached!.limits, admission: this.access?.admission };
+    }
+
+    async refresh(meta: RoomMeta): Promise<void> {
+      const now = Date.now();
+      const limits = await this.policy.limits(meta.ownerAccountId);
+      const retentionDays = await this.policy.retention(meta.ownerAccountId, meta.roomId);
+      const access = await this.policy.room?.(meta.ownerAccountId, meta.roomId);
+      if (access && access.validUntil <= Date.now()) throw new TandryError("unavailable", "Room policy expired; retry");
+      this.assertActive();
+      this.access = access;
+      this.cached = {
+        limits: access ? { ...limits, membersPerRoom: access.members } : limits,
+        validUntil: Math.min(now + POLICY_TTL_MS, access?.validUntil ?? Infinity),
+      };
+      this.applyAccess();
+      if (access?.transition) {
+        const departed = this.ctx.storage.sql.exec<{ account_id: string }>("SELECT DISTINCT account_id FROM member WHERE account_id NOT IN (SELECT account_id FROM member WHERE left_at IS NULL)").toArray().map(row => row.account_id);
+        if (departed.length) await this.env.AUTH_DB.prepare("DELETE FROM joined_rooms WHERE room_id=? AND account_id IN (SELECT value FROM json_each(?))").bind(meta.roomId, JSON.stringify(departed)).run();
+      }
+      if (retentionDays !== meta.retentionDays) {
+        this.meta = { ...meta, retentionDays };
+        await this.ctx.storage.put("meta", this.meta);
+      }
+      await this.scheduleRetention();
     }
 
     applyAccess(): void {
@@ -128,7 +140,9 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
       for (const id of close) this.links.close(id, CLOSE_CODES.not_in_room, access.enabled ? "not_in_room" : "room_disabled");
     }
 
+    /** A pushed policy change: drop the cache and re-read, after any fetch already in flight. */
     async invalidatePolicy(): Promise<void> {
+      if (this.refreshing) await this.refreshing.catch(() => undefined);
       this.cached = null;
       if (this.meta) {
         try { await this.context(this.meta); }
