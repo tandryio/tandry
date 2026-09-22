@@ -1,0 +1,9 @@
+{
+  "name": "tandry",
+  "version": "0.1.0",
+  "description": "Connect this conversation to a Tandry room with the local Grok Build adapter. Automatic delivery runs through Grok's monitor tool, which the conversation starts after joining.",
+  "author": {
+    "name": "henrylo"
+  },
+  "repository": "https://github.com/tandryio/tandry"
+}

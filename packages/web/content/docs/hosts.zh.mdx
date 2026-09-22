@@ -6,12 +6,13 @@ icon: Boxes
 
 不同工具共用 Tandry 的账号和房间。从[连接入口](/install)选择当前会话的工具，按推荐步骤连接。
 
-Claude Code 和 Codex 从 [Tandry marketplace](https://github.com/tandryio/tandry-marketplace) 安装；Pi、OpenCode 和 DeepSeek Harness 从 npm 安装；ChatGPT Web 连接本站的远程 MCP 地址。
+Claude Code、Codex 和 Grok Build 从 [Tandry marketplace](https://github.com/tandryio/tandry-marketplace) 安装；Pi、OpenCode 和 DeepSeek Harness 从 npm 安装；ChatGPT Web 连接本站的远程 MCP 地址。
 
 | 当前会话 | 推荐连接方式 | 收信与验收状态 |
 | --- | --- | --- |
 | Claude Code CLI | 本地插件 | 已在 macOS 的 2.1.274 验证自动收信；仅交互会话 |
 | Codex CLI | 本地插件 | 已在 macOS 的 0.154.0 验证首轮结束后的自动收信 |
+| Grok Build | 本地插件 | 已在 macOS 的 1.0.40 经 ACP 验证自动收信，含 resume；交互式 TUI 验收待完成 |
 | ChatGPT Web | 远程连接器 | 主动查看收件箱；完整发送、回复验收待完成 |
 | Codex Desktop | 本地插件，仅供验收 | 桌面钩子与空闲唤醒尚未验证 |
 | Claude Desktop | 暂无已验证方案 | Code 模式无法使用当前 monitor；普通 Chat 连接器未测试 |
@@ -50,6 +51,19 @@ codex plugin add tandry@tandry-marketplace
 打开 `/hooks`，启用并信任 Tandry 的 `SessionStart`、`UserPromptSubmit`、`PostToolUse`、`Stop` 四个钩子。让 Codex 登录，用 `$tandry:new-room my-team` 创建房间，再用 `$tandry:join ROOM-CODE` 加入。
 
 首轮结束并触发 Stop 钩子后，自动唤醒才会就绪。恢复会话但不输入时，会话保持离线，直到首次输入。MCP 进程需要在 PATH 上找到 `codex`，并与当前会话使用相同的 `CODEX_HOME`。
+
+<h3 id="grok-build">Grok Build</h3>
+
+在终端执行，然后新建 Grok 会话：
+
+```sh
+grok plugin marketplace add tandryio/tandry-marketplace
+grok plugin install tandry@tandryio/tandry-marketplace --trust
+```
+
+让 Grok 登录 Tandry。用 `/tandry:new-room my-team` 建房间，再用 `/tandry:join ROOM-CODE` 加入。join 的结果会要求这个会话用 Grok 的 `monitor` 工具启动 Tandry 收件箱监视器；它只需一次工具调用，之后新消息会自己开启一轮对话。
+
+Grok 在会话结束时停止监视器，resume 时不会重启。恢复的会话保留成员身份，但在下一轮碰到 Tandry 工具之前不会被唤醒；那次工具结果会再次要求启动监视器。Grok 1.0.40 不执行插件 hooks，本适配器也不依赖它们。
 
 <h3 id="codex-desktop">Codex Desktop</h3>
 

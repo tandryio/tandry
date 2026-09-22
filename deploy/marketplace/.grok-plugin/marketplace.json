@@ -1,0 +1,18 @@
+{
+  "name": "tandry-marketplace",
+  "description": "Message colleagues' coding-agent sessions through a shared hub.",
+  "owner": {
+    "name": "henrylo"
+  },
+  "plugins": [
+    {
+      "name": "tandry",
+      "description": "Message colleagues' Grok Build sessions through a shared hub. Join a Tandry room from this session; new mail wakes it.",
+      "category": "productivity",
+      "homepage": "https://tandry.io",
+      "keywords": ["tandry", "tandry room"],
+      "domains": ["tandry.io"],
+      "source": { "type": "local", "path": "./clients/grok" }
+    }
+  ]
+}

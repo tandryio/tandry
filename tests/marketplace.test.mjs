@@ -21,7 +21,18 @@ test('marketplace catalogs resolve to complete standalone plugin packages', () =
   assert.ok(fs.existsSync(path.join(destination, claude.plugins[0].source, 'dist/main.cjs')));
   assert.ok(fs.existsSync(path.join(destination, claude.plugins[0].source, 'dist/hook.cjs')));
   assert.ok(fs.existsSync(path.join(destination, codex.plugins[0].source.path, 'dist/tandry.cjs')));
-  assert.deepEqual(fs.readdirSync(path.join(destination, 'clients')).sort(), ['claude', 'codex', 'dsh', 'opencode', 'pi']);
+  const grok = read('.grok-plugin/marketplace.json');
+  assert.equal(grok.name, claude.name);
+  assert.ok(fs.existsSync(path.join(destination, grok.plugins[0].source.path, 'dist/main.cjs')));
+  assert.ok(fs.existsSync(path.join(destination, grok.plugins[0].source.path, 'commands/join.md')));
+  // Grok's browser reads this generated component catalog before install; it must describe the shipped package.
+  const index = read('.grok-plugin/plugin-index.json');
+  assert.equal(index.version, 1);
+  assert.equal(index.plugins.tandry.version, read('release.json').versions.grok);
+  assert.deepEqual(index.plugins.tandry.components.commands.map(command => command.name), ['join', 'leave', 'members', 'new-room', 'status']);
+  assert.ok(index.plugins.tandry.components.commands.every(command => command.description));
+  assert.deepEqual(index.plugins.tandry.components.mcpServers, [{ name: 'tandry', description: 'stdio' }]);
+  assert.deepEqual(fs.readdirSync(path.join(destination, 'clients')).sort(), ['claude', 'codex', 'dsh', 'grok', 'opencode', 'pi']);
   assert.deepEqual(read('clients/pi/package.json').pi.extensions, ['./dist/index.cjs']);
   assert.ok(fs.existsSync(path.join(destination, 'clients/pi/dist/index.cjs')));
   assert.equal(read('clients/dsh/package.json').main, './dist/index.js');
@@ -42,7 +53,7 @@ test('marketplace catalogs resolve to complete standalone plugin packages', () =
       assert.doesNotMatch(version, /^(workspace:|file:|link:)/);
     }
   }
-  for (const [host, manifest] of [['claude', '.claude-plugin/plugin.json'], ['codex', '.codex-plugin/plugin.json']]) {
+  for (const [host, manifest] of [['claude', '.claude-plugin/plugin.json'], ['codex', '.codex-plugin/plugin.json'], ['grok', '.grok-plugin/plugin.json']]) {
     assert.equal(read(`clients/${host}/${manifest}`).version, read(`clients/${host}/package.json`).version);
   }
   assert.match(read('release.json').source.commit, /^[0-9a-f]{40}$/);
@@ -58,15 +69,15 @@ test('distribution excludes sources, development metadata and private configurat
   }
 });
 
-test('exported Claude and Codex MCP servers run outside the workspace and report their release version', { timeout: 10_000 }, async t => {
-  for (const host of ['claude', 'codex']) {
+test('exported Claude, Codex and Grok MCP servers run outside the workspace and report their release version', { timeout: 15_000 }, async t => {
+  for (const host of ['claude', 'codex', 'grok']) {
     const plugin = path.join(destination, 'clients', host);
     const config = read(`clients/${host}/.mcp.json`).mcpServers.tandry;
     assert.equal(config.command, 'node');
     // Codex forwards only the variables named here; without the proxy ones the Hub is reached directly.
     if (host === 'codex') for (const name of ['HTTPS_PROXY', 'https_proxy', 'NO_PROXY', 'no_proxy']) assert.ok(config.env_vars.includes(name), name);
     const child = spawn(process.execPath,
-      config.args.map(arg => arg.replace('${CLAUDE_PLUGIN_ROOT}', plugin)), {
+      config.args.map(arg => arg.replace(/\$\{(CLAUDE|GROK)_PLUGIN_ROOT\}/, plugin)), {
         cwd: config.cwd ? path.resolve(plugin, config.cwd) : temporary,
         env: { ...process.env, TANDRY_HOME: path.join(temporary, 'state'), TANDRY_HUB: 'http://127.0.0.1:1' },
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -94,6 +105,15 @@ test('exported Claude and Codex MCP servers run outside the workspace and report
     assert.match(status.content[0].text, /not signed in/i);
     child.stdin.end();
   }
+});
+
+test('the exported Grok plugin passes grok plugin validate when the grok CLI is installed', t => {
+  let grok;
+  try { grok = execFileSync('sh', ['-c', 'command -v grok'], { encoding: 'utf8' }).trim(); } catch { grok = ''; }
+  if (!grok) return t.skip('grok is not on PATH');
+  const output = execFileSync(grok, ['plugin', 'validate', path.join(destination, 'clients/grok')], { encoding: 'utf8' });
+  assert.match(output, /Plugin manifest is valid/);
+  assert.match(output, /1 command dir/);
 });
 
 test('the exported Claude hook runs as a standalone small bundle', () => {

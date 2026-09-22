@@ -111,6 +111,29 @@ const HOSTS: Host[] = [
     guide: "/docs/hosts#codex-cli",
   },
   {
+    key: "grok-build",
+    name: "Grok Build",
+    logo: "/hosts/grok.svg",
+    group: "coding",
+    tier: "push",
+    source: m.install_source_marketplace,
+    steps: [
+      {
+        title: m.install_step_plugin,
+        body: m.install_step_plugin_grok,
+        block: terminal(
+          `grok plugin marketplace add ${MARKETPLACE}`,
+          // Grok qualifies a plugin by its marketplace's repository, not by the marketplace name.
+          `grok plugin install tandry@${MARKETPLACE} --trust`,
+        ),
+      },
+      signIn,
+      room,
+    ],
+    note: m.install_note_grok,
+    guide: "/docs/hosts#grok-build",
+  },
+  {
     key: "pi",
     name: "Pi",
     logo: "/hosts/pi.svg",

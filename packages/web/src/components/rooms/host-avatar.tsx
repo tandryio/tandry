@@ -6,6 +6,7 @@ import { cn } from "../../lib/cn";
 const LOGOS: Partial<Record<HostKind, string>> = {
   claude: "/hosts/claude-code.svg",
   codex: "/hosts/codex.svg",
+  grok: "/hosts/grok.svg",
   pi: "/hosts/pi.svg",
   opencode: "/hosts/opencode.svg",
   dsh: "/hosts/deepseek-harness.svg",

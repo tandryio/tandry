@@ -30,7 +30,7 @@ if (name === 'codex' && args.includes('--json')) {
 }
 if (!args.includes('plugin')) process.exit(Number(env.TEST_EXIT || 0));
 `;
-  for (const name of ['pnpm', 'claude', 'codex', 'pi', 'opencode', 'dsh']) {
+  for (const name of ['pnpm', 'claude', 'codex', 'grok', 'pi', 'opencode', 'dsh']) {
     await writeFile(join(dir, name), fake, { mode: 0o700 });
   }
   async function launch(host, extra = [], overrides = {}) {
@@ -50,7 +50,7 @@ if (!args.includes('plugin')) process.exit(Number(env.TEST_EXIT || 0));
     const calls = (await readFile(log, 'utf8')).trim().split('\n').filter(Boolean).map(JSON.parse);
     return { code, calls, stderr };
   }
-  for (const host of ['claude', 'codex', 'pi', 'opencode', 'dsh']) {
+  for (const host of ['claude', 'codex', 'grok', 'pi', 'opencode', 'dsh']) {
     await t.test(host, async () => {
       const overrides = host === 'opencode' ? { OPENCODE_CONFIG_CONTENT: JSON.stringify({ model: 'fixture/test', plugin: ['file:///fixture/other.js'] }) } : {};
       const { code, calls, stderr } = await launch(host, ['--', '--help', 'argument with spaces'], overrides);
@@ -74,6 +74,10 @@ if (!args.includes('plugin')) process.exit(Number(env.TEST_EXIT || 0));
       }
       if (host === 'codex') {
         assert.deepEqual(calls.slice(-3, -1).map(call => call.args.slice(0, 2)), [['plugin', 'remove'], ['plugin', 'add']]);
+      }
+      if (host === 'grok') {
+        assert.deepEqual(calls.slice(-4, -1).map(call => call.args.slice(0, 2)), [['plugin', 'uninstall'], ['plugin', 'install'], ['plugin', 'enable']]);
+        assert.deepEqual(calls.at(-3).args.slice(2), [join(root, 'clients/grok'), '--trust']);
       }
     });
   }

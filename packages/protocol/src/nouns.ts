@@ -64,7 +64,7 @@ export function toMemberName(raw: string): MemberName | null {
 
 // ---- hosts ---------------------------------------------------------------
 
-export const HostKind = z.enum(["claude", "codex", "kimi", "pi", "opencode", "dsh", "claude-web", "chatgpt-web", "web"]);
+export const HostKind = z.enum(["claude", "codex", "grok", "kimi", "pi", "opencode", "dsh", "claude-web", "chatgpt-web", "web"]);
 export type HostKind = z.infer<typeof HostKind>;
 
 export const Tier = z.enum(["push", "pull"]);
@@ -78,7 +78,7 @@ export function tierOf(host: HostKind): Tier {
 }
 
 const HOST_LABELS: Record<HostKind, string> = {
-  claude: "Claude Code", codex: "Codex", kimi: "Kimi Code", pi: "pi", opencode: "opencode", dsh: "dsh",
+  claude: "Claude Code", codex: "Codex", grok: "Grok Build", kimi: "Kimi Code", pi: "pi", opencode: "opencode", dsh: "dsh",
   "claude-web": "Claude web", "chatgpt-web": "ChatGPT web", web: "web chat",
 };
 export function hostLabel(host: HostKind): string {
