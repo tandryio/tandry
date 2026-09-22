@@ -83,11 +83,16 @@ export function AccountNav() {
                 </DropdownMenu.Item>
               ))}
               <DropdownMenu.Separator className="ui-menu-separator" />
-              <DropdownMenu.Item asChild>
-                <Link to="/install">
-                  <Icon name="code" />
-                  {m.nav_install_plugin()}
-                </Link>
+              <DropdownMenu.Item
+                className="ui-menu-sign-out"
+                onSelect={() => {
+                  void authClient
+                    .signOut()
+                    .finally(() => window.location.assign("/login"));
+                }}
+              >
+                <Icon name="logout" />
+                {m.account_sign_out()}
               </DropdownMenu.Item>
             </DropdownMenu.Content>
           </DropdownMenu.Portal>

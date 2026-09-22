@@ -196,6 +196,14 @@
   background: #ffffff0e;
   margin: 5px 6px;
 }
+.ui-menu .ui-menu-sign-out,
+.ui-menu .ui-menu-sign-out .ui-icon {
+  color: #f6a5b5d9;
+}
+.ui-menu .ui-menu-sign-out[data-highlighted] {
+  background: #fda4af1a;
+  color: #fecdd3;
+}
 .ui-badge {
   display: inline-flex;
   align-items: center;
