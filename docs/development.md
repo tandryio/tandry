@@ -1,6 +1,6 @@
 # 本地开发
 
-The workspace packages five clients: Claude Code, Codex, pi, OpenCode and dsh.
+The workspace packages six clients: Claude Code, Codex, Grok Build, pi, OpenCode and dsh.
 Remote MCP and OAuth run in the Hub. For project-local tunnel setup and
 `pnpm dev:mcp`, see [Remote MCP development](web-mcp-development.md).
 
@@ -13,7 +13,7 @@ pnpm install --frozen-lockfile
 pnpm build
 ```
 
-`pnpm build` 检查 protocol，分别构建五个客户端（Claude Code、Codex、pi、OpenCode、dsh），并导出
+`pnpm build` 检查 protocol，分别构建六个客户端（Claude Code、Codex、Grok Build、pi、OpenCode、dsh），并导出
 `.local/marketplace/`。它不包含网站构建。
 
 ## 配置 Hub
@@ -139,6 +139,7 @@ curl http://127.0.0.1:4173/api/config
 # 先在一个终端运行 pnpm dev，再在其他终端按需启动：
 pnpm agent claude
 pnpm agent codex
+pnpm agent grok
 ```
 
 宿主 CLI 需要预先安装并配置好模型账号。启动器检查 Hub 连通性、执行 `pnpm build`，
@@ -150,6 +151,8 @@ pnpm agent codex
 - Codex 自动注册构建生成的 `.local/marketplace`，移除旧安装缓存并重新安装 `tandry`，
   再开启会话；安装会保留在 Codex 中。首次使用仍需在 `/hooks` 检查并信任 hooks。
   如果同名 marketplace 指向其他目录，启动器会报错说明如何处理，不覆盖其他来源。迁移前曾注册源码根目录时，也需要先移除旧来源。
+- Grok Build 用 `grok plugin install <clients/grok> --trust` 安装本地插件副本并 `enable`，每次启动先卸载旧副本；
+  安装会保留在 Grok 中。加入房间后由对话自己用 `monitor` 工具启动收件箱监视器。
 
 每次启动都重新构建；代码修改后退出宿主，再运行同一条命令即可。
 这些命令启动本地 CLI，不会给已打开的桌面窗口注入环境变量。

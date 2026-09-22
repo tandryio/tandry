@@ -1,0 +1,31 @@
+{
+  "name": "@tandryio/grok",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node ../../scripts/package-plugins.mjs client grok",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm build && tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@tandryio/bridge": "workspace:*"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@tandryio/hub": "workspace:*",
+    "@types/node": "^22.0.0",
+    "tsx": "4.23.13"
+  },
+  "license": "Apache-2.0",
+  "files": [
+    "dist",
+    ".grok-plugin",
+    ".mcp.json",
+    "commands",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md"
+  ]
+}

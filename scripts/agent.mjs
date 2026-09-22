@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const [host, ...rest] = process.argv.slice(2);
-const hosts = ['claude', 'codex', 'pi', 'opencode', 'dsh'];
+const hosts = ['claude', 'codex', 'grok', 'pi', 'opencode', 'dsh'];
 const args = rest[0] === '--' ? rest.slice(1) : rest;
 const env = {
   ...process.env,
@@ -76,9 +76,20 @@ async function prepareCodex() {
   console.log('Codex refreshed the local plugin. On first use, review and trust its hooks in /hooks.');
 }
 
+async function prepareGrok() {
+  const plugin = join(root, 'clients', 'grok');
+  const name = JSON.parse(await readFile(join(plugin, '.grok-plugin/plugin.json'), 'utf8')).name;
+  if (!/^[A-Za-z0-9_-]+$/.test(name)) throw new Error('Invalid plugin name.');
+  // Grok copies a local plugin at install time; replacing the installed copy picks up the fresh build.
+  await run('grok', ['plugin', 'uninstall', name]).catch(() => {});
+  await run('grok', ['plugin', 'install', plugin, '--trust']);
+  await run('grok', ['plugin', 'enable', name]);
+  console.log('Grok Build refreshed the local plugin. After joining a room, the conversation starts the Tandry inbox monitor itself.');
+}
+
 try {
   if (!host || host === '--help' || host === '-h') {
-    console.log('Usage: pnpm agent <claude|codex|pi|opencode|dsh> [host arguments...]\nRun pnpm dev first. The default Hub is local; data is stored in ~/.tandry-dev.\nExample: pnpm agent claude --resume');
+    console.log('Usage: pnpm agent <claude|codex|grok|pi|opencode|dsh> [host arguments...]\nRun pnpm dev first. The default Hub is local; data is stored in ~/.tandry-dev.\nExample: pnpm agent claude --resume');
   } else {
     if (!hosts.includes(host)) throw new Error(`Unsupported host ${host}. Choose from: ${hosts.join(', ')}`);
     await executable(host);
@@ -108,6 +119,7 @@ try {
       launchArgs = ['--patch', patch, ...args];
     }
     if (host === 'codex') await prepareCodex();
+    if (host === 'grok') await prepareGrok();
     await run(host, launchArgs);
   }
 } catch (error) {

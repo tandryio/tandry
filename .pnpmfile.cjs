@@ -9,13 +9,14 @@ module.exports = {
           '@tandryio/web',
           '@tandryio/claude',
           '@tandryio/codex',
+          '@tandryio/grok',
           '@tandryio/pi',
           '@tandryio/opencode',
           '@tandryio/dsh',
         ].includes(pkg.name)
       )
         return pkg;
-      if (['@tandryio/claude', '@tandryio/codex', '@tandryio/pi', '@tandryio/opencode', '@tandryio/dsh'].includes(pkg.name)) {
+      if (['@tandryio/claude', '@tandryio/codex', '@tandryio/grok', '@tandryio/pi', '@tandryio/opencode', '@tandryio/dsh'].includes(pkg.name)) {
         delete pkg.dependencies;
         delete pkg.private;
       }

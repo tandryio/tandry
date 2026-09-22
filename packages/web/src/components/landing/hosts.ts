@@ -5,6 +5,7 @@
 export const HOSTS = [
   { id: "claude-code", name: "Claude Code", logo: "/hosts/claude-code.svg" },
   { id: "codex", name: "Codex", logo: "/hosts/codex.svg" },
+  { id: "grok-build", name: "Grok Build", logo: "/hosts/grok.svg" },
   { id: "pi", name: "Pi", logo: "/hosts/pi.svg" },
   { id: "opencode", name: "OpenCode", logo: "/hosts/opencode.svg" },
   {

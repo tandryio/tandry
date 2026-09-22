@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import semver from 'semver';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const hosts = ['claude', 'codex', 'pi', 'opencode', 'dsh'];
+const hosts = ['claude', 'codex', 'grok', 'pi', 'opencode', 'dsh'];
 export const marketplace = path.join(root, '.local/marketplace');
 const run = (command, args, cwd = root) => execFileSync(command, args, { cwd, encoding: 'utf8' }).trim();
 
@@ -24,7 +24,7 @@ async function buildClients(selected = hosts) {
     fs.rmSync(outdir, { recursive: true, force: true });
     await build({
       absWorkingDir: fileURLToPath(directory),
-      entryPoints: host === 'claude' ? { main: 'src/main.ts', hook: 'src/hook.ts' }
+      entryPoints: host === 'claude' ? { main: 'src/main.ts', hook: 'src/hook.ts' } : host === 'grok' ? { main: 'src/main.ts' }
         : ['pi', 'opencode', 'dsh'].includes(host) ? { index: 'src/index.ts' } : { tandry: 'src/main.ts' },
       outdir, outExtension: { '.js': ['opencode', 'dsh'].includes(host) ? '.js' : '.cjs' },
       bundle: true, format: ['opencode', 'dsh'].includes(host) ? 'esm' : 'cjs', platform: 'node', target: 'node22',
@@ -38,6 +38,22 @@ async function buildClients(selected = hosts) {
       logLevel: 'info',
     });
   }
+}
+
+// Grok's marketplace browser shows a plugin's components before install from
+// this generated catalog. It describes the exported package, never the source.
+function writeGrokPluginIndex(version) {
+  const catalog = JSON.parse(fs.readFileSync(path.join(marketplace, '.grok-plugin/marketplace.json'), 'utf8'));
+  const plugins = {};
+  for (const entry of catalog.plugins) {
+    const plugin = path.join(marketplace, entry.source.path);
+    const frontmatter = file => Object.fromEntries([...fs.readFileSync(file, 'utf8').matchAll(/^(name|description): (".*")$/gm)].map(([, key, value]) => [key, JSON.parse(value)]));
+    const commands = fs.globSync('commands/*.md', { cwd: plugin }).sort().map(file => frontmatter(path.join(plugin, file)));
+    const mcp = JSON.parse(fs.readFileSync(path.join(plugin, '.mcp.json'), 'utf8')).mcpServers;
+    const mcpServers = Object.entries(mcp).map(([name, server]) => ({ name, description: server.url ? 'http' : 'stdio' }));
+    plugins[entry.name] = { version: version ?? JSON.parse(fs.readFileSync(path.join(plugin, 'package.json'), 'utf8')).version, components: { commands, mcpServers } };
+  }
+  fs.writeFileSync(path.join(marketplace, '.grok-plugin/plugin-index.json'), JSON.stringify({ version: 1, plugins }, null, 2) + '\n');
 }
 
 // Package managers own file selection and metadata. Only this fixed, ignored
@@ -63,6 +79,7 @@ function exportMarketplace() {
         fs.writeFileSync(manifest, JSON.stringify(metadata, null, 2) + '\n');
       }
     }
+    writeGrokPluginIndex(version);
     for (const file of ['LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md']) {
       fs.copyFileSync(path.join(root, file === 'LICENSE' ? file : `licenses/${file}`), path.join(marketplace, file));
     }

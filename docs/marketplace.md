@@ -2,9 +2,9 @@
 
 `tandryio/tandry` contains source, manifests, tests and build configuration.
 [`tandryio/tandry-marketplace`](https://github.com/tandryio/tandry-marketplace)
-contains installable plugin packages. It carries the released Claude Code and
-Codex plugins; its `release.json` records the source commit and plugin versions
-of each build.
+contains installable plugin packages. It carries the released Claude Code,
+Codex and Grok Build plugins; its `release.json` records the source commit and
+plugin versions of each build.
 
 ## Connection and distribution
 
@@ -66,7 +66,9 @@ licenses are never committed to the source repository.
 
 `pnpm test:marketplace` validates the exported distribution. `pnpm check:source`
 rejects tracked build artifacts. `pnpm agent codex` registers `.local/marketplace/`;
-`pnpm agent claude` loads its client directory directly. `pnpm agent pi` loads
+`pnpm agent claude` loads its client directory directly. `pnpm agent grok`
+installs `clients/grok` into Grok with `grok plugin install --trust` and enables
+it. `pnpm agent pi` loads
 the bundled native extension. `pnpm agent opencode` loads the bundled native
 plugin through process configuration. `pnpm agent dsh` adds a temporary Cordis
 patch pointing to the bundled native plugin. These five hosts are packaged during
@@ -95,5 +97,63 @@ codex plugin marketplace add tandryio/tandry-marketplace
 codex plugin add tandry@tandry-marketplace
 ```
 
+Grok Build:
+
+```sh
+grok plugin marketplace remove https://github.com/tandryio/tandry-marketplace.git
+grok plugin marketplace add tandryio/tandry-marketplace
+grok plugin install tandry@tandryio/tandry-marketplace --trust
+```
+
 Update project `extraKnownMarketplaces` entries to `tandryio/tandry-marketplace` too.
 Start a new conversation and review hooks as usual. Shared `~/.tandry` data is retained.
+
+## Grok Build catalog
+
+Grok reads two files at the marketplace root, both exported by `pnpm build`
+from `deploy/marketplace/` and the packed `clients/grok`:
+
+- `.grok-plugin/marketplace.json`: the index. The `tandry` entry is a local
+  source at `./clients/grok`, so the plugin files ship inside the marketplace
+  repository and nothing is fetched from elsewhere. `homepage`, `keywords` and
+  `domains` drive Grok's plugin suggestions.
+- `.grok-plugin/plugin-index.json`: the component catalog Grok shows before
+  install. `scripts/package-plugins.mjs` generates it from the exported
+  package's `commands/*.md` and `.mcp.json`; it is never edited by hand.
+  Local sources carry no `sha`; a user who sets `require_sha` installs from a
+  commit-pinned marketplace instead.
+
+`grok plugin validate <path>` checks the manifest; `pnpm test:marketplace` runs
+it against the exported package when the `grok` CLI is on PATH. Users install
+with `grok plugin marketplace add tandryio/tandry-marketplace` followed by
+`grok plugin install tandry@tandryio/tandry-marketplace --trust`; a session
+started afterwards loads the plugin, and `grok plugin update` follows later
+releases. The marketplace-qualified name matters: Grok also imports the
+marketplaces Claude Code knows, so a machine with the Claude plugin installed
+already sees `tandry` from the same repository under another source name, and
+a bare `grok plugin install tandry` stops with an ambiguity error. Measured
+on 1.0.40: when one repository carries both `.claude-plugin/` and
+`.grok-plugin/` indexes, Grok installs from the `.grok-plugin/` entry, so the
+Grok package wins over the Claude one.
+
+### Listing in the xAI marketplace
+
+[`xai-org/plugin-marketplace`](https://github.com/xai-org/plugin-marketplace)
+is the catalog every Grok installation has by default. It is an index: a pull
+request adds one entry to its `.grok-plugin/marketplace.json`, regenerates its
+`plugin-index.json` with the repository's script, and passes CI plus code-owner
+review. Its rules, from the repository's contributing guide:
+
+- A remote source must be a repository whose root is the plugin, pinned to a
+  full commit `sha`, published under the project's own organization. The
+  marketplace repository does not qualify: its root is a catalog, and the
+  plugin lives under `clients/grok`.
+- A local source vendors the plugin files under `external_plugins/<name>/` in
+  the pull request, with a `README.md` and a valid `.grok-plugin/plugin.json`.
+- The entry needs a `homepage`, a clear `description`, brand-scoped `keywords`
+  and `domains`, and a stated license.
+
+So a listing is either a vendored copy of the released `clients/grok` package,
+refreshed by a new pull request per release, or a separate `tandryio` repository
+that holds the plugin at its root and is tagged per release. Neither is set up
+yet; the marketplace above is the supported channel until then.

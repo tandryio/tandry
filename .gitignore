@@ -17,6 +17,7 @@ packages/web/project.inlang/cache/
 
 # Generated plugin instructions and license copies
 clients/claude/commands/
+clients/grok/commands/
 clients/codex/skills/
 clients/dsh/skills/
 clients/*/LICENSE
