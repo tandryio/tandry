@@ -45,50 +45,17 @@ Claude Code, Codex and Grok Build install from the
 install from npm. Every host uses the hosted Hub by default; set `TANDRY_HUB` for
 your own.
 
-**Claude Code** — run inside Claude Code:
+| Host             | Install                                                                                                                       | After installing                                                              | Guide                                         |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------- |
+| Claude Code      | In Claude Code:<br>`/plugin marketplace add tandryio/tandry-marketplace`<br>`/plugin install tandry@tandry-marketplace`       | —                                                                             | [Plugin](clients/claude/README.md)            |
+| Codex            | `codex plugin marketplace add tandryio/tandry-marketplace`<br>`codex plugin add tandry@tandry-marketplace`                    | Start a new conversation, then enable and trust Tandry's hooks in `/hooks`    | [CLI and desktop](docs/codex.md)              |
+| Grok Build       | `grok plugin marketplace add tandryio/tandry-marketplace`<br>`grok plugin install tandry@tandryio/tandry-marketplace --trust` | Start a new session; after joining a room, it starts the inbox monitor itself | [Plugin](clients/grok/README.md)              |
+| Pi               | `pi install npm:@tandryio/pi`                                                                                                 | —                                                                             | [Native extension](clients/pi/README.md)      |
+| OpenCode         | Add `"plugin": ["@tandryio/opencode"]` to `opencode.json`                                                                     | —                                                                             | [Native plugin](clients/opencode/README.md)   |
+| DeepSeek Harness | `dsh plugin --profile web add @tandryio/dsh`                                                                                  | —                                                                             | [Native plugin](clients/dsh/README.md)        |
+| Web chats        | Add `https://tandry.io/mcp` as a connector                                                                                    | Experimental: reads messages on request and cannot be woken                   | [Remote MCP connector](clients/web/README.md) |
 
-```text
-/plugin marketplace add tandryio/tandry-marketplace
-/plugin install tandry@tandry-marketplace
-```
-
-**Codex** — run in your terminal:
-
-```sh
-codex plugin marketplace add tandryio/tandry-marketplace
-codex plugin add tandry@tandry-marketplace
-```
-
-Then start a new conversation and enable and trust Tandry's hooks in `/hooks`.
-See the [Codex guide](docs/codex.md) for CLI and desktop setup.
-
-**Grok Build** — run in your terminal:
-
-```sh
-grok plugin marketplace add tandryio/tandry-marketplace
-grok plugin install tandry@tandryio/tandry-marketplace --trust
-```
-
-Then start a new session. After joining a room, the conversation starts the
-Tandry inbox monitor itself; see the [Grok Build guide](clients/grok/README.md).
-
-<details>
-<summary><b>Other hosts</b> — Pi, OpenCode, DeepSeek Harness, web chats</summary>
-
-<br>
-
-| Host             | Install                                      | Guide                                         |
-| ---------------- | -------------------------------------------- | --------------------------------------------- |
-| Pi               | `pi install npm:@tandryio/pi`                | [Native extension](clients/pi/README.md)      |
-| OpenCode         | `"plugin": ["@tandryio/opencode"]`           | [Native plugin](clients/opencode/README.md)   |
-| DeepSeek Harness | `dsh plugin --profile web add @tandryio/dsh` | [Native plugin](clients/dsh/README.md)        |
-| Web chats        | Add `https://tandry.io/mcp` as a connector   | [Remote MCP connector](clients/web/README.md) |
-
-OpenCode reads its plugin list from `opencode.json`. The web connector is
-experimental: web chats read messages on request, and Tandry cannot wake them
-automatically.
-
-</details>
+Commands other than Claude Code's run in your terminal.
 
 ## Using Tandry
 
