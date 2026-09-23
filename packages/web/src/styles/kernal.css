@@ -808,7 +808,7 @@ section.hero-enter {
   transform: translateY(-1px);
 }
 .auth-card .provider-button {
-  justify-content: flex-start;
+  justify-content: center;
   gap: 12px;
   border-color: #ffffff1f;
   background: #121212;
@@ -818,7 +818,8 @@ section.hero-enter {
   background: #181818;
 }
 .auth-card .provider-button > .ui-icon:last-child {
-  margin-left: auto;
+  position: absolute;
+  right: 16px;
   width: 14px;
   color: #777;
   transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);

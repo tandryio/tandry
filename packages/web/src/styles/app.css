@@ -608,12 +608,14 @@
   text-align: center;
 }
 .provider-button {
-  justify-content: flex-start;
+  position: relative;
+  justify-content: center;
   width: 100%;
   gap: 12px;
 }
 .provider-button > .ui-icon:last-child {
-  margin-left: auto;
+  position: absolute;
+  right: 16px;
   color: #8898b1;
   width: 14px;
 }

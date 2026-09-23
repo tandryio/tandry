@@ -1,5 +1,5 @@
 import { safeNext, useWebOptions } from "../options";
-import { Button, Icon, Status } from "../components/ui";
+import { Button, Icon, ProviderLogo, Status } from "../components/ui";
 import { m } from "../paraglide/messages";
 import { useEffect, useState } from "react";
 import { authClient, unwrap } from "../lib/auth-client";
@@ -85,7 +85,7 @@ export function Login() {
                   onClick={() => social.run(provider)}
                 >
                   <span className="provider-symbol" aria-hidden="true">
-                    {provider === "github" ? <Icon name="code" /> : "G"}
+                    <ProviderLogo provider={provider} />
                   </span>
                   {m.login_with_provider({
                     provider: PROVIDER_LABELS[provider],

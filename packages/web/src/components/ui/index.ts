@@ -1,5 +1,6 @@
 export { Button, buttonVariants, type ButtonProps } from "./button";
 export { Icon, type IconName } from "./icon";
+export { GitHubLogo, GoogleLogo, ProviderLogo } from "./provider-logo";
 export { Input } from "./input";
 export { Select, type SelectOption } from "./select";
 export { Badge } from "./badge";
