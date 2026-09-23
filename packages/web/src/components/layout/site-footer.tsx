@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { m } from "../../paraglide/messages";
 import { Brand } from "./brand";
 import { Container } from "./section";
-import { REPO_URL } from "./site-header";
+import { DISCORD_URL, REPO_URL } from "./site-header";
 import { SiteLink } from "../ui/site-link";
 
 export function SiteFooter() {
@@ -20,6 +20,7 @@ export function SiteFooter() {
       links: [
         { href: "/docs", label: m.landing_read_docs() },
         { href: REPO_URL, label: m.nav_source_code(), external: true },
+        { href: DISCORD_URL, label: m.nav_discord(), external: true },
         { href: "/privacy", label: m.privacy_title() },
       ],
     },
