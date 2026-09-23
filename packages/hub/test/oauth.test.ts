@@ -57,12 +57,15 @@ test("OAuth works in workerd across sign-in, consent, PKCE, refresh and revocati
   const grant = await connectorGrant(hub, hub.accounts.alice, undefined, false);
   const list = await mcpRequest(hub, grant.access_token, "tools/list");
   assert.deepEqual(list.tools.map((tool: { name: string }) => tool.name), Object.values(tools).filter((tool) => tool.connector).map((tool) => tool.name));
+  for (const tool of list.tools as { name: string; outputSchema?: { type?: string } }[]) assert.equal(tool.outputSchema?.type, "object", tool.name);
   const annotations = Object.fromEntries(list.tools.map((tool: { name: string; annotations: unknown }) => [tool.name, tool.annotations]));
   assert.deepEqual(annotations.history, { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true });
   assert.deepEqual(annotations.inbox, { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true });
   assert.equal(annotations.join.destructiveHint, true);
   assert.equal(annotations.leave.destructiveHint, true);
-  assert.match((await mcpTool(hub, grant.access_token, "status")).text, /alice/);
+  const status = await mcpTool(hub, grant.access_token, "status");
+  assert.match(status.text, /alice/);
+  assert.deepEqual(status.structured?.account, { id: hub.accounts.alice.id, handle: "alice" });
   const legacy = await mcpRequest(hub, grant.access_token, "tools/list", {}, false);
   assert.deepEqual(legacy.tools.map((tool: { name: string }) => tool.name), list.tools.map((tool: { name: string }) => tool.name));
   const refreshed = await grant.exchange({ grant_type: "refresh_token", refresh_token: grant.refresh_token, resource: grant.resource });

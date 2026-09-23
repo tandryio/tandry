@@ -102,7 +102,10 @@ export function runHubSuite(start: () => Promise<HubUnderTest>): void {
     const join = async (name: string) => {
       const result = await tool("join", { room: room.code, name, intro: `Working on ${name}` });
       assert.equal(result.isError, false, result.text);
-      return result.text.match(/^Conversation: (\S+)/)![1]!;
+      const handle = result.text.match(/^Conversation: (\S+)/)![1]!;
+      assert.equal(result.structured?.conversation, handle);
+      assert.equal(result.structured?.member, `alice/${name}`);
+      return handle;
     };
     const a = await join("planning");
     const b = await join("research");
@@ -113,7 +116,10 @@ export function runHubSuite(start: () => Promise<HubUnderTest>): void {
     assert.doesNotMatch((await tool("history", { conversation: b })).text, /Only planning/);
     assert.equal((await tool("inbox", { conversation: a }, bob.access_token)).isError, true);
     assert.equal((await tool("inbox", { conversation: "broken" })).isError, true);
-    assert.match((await tool("inbox", { conversation: a })).text, /Only planning sees this/);
+    const inbox = await tool("inbox", { conversation: a });
+    assert.match(inbox.text, /Only planning sees this/);
+    assert.deepEqual((inbox.structured?.messages as { body: string }[]).map((message) => message.body), ["Only planning sees this"]);
+    assert.equal((await tool("inbox", { conversation: "broken" })).structured, undefined);
     assert.doesNotMatch((await tool("inbox", { conversation: a })).text, /Only planning/);
     assert.match((await tool("history", { conversation: a })).text, /Only planning sees this/);
     assert.equal((await call(sender, "members", {})).members.find((member) => member.address === "alice/planning")!.unreadFromMe, 0);

@@ -81,6 +81,11 @@ async function adoptPicture(
   else await work;
 }
 
+/** The protected resource a connector's access token must be issued for. */
+export function connectorResource(env: Pick<AuthConfig, "BETTER_AUTH_URL">): string {
+  return `${env.BETTER_AUTH_URL}/mcp`;
+}
+
 /** Construct per request: D1 and request-scoped bindings must not escape the request. */
 export function authFor(env: AuthConfig, options: AuthOptions = {}) {
   if (
@@ -175,7 +180,7 @@ export function authFor(env: AuthConfig, options: AuthOptions = {}) {
       mcp({
         loginPage: "/connect",
         consentPage: "/connect",
-        resource: `${env.BETTER_AUTH_URL}/mcp`,
+        resource: connectorResource(env),
         scopes: ["tandry", "offline_access"],
         accessTokenExpiresIn: 15 * MINUTE_SECONDS,
         grantTypes: ["authorization_code", "refresh_token"],

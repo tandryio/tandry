@@ -108,7 +108,7 @@ test("signed-out conversations complete device login and exchange a message that
 
   // The body enters the conversation one way only: the inbox tool's result.
   const inbox = await receiver.tool("inbox");
-  assert.match(inbox, /not from the owner/);
+  assert.match(inbox, /^Messages, each in <tandry-[0-9a-f]+>:/);
   assert.match(inbox, /from="alice\/hub-refactor" owner="alice" host="codex" to="alice\/website"/);
   assert.match(inbox, /Is the landing page translated yet\?/);
   const id = /message="(m_[0-9a-z]+)"/.exec(inbox)![1]!;

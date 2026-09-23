@@ -22,5 +22,10 @@ export async function mcpRequest(hub: Pick<HubUnderTest, "baseUrl">, token: stri
 
 export async function mcpTool(hub: Pick<HubUnderTest, "baseUrl">, token: string, name: string, args: Record<string, unknown> = {}) {
   const result = await mcpRequest(hub, token, "tools/call", { name, arguments: args });
-  return { text: result.content.map((part: { text?: string }) => part.text ?? "").join("\n"), isError: result.isError === true };
+  return {
+    text: result.content.map((part: { text?: string }) => part.text ?? "").join("\n"),
+    isError: result.isError === true,
+    /** The same result as data; absent on errors. */
+    structured: result.structuredContent as Record<string, unknown> | undefined,
+  };
 }

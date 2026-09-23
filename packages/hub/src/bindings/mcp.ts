@@ -1,101 +1,109 @@
-import { createResourceServerChallenge } from "@better-auth/oauth-provider";
 import { createMcpHandler, McpServer } from "@modelcontextprotocol/server";
-import { APIError } from "better-auth/api";
 import {
-  createDpopReplayStore, createInsufficientScopeError, enforceDpopBinding, isDpopBindingError,
-  parseAccessTokenAuthorization, verifyJwsAccessToken,
-} from "better-auth/oauth2";
-import {
-  Handle, PROTOCOL_VERSION, RoomId, TandryError, newId, newNonce, operations,
+  PROTOCOL_VERSION, RoomId, TandryError, connectorToolNames, newId, newNonce, operations,
   renderConversationHandle, renderError, renderHistory, renderInbox, renderJoin, renderLeft,
   renderMembers, renderNewRoom, renderRenamed, renderRoomUpdated, renderSent, renderStatus, toolParameters, tools,
-  type ConversationKey, type Input, type OperationName, type Output, type ToolName, type ToolParams,
+  type ConnectorOutput, type ConnectorToolName, type ConversationKey, type Input, type OperationName, type Output, type ToolParams,
 } from "@tandryio/protocol";
 import { z } from "zod";
-import { authFor } from "../auth/auth";
+import { connectorPrincipal } from "../auth/connector";
 import type { Principal } from "../auth/principal";
 import { execute, type HubContext } from "../operations/execute";
 
-const handleParts = z.tuple([RoomId, z.string().regex(/^c_[0-9a-z]{8,40}$/)]);
-type ConnectorTool = Exclude<ToolName, "login">;
-
-/** The handle locates a member; the verified account remains the authority. */
-function decodeHandle(value: unknown): { room: string; conversation: ConversationKey } {
-  const parsed = handleParts.safeParse(typeof value === "string" ? value.split(".") : null);
-  if (!parsed.success) throw new TandryError("invalid_input", "Pass the conversation handle returned by join");
-  return { room: parsed.data[0], conversation: { host: "web", hostConversationId: parsed.data[1] } };
+/**
+ * The web connector: the protocol's tools as a remote MCP server. OAuth and
+ * protocol state are request-scoped; the room owns all conversation state.
+ */
+export async function mcpBinding(request: Request, hub: HubContext): Promise<Response> {
+  const who = await connectorPrincipal(hub.env, request);
+  if (who instanceof Response) return who;
+  return createMcpHandler(() => connectorServer(hub, who), { legacy: "stateless" }).fetch(request);
 }
 
-function connectorServer(hub: HubContext, who: Principal) {
-  const server = new McpServer({ name: "tandry", version: "0.1.0" });
+/** What a tool returns: the data (structuredContent) and the words the model reads (content). */
+interface Reply<K extends ConnectorToolName> {
+  result: ConnectorOutput<K>;
+  text: string;
+}
+
+type Implementation<K extends ConnectorToolName> = (params: ToolParams<K>, handle: unknown) => Promise<Reply<K>>;
+
+function connectorServer(hub: HubContext, who: Principal): McpServer {
   async function call<K extends OperationName>(op: K, input: Input<K>, context: { room?: string; conversation?: ConversationKey } = {}): Promise<Output<K>> {
     const result = await execute(hub, { op, input, principal: who, protocol: PROTOCOL_VERSION, ...context });
     if (!result.ok) throw new TandryError(result.error.code, result.error.message, result.error.data);
     return operations[op].output.parse(result.result) as Output<K>;
   }
-  const implementations: { [K in ConnectorTool]: (params: ToolParams<K>, handle?: unknown) => Promise<string> } = {
+
+  const implementations: { [K in ConnectorToolName]: Implementation<K> } = {
     async status() {
       const result = await call("status", {});
-      return renderStatus({ ...result, current: null, inactive: null });
+      return { result, text: renderStatus({ ...result, current: null, inactive: null }) };
     },
     async new_room(params) {
-      return renderNewRoom(await call("new_room", { id: newId("r"), ...params }));
+      const result = await call("new_room", { id: newId("r"), ...params });
+      return { result, text: renderNewRoom(result) };
     },
     async update_room(params, handle) {
       // Account scope: the handle only supplies the room, and the Hub checks
       // that the verified account owns it.
       const { room } = decodeHandle(handle);
-      return renderRoomUpdated(await call("update_room", { room, ...params }), params.rotateCode === true);
+      const result = await call("update_room", { room, ...params });
+      return { result, text: renderRoomUpdated(result, params.rotateCode === true) };
     },
     async join(params) {
       const conversation: ConversationKey = { host: "web", hostConversationId: newId("c") };
       const result = await call("join", { code: params.room, intro: params.intro, name: params.name, as: params.as,
         workspace: { repo: "", branch: "" } }, { conversation });
-      return `${renderConversationHandle(`${result.room.id}.${conversation.hostConversationId}`)}\n\n${renderJoin(result, newNonce(), hub.now())}`;
+      const handle = encodeHandle(result.room.id, conversation);
+      return { result: { ...result, conversation: handle }, text: `${renderConversationHandle(handle)}\n\n${renderJoin(result, newNonce(), hub.now())}` };
     },
     async leave(_, handle) {
-      return renderLeft(await call("leave", {}, decodeHandle(handle)));
+      const result = await call("leave", {}, decodeHandle(handle));
+      return { result, text: renderLeft(result) };
     },
     async members(_, handle) {
-      return renderMembers(await call("members", {}, decodeHandle(handle)), hub.now());
+      const result = await call("members", {}, decodeHandle(handle));
+      return { result, text: renderMembers(result, hub.now()) };
     },
     async rename(params, handle) {
       // The handle's conversation locates the member, so a connector can only
       // ever rename the member backing its own chat.
-      return renderRenamed(await call("rename", params, decodeHandle(handle)));
+      const result = await call("rename", params, decodeHandle(handle));
+      return { result, text: renderRenamed(result) };
     },
     async send(params, handle) {
-      return renderSent(await call("send", { id: newId("m"), ...params }, decodeHandle(handle)), hub.now());
+      const result = await call("send", { id: newId("m"), ...params }, decodeHandle(handle));
+      return { result, text: renderSent(result, hub.now()) };
     },
     async inbox(_, handle) {
       // Pull inbox consumes atomically in RoomDO before this response can leave.
-      return renderInbox(await call("inbox", {}, decodeHandle(handle)), newNonce());
+      const result = await call("inbox", {}, decodeHandle(handle));
+      return { result, text: renderInbox(result, newNonce()) };
     },
     async history(params, handle) {
-      return renderHistory(await call("history", params, decodeHandle(handle)), newNonce());
+      const result = await call("history", params, decodeHandle(handle));
+      return { result, text: renderHistory(result, newNonce()) };
     },
   };
-  for (const name of Object.keys(tools) as ToolName[]) {
-    if (!tools[name].connector || name === "login") continue;
-    const readOnly = name === "status" || name === "members" || name === "history";
+
+  const server = new McpServer({ name: "tandry", version: "0.1.0" });
+  for (const name of connectorToolNames) {
+    const { description, connector } = tools[name];
     server.registerTool(name, {
-      description: tools[name].description,
+      description,
       inputSchema: toolParameters(name, "connector"),
+      outputSchema: connector.output,
       annotations: {
-        readOnlyHint: readOnly,
-        // Continuing a member can replace its conversation; leaving abandons
-        // unread; rotating the code stops the old one admitting anyone, and
-        // renaming stops a member's old address resolving.
-        destructiveHint: name === "join" || name === "leave" || name === "update_room" || name === "rename",
-        // Each pull consumes a batch; retrying inbox can return the next batch.
-        // A repeated rename lands on the same name, but a repeated rotate does not.
-        idempotentHint: readOnly || name === "leave" || name === "rename",
-        openWorldHint: true,
+        readOnlyHint: connector.readOnly, destructiveHint: connector.destructive,
+        idempotentHint: connector.idempotent, openWorldHint: true,
       },
     }, async (params) => {
+      // registerTool validated params against this tool's inputSchema.
+      const run = implementations[name] as (params: unknown, handle: unknown) => Promise<Reply<ConnectorToolName>>;
       try {
-        const text = await implementations[name](params as never, "conversation" in params ? params.conversation : undefined);
-        return { content: [{ type: "text" as const, text }] };
+        const reply = await run(params, (params as { conversation?: unknown }).conversation);
+        return { content: [{ type: "text" as const, text: reply.text }], structuredContent: reply.result };
       } catch (error) {
         if (!(error instanceof TandryError)) throw error;
         return { content: [{ type: "text" as const, text: renderError(error.toBody()) }], isError: true };
@@ -105,69 +113,17 @@ function connectorServer(hub: HubContext, who: Principal) {
   return server;
 }
 
-type JWTPayload = Awaited<ReturnType<typeof verifyJwsAccessToken>>;
-const REQUIRED_SCOPES = ["tandry"];
-/** Caches the signing keys for five minutes; a token with an unknown kid refetches them. */
-const jwksCacheKey = {};
+// A connector's chat has no process-local marker, so join hands the model a
+// handle that names the room and this chat's conversation. It locates a
+// member; the verified account remains the authority.
+const handleParts = z.tuple([RoomId, z.string().regex(/^c_[0-9a-z]{8,40}$/)]);
 
-/**
- * Verifies the access token as `requireMcpAuth` does, except that the keys come
- * from this Hub's own store: the JWKS URL is the public origin, which in
- * production routes back here through the website Worker.
- */
-async function verifyConnectorToken(request: Request, auth: ReturnType<typeof authFor>, resource: string): Promise<JWTPayload> {
-  const authorization = parseAccessTokenAuthorization(request.headers.get("authorization"));
-  if (!authorization?.token) throw new APIError("UNAUTHORIZED", { message: "missing authorization header" });
-  if (authorization.scheme === "Unknown")
-    throw new APIError("UNAUTHORIZED", { message: "authorization scheme must be Bearer or DPoP", error: "invalid_token" });
-  const { baseURL, internalAdapter } = await auth.$context;
-  let payload: JWTPayload;
-  try {
-    payload = await verifyJwsAccessToken(authorization.token, {
-      jwksFetch: () => auth.api.getJwks(), jwksCacheKey, verifyOptions: { issuer: baseURL, audience: resource },
-    });
-  } catch (error) {
-    // By code, not instanceof: jose may be installed more than once.
-    const code = (error as { code?: unknown }).code;
-    if (code === "ERR_JWT_EXPIRED") throw new APIError("UNAUTHORIZED", { message: "token expired" });
-    if ((typeof code === "string" && code.startsWith("ERR_J")) || error instanceof TypeError)
-      throw new APIError("UNAUTHORIZED", { message: "invalid access token" });
-    throw error;
-  }
-  const granted = typeof payload.scope === "string" ? payload.scope.split(" ") : [];
-  const missing = REQUIRED_SCOPES.filter((scope) => !granted.includes(scope));
-  if (missing.length) throw createInsufficientScopeError(missing);
-  try {
-    await enforceDpopBinding({
-      payload, authorization, proofJwt: request.headers.get("dpop") ?? undefined, method: request.method, url: request.url,
-      replayStore: createDpopReplayStore(internalAdapter),
-    });
-  } catch (error) {
-    if (isDpopBindingError(error)) throw new APIError("UNAUTHORIZED", { message: error.message, error: error.code, error_description: error.message });
-    throw error;
-  }
-  return payload;
+function encodeHandle(room: string, conversation: ConversationKey): string {
+  return `${room}.${conversation.hostConversationId}`;
 }
 
-/** OAuth and protocol state are request-scoped; the room owns all conversation state. */
-export async function mcpBinding(request: Request, hub: HubContext): Promise<Response> {
-  const auth = authFor(hub.env);
-  const resource = `${hub.env.BETTER_AUTH_URL}/mcp`;
-  let claims: JWTPayload;
-  try {
-    claims = await verifyConnectorToken(request, auth, resource);
-  } catch (error) {
-    const challenge = createResourceServerChallenge(error, resource, { challengeScopes: REQUIRED_SCOPES });
-    if (!challenge) throw error;
-    const headers = new Headers(challenge.headers);
-    headers.set("Content-Type", "application/json");
-    return new Response(JSON.stringify({ jsonrpc: "2.0", error: { code: -32000, message: challenge.message }, id: null }),
-      { status: challenge.statusCode, headers });
-  }
-  if (typeof claims.sub !== "string") return new Response("Account required", { status: 403 });
-  const account = await hub.env.AUTH_DB.prepare("SELECT id, handle FROM user WHERE id=?").bind(claims.sub).first<{ id: string; handle: string | null }>();
-  if (!account) return new Response("Account required", { status: 403 });
-  const handle = Handle.safeParse(account.handle);
-  const who: Principal = { accountId: account.id, handle: handle.success ? handle.data : null, via: "connector" };
-  return createMcpHandler(() => connectorServer(hub, who), { legacy: "stateless" }).fetch(request);
+function decodeHandle(value: unknown): { room: string; conversation: ConversationKey } {
+  const parsed = handleParts.safeParse(typeof value === "string" ? value.split(".") : null);
+  if (!parsed.success) throw new TandryError("invalid_input", "Pass the conversation handle returned by join");
+  return { room: parsed.data[0], conversation: { host: "web", hostConversationId: parsed.data[1] } };
 }
