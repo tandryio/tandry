@@ -29,7 +29,7 @@ export function createHub<E extends Env = Env>(options: HubOptions<E>) {
 
   app.use("*", bodyLimit({ maxSize: 256 * 1024 }));
   app.onError((error, c) => {
-    console.error(JSON.stringify({ event: "request_failed", path: c.req.path, error: error.name }));
+    console.error(JSON.stringify({ event: "request_failed", path: c.req.path, error: error.name, message: error.message }));
     return c.json({ ok: false, error: { code: "unavailable", message: "Service temporarily unavailable" } }, 503);
   });
   app.get("/health", (c) => c.json({ ok: true, now: Date.now() }));

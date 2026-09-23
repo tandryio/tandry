@@ -18,6 +18,8 @@ export interface TestAccount {
 
 export interface HubUnderTest {
   baseUrl: string;
+  /** The configured public origin (`BETTER_AUTH_URL`); it issues tokens and names the `/mcp` resource. */
+  publicUrl: string;
   accounts: { alice: TestAccount; bob: TestAccount; nohandle: TestAccount };
   stop(): Promise<void>;
 }
@@ -99,6 +101,7 @@ export async function startLocalHub(options: StartOptions = {}): Promise<HubUnde
 
   return {
     baseUrl,
+    publicUrl: options.vars?.BETTER_AUTH_URL ?? baseUrl,
     accounts,
     async stop() {
       if (worker.exitCode === null) {

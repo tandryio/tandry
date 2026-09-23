@@ -5,7 +5,7 @@ import type { HubUnderTest, TestAccount } from "./start";
 /** Exercises the public OAuth endpoints with synthetic accounts, including explicit consent. */
 export async function connectorAuthorization(hub: HubUnderTest, account: TestAccount, scope = "tandry offline_access", signedIn = true) {
   const redirectUri = "https://connector.example.test/callback";
-  const resource = `${hub.baseUrl}/mcp`;
+  const resource = `${hub.publicUrl}/mcp`;
   const jsonHeaders = { "Content-Type": "application/json" };
   const registration = await fetch(`${hub.baseUrl}/api/auth/oauth2/register`, {
     method: "POST", headers: jsonHeaders,
@@ -18,7 +18,7 @@ export async function connectorAuthorization(hub: HubUnderTest, account: TestAcc
   const query = new URLSearchParams({ client_id: client.client_id, redirect_uri: redirectUri, response_type: "code",
     scope, resource, state: randomBytes(16).toString("hex"),
     code_challenge: createHash("sha256").update(verifier).digest("base64url"), code_challenge_method: "S256" });
-  const headers = { ...jsonHeaders, Authorization: `Bearer ${account.token}`, Origin: hub.baseUrl };
+  const headers = { ...jsonHeaders, Authorization: `Bearer ${account.token}`, Origin: hub.publicUrl };
   const authorization = await fetch(`${hub.baseUrl}/api/auth/oauth2/authorize?${query}`, { headers: signedIn ? headers : jsonHeaders, redirect: "manual" });
   const redirect = authorization.headers.get("Location") ?? (await authorization.json() as { url: string }).url;
   const consentUrl = new URL(redirect, hub.baseUrl);

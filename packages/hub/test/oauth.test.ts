@@ -21,6 +21,24 @@ test("MCP challenges use the public HTTPS origin behind an HTTP proxy", async ()
   }
 });
 
+test("MCP verifies tokens without fetching its own public origin, and keeps DPoP binding", async () => {
+  // In production the public origin routes through the website Worker; the Hub
+  // must verify the tokens it signed without a network hop back to itself.
+  const local = await startLocalHub({ vars: { BETTER_AUTH_URL: "https://connector.example.test" } });
+  try {
+    const grant = await connectorGrant(local, local.accounts.alice);
+    const discovered = await mcpRequest(local, grant.access_token, "server/discover");
+    assert.deepEqual(discovered.supportedVersions, ["2026-07-28"]);
+    assert.match((await mcpTool(local, grant.access_token, "status")).text, /alice/);
+    const asDpop = await fetch(`${local.baseUrl}/mcp`, { method: "POST", headers: { Authorization: `DPoP ${grant.access_token}` } });
+    assert.equal(asDpop.status, 401);
+    assert.match(asDpop.headers.get("WWW-Authenticate")!, /^DPoP .*error="invalid_token"/);
+    await asDpop.body?.cancel();
+  } finally {
+    await local.stop();
+  }
+});
+
 test("discovery and challenges point to this resource; sessions cannot authorize MCP", async () => {
   const metadata = await fetch(`${hub.baseUrl}/.well-known/oauth-protected-resource/mcp`).then((r) => r.json()) as Record<string, unknown>;
   assert.equal(metadata.resource, `${hub.baseUrl}/mcp`);

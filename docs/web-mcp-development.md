@@ -187,6 +187,9 @@ Tokens must be issued for this site's `/mcp` resource and carry `tandry` scope.
 `offline_access` permits refresh. Session/device tokens are rejected at `/mcp`;
 connector tokens do not authorize the website or device APIs. JWTs expire in
 15 minutes. Revoking refresh tokens stops renewal, not already issued JWTs.
+`/mcp` verifies JWTs against the Hub's own key store rather than fetching
+`/api/auth/jwks`: in production that URL is the public origin, which routes
+back to the Hub through the website Worker.
 
 Dynamic registration is deliberately enabled for connector compatibility.
 CIMD is not enabled: its Workers transport needs DNS/address validation and
