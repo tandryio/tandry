@@ -67,15 +67,13 @@ export class Links {
   presence(member: Pick<MemberRow, "id" | "host" | "last_active_at">, now: number): Presence {
     const tier = tierOf(member.host);
     if (tier === "pull")
-      return { state: now - member.last_active_at < this.pullOnlineMs ? "online" : "offline", tier, lastActiveAt: member.last_active_at, wakeable: false };
+      return { state: now - member.last_active_at < this.pullOnlineMs ? "online" : "offline", tier, lastActiveAt: member.last_active_at };
     const open = this.sockets(member.id);
     const online = open.some(({ attachment }) => attachment.wakeable);
     return {
       state: online ? "online" : "offline", tier,
       busy: open.some(({ attachment }) => attachment.busy),
       lastActiveAt: online ? now : member.last_active_at,
-      // Deprecated field, kept for clients that still require it (see Presence).
-      wakeable: online,
     };
   }
 }

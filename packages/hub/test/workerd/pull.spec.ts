@@ -15,11 +15,11 @@ test("pull presence expires without an alarm; inbox makes it online again", asyn
     if (!result.ok) throw new Error(result.error.message);
     return (result.result as Output<"members">).members[0]!;
   };
-  expect(await presence()).toMatchObject({ state: "online", tier: "pull", wakeable: false });
+  expect(await presence()).toMatchObject({ state: "online", tier: "pull" });
   await runInDurableObject(stub, (_, state) => {
     state.storage.sql.exec("UPDATE member SET last_active_at=?", Date.now() - 11 * 60_000);
   });
-  expect(await presence()).toMatchObject({ state: "offline", tier: "pull", wakeable: false });
+  expect(await presence()).toMatchObject({ state: "offline", tier: "pull" });
   expect((await rpc.call("inbox", caller, {})).ok).toBe(true);
-  expect(await presence()).toMatchObject({ state: "online", tier: "pull", wakeable: false });
+  expect(await presence()).toMatchObject({ state: "online", tier: "pull" });
 });

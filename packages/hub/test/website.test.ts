@@ -137,7 +137,7 @@ test("website presence distinguishes a working push host from idle and offline",
     const deadline = Date.now() + 3000;
     for (;;) {
       const member = (await call(alice, "members", {}, context)).members.find((m) => m.address === "alice/main")!;
-      if (member.busy) { assert.equal(member.state, "online"); assert.equal(member.wakeable, true); break; }
+      if (member.busy) { assert.equal(member.state, "online"); break; }
       assert.ok(Date.now() < deadline, "Host busy state did not reach the website");
       await new Promise((resolve) => setTimeout(resolve, 10));
     }

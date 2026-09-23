@@ -355,10 +355,9 @@ export function runHubSuite(start: () => Promise<HubUnderTest>): void {
     await bobLink.opened;
     // Reconnecting replays the notice for what is unread.
     assert.deepEqual(await bobLink.notify(1), { t: "notify", unread: 1, upTo: (await call(bob, "inbox", {})).upTo, from: ["alice/a"] });
-    // Connected but unable to wake: offline to senders. The deprecated wakeable field only repeats the state.
+    // Connected but unable to wake: offline to senders.
     await quiet();
-    const early = (await call(alice, "members", {})).members.find((member) => member.address === "bob/b")!;
-    assert.deepEqual([early.state, early.wakeable], ["offline", false]);
+    assert.equal((await call(alice, "members", {})).members.find((member) => member.address === "bob/b")?.state, "offline");
     bobLink.state(true);
     await quiet();
     const sent = await text(alice, ["bob/b"], "SECRET BODY");

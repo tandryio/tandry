@@ -118,12 +118,6 @@ export const Presence = z.object({
   /** Reported by a connected push host; absent for pull hosts. */
   busy: z.boolean().optional(),
   lastActiveAt: z.number(),
-  /**
-   * Deprecated. Clients up to 0.1.0-alpha.3 require it; it now equals
-   * `state === "online"` for push members and is false for pull members.
-   * Nothing new reads it. Remove once those clients are gone.
-   */
-  wakeable: z.boolean().optional(),
 });
 export type Presence = z.infer<typeof Presence>;
 
