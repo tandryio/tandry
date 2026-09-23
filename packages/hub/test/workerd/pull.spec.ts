@@ -4,7 +4,7 @@ import { expect, test } from "vitest";
 import type { Caller } from "../../src/room-do/context";
 import type { RoomRpc } from "../../src/room-do/room-do";
 
-test("pull presence expires without an alarm; inbox makes it online again without making it wakeable", async () => {
+test("pull presence expires without an alarm; inbox makes it online again", async () => {
   const id = newId("r");
   const stub = env.ROOM.get(env.ROOM.idFromName(id));
   const rpc = stub as unknown as RoomRpc;

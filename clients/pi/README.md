@@ -56,8 +56,9 @@ old connection; pi 0.85.1 creates a fresh extension instance on session changes.
 TUI and RPC modes can wake an idle conversation through a custom follow-up
 message. During a run, notices enter at a tool boundary or queue after the
 turn. `agent_settled` reports true idle, including after retries and queued
-continuations. Blocking UI prompts temporarily disable idle waking. Print and
-JSON modes report “seen on next turn” because they do not wait for new mail.
+continuations. A blocking UI prompt counts as the owner's turn: no wake until
+it closes. Print and JSON modes are offline to senders because they do not
+wait for new mail.
 
 Pi's `sendMessage` returns no delivery acknowledgement. The bridge can confirm
 that it submitted a notice, but asynchronous model/provider failures are shown

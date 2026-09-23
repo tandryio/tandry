@@ -236,11 +236,11 @@ test("mail arriving during a final answer queues a follow-up even without anothe
   await pi.close();
 });
 
-test("print mode reports next-turn delivery; leaving removes the membership", async () => {
+test("print mode is offline to senders; leaving removes the membership", async () => {
   const sender = await room();
   const pi = await host({ mode: "print" });
   await pi.call("join", { room: sender.code, name: "receiver", intro: "One-shot pi" });
-  await until(async () => /alice\/receiver .*online, seen on next turn/.test(await sender.call("members")), "non-wakeable print session");
+  await until(async () => /alice\/receiver .*offline/.test(await sender.call("members")), "print session offline");
   await sender.call("send", { to: ["alice/receiver"], body: "next prompt" });
   await new Promise(resolve => setTimeout(resolve, 100));
   assert.equal(pi.notices().length, 0);

@@ -76,9 +76,7 @@ function MemberRow({
     ? m.rooms_offline_hint()
     : member.tier === "pull"
       ? m.rooms_pull_hint()
-      : member.wakeable
-        ? m.rooms_wakeable_hint()
-        : m.rooms_next_turn_hint();
+      : m.rooms_wakeable_hint();
   return (
     <li className="member-row">
       <details>

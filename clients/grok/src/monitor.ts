@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readRun } from "@tandryio/bridge/local";
+import { readMarker, readRun } from "@tandryio/bridge/local";
 import { activeSessions, registerMonitor, sessionIdFrom, unregisterMonitor } from "./files";
 
 const POLL_MS = 500;
@@ -65,6 +65,10 @@ function findSession(argv: string[], chain: ProcessInfo[]): string | null {
  * notice its stdout is gone. So it watches the processes above it: the shell
  * and the grok that started it, and the grok process Grok's registry names
  * for this session. When any of them is gone, so is the reason to stay.
+ *
+ * It also leaves with the conversation: once the room it was watching has
+ * been left, there is nothing to wake for, and the next join's result asks
+ * the model for a new monitor anyway.
  */
 export function monitor(argv: string[]): void {
   const chain = ancestors();
@@ -87,9 +91,14 @@ export function monitor(argv: string[]): void {
   // Registered only once the baseline is taken, so no wake can fall between the two.
   registerMonitor(sessionId);
 
+  let joined = !!readMarker("grok", sessionId);
   setInterval(() => {
     // Orphaned: a process above us is gone, or we were reparented to init.
     if (process.ppid === 1 || [...watched].some((pid) => !alive(pid))) stop();
+    // Left the room it was started for.
+    const inRoom = !!readMarker("grok", sessionId);
+    if (joined && !inRoom) stop();
+    joined = inRoom;
     const current = readRun(sessionId);
     if (current && current.wake > seen) {
       seen = current.wake;

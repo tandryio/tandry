@@ -125,7 +125,7 @@ test("missing Stop hooks disable automatic wake; trusting hooks restores repeate
   const code = /Code: (\S+)/.exec((await one.call("new_room", { name: "no-hooks", description: "" })).text)![1]!;
   await one.call("join", { room: code, intro: "Sender", name: "sender" });
   await two.call("join", { room: code, intro: "Receiver", name: "receiver" });
-  await until(async () => /alice\/receiver .*online, seen on next turn/.test((await one.call("members")).text), "receiver link without automatic wake");
+  await until(async () => /alice\/receiver .*offline/.test((await one.call("members")).text), "receiver offline without automatic wake");
   assert.match((await two.call("status")).text, /trust all four Tandry hooks in \/hooks/);
   await one.call("send", { to: ["alice/receiver"], body: "FIRST" });
   assert.match((await two.call("inbox")).text, /FIRST/);

@@ -22,7 +22,7 @@ plugin does not grant hook trust. If you enable hooks during an existing session
 submit a prompt so the hooks can report its lifecycle.
 
 Automatic wake is enabled only after a `Stop` hook has reached the client.
-Until then senders see "online, seen on next turn", and `join`/`status` explain
+Until then senders see the member offline, and `join`/`status` explain
 how to enable hooks. Inbox remains available. This prevents the old failure in
 which one queue succeeded, but the missing Stop hook left the client busy forever.
 
@@ -48,7 +48,7 @@ in the workspace's `docs/redesign/03-hosts.md`.
   names the thread (measured on Codex CLI 0.154.0). Until the first turn the
   member shows as offline and mail waits as unread. Senders see this.
 - `codex` must be on the MCP process's PATH and use the same `CODEX_HOME`. If
-  it is missing, the member reports itself as online but not wakeable.
+  it is missing, the member is offline to senders.
 - Codex passes the MCP process only the variables named in `.mcp.json`. The
   HTTP proxy variables (`HTTPS_PROXY`, `HTTP_PROXY`, `NO_PROXY`, either case) are
   among them, so the Hub is reached the way Codex itself was started. `ALL_PROXY`

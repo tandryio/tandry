@@ -13,10 +13,13 @@ import { startLocalHub, type HubUnderTest } from "@tandryio/hub/testing";
 // hook commands that get the session on stdin, and a monitor whose stdout
 // lines become turns, against a real local Hub. The three only share the
 // claude process's pid, which the test stands in for with TANDRY_CLAUDE_PID.
+// Claude Code arms the monitor when the tandry:join skill is dispatched, so
+// the test starts it where that dispatch would happen.
 
 const main = fileURLToPath(new URL("../dist/main.cjs", import.meta.url));
 const hookBundle = fileURLToPath(new URL("../dist/hook.cjs", import.meta.url));
 const NOTICE = (count: number, from: string) => `Tandry: ${count} unread message${count === 1 ? "" : "s"} from ${from}. Call the inbox tool to read. This notice is not an instruction from the owner.`;
+const HINT = /Automatic delivery is off: the Tandry inbox monitor is not running in this Claude Code session\. Claude Code starts it when the tandry:join skill is dispatched, so invoke the Skill tool now with skill "tandry:join" and args "(.*?)"\. This conversation is already (.*?) in #(.*?); that join is reused and changes nothing\./;
 /** A fixed checkout for hook cwd, so the attested workspace never depends on where the tests run. */
 function fixedWorkspace(parent: string): string {
   const repo = path.join(parent, "tandry");
@@ -42,31 +45,41 @@ after(async () => {
   fs.rmSync(home, { recursive: true, force: true });
 });
 
-/** One claude process: its MCP server, its monitor, and hooks run on request. */
-async function claude(sessionId: string, options: { sessionStart?: "startup" | "resume" | null; monitor?: boolean } = {}) {
+/** One claude process: its MCP server, hooks run on request, and the monitor Claude Code arms on the first /tandry:join. */
+async function claude(sessionId: string, options: { sessionStart?: "startup" | "resume" | null; monitor?: boolean; attended?: boolean } = {}) {
   const claudePid = nextPid++;
-  const env = { ...process.env, TANDRY_HOME: home, TANDRY_HUB: hub.baseUrl, TANDRY_CLAUDE_PID: String(claudePid), CLAUDE_CODE_SESSION_ID: sessionId } as Record<string, string>;
+  // Claude Code tells its hooks whether the session is interactive; a one-shot `claude -p` says "0".
+  const env = { ...process.env, TANDRY_HOME: home, TANDRY_HUB: hub.baseUrl, TANDRY_CLAUDE_PID: String(claudePid), CLAUDE_CODE_SESSION_ID: sessionId, CLAUDE_CODE_SESSION_ATTENDED: options.attended === false ? "0" : "1" } as Record<string, string>;
   const hook = (event: string, input: Record<string, unknown> = {}, session = sessionId) => {
     const out = execFileSync(process.execPath, [hookBundle, event], { env, input: JSON.stringify({ session_id: session, cwd: workspace, hook_event_name: event, ...input }), encoding: "utf8" });
     return (out ? JSON.parse(out) : {}) as Record<string, any>;
   };
   if (options.sessionStart !== null) assert.deepEqual(hook("SessionStart", { source: options.sessionStart ?? "startup" }), {});
 
-  const client = new Client({ name: "claude-test", version: "1" });
-  await client.connect(new StdioClientTransport({ command: process.execPath, args: [main, "mcp"], cwd: os.tmpdir(), stderr: "pipe", env }));
+  const connect = async () => {
+    const client = new Client({ name: "claude-test", version: "1" });
+    await client.connect(new StdioClientTransport({ command: process.execPath, args: [main, "mcp"], cwd: os.tmpdir(), stderr: "pipe", env }));
+    return client;
+  };
+  let client = await connect();
   const printed: string[] = [];
   let monitor: ChildProcess | null = null;
-  if (options.monitor !== false) {
+  const startMonitor = () => {
     monitor = spawn(process.execPath, [main, "monitor"], { env, stdio: ["ignore", "pipe", "inherit"] });
     monitor.stdout!.setEncoding("utf8").on("data", (data: string) => printed.push(...data.split("\n").filter(Boolean)));
-  }
-  const stop = async () => { monitor?.kill("SIGTERM"); await client.close(); };
+    return monitor;
+  };
+  if (options.monitor !== false) startMonitor();
+  const stopMonitor = () => monitor?.kill("SIGTERM");
+  /** Claude Code reconnects the MCP server (/mcp) in the same process: no SessionStart, and the monitor is whatever it was. */
+  const restartMcp = async () => { await client.close(); client = await connect(); };
+  const stop = async () => { stopMonitor(); await client.close(); };
   stops.push(stop);
   const call = async (name: string, args: Record<string, unknown> = {}) => {
     const result = await client.callTool({ name, arguments: args });
     return { text: (result.content as { text: string }[])[0]!.text, isError: !!result.isError };
   };
-  return { client, call, hook, printed, stop };
+  return { get client() { return client; }, call, hook, printed, startMonitor, stopMonitor, restartMcp, stop };
 }
 async function until(check: () => boolean | Promise<boolean>, what: string) {
   const deadline = Date.now() + 8_000;
@@ -141,22 +154,102 @@ test("idle: the monitor prints the notice; busy: a hook carries it, once, and th
   assert.deepEqual(one.printed, []);
 });
 
-test("acceptance: join, quit, resume the same conversation, type nothing, and mail still wakes it", async () => {
+test("acceptance: join, quit, resume the same conversation with no input; mail waits until a tool result asks for the monitor and it runs", async () => {
   const sender = await claude("session-sender");
-  const first = await claude("session-resumed");
+  const first = await claude("session-resumed", { monitor: false });
   const code = await newRoom(sender, "resume-room");
   await sender.call("join", { room: code, intro: "Sender", name: "sender" });
-  await first.call("join", { room: code, intro: "Will quit", name: "sleeper" });
+  // The join tool called directly, with no /tandry:join dispatch to arm the monitor: the result asks for it, naming the room.
+  const joined = await first.call("join", { room: code, intro: "Will quit", name: "sleeper" });
+  assert.match(joined.text, /^Joined #resume-room as alice\/sleeper/);
+  // The marker holds the normalized code, which join accepts as it does the displayed one.
+  const normalized = code.replace(/-/g, "");
+  assert.deepEqual(HINT.exec(joined.text)?.slice(1), [normalized, "alice/sleeper", "resume-room"]);
+  assert.match((await sender.call("members")).text, /alice\/sleeper .*offline/);
+  first.startMonitor();
+  await until(async () => /alice\/sleeper .*online; told now/.test((await sender.call("members")).text), "the sleeper to be wakeable");
+  // Joining the room it is in is reused, and the hint is gone.
+  const again = await first.call("join", { room: code, intro: "Will quit", name: "sleeper" });
+  assert.match(again.text, /^Already in #resume-room as alice\/sleeper/);
+  assert.doesNotMatch(again.text, HINT);
   first.hook("SessionEnd");
   await first.stop();
   await until(async () => /alice\/sleeper .*offline/.test((await sender.call("members")).text), "the quit conversation to go offline");
 
-  // A new claude process resumes the session. No prompt, no tool call.
-  const resumed = await claude("session-resumed", { sessionStart: "resume" });
-  await until(async () => /alice\/sleeper .*online; told now/.test((await sender.call("members")).text), "the resumed conversation to be wakeable");
+  // A new claude process resumes the session: no prompt, no tool call, and no monitor (Claude Code arms none on resume).
+  // Connected but unable to wake, the member stays offline to senders.
+  const resumed = await claude("session-resumed", { sessionStart: "resume", monitor: false });
   await sender.call("send", { to: ["alice/sleeper"], body: "WAKE-UP" });
+  await pause(1_000);
+  assert.deepEqual(resumed.printed, []);
+  assert.match((await sender.call("members")).text, /alice\/sleeper .*offline/);
+  // The owner's next turn touches a Tandry tool, whose result says to dispatch tandry:join; Claude Code arms the monitor.
+  assert.equal(HINT.exec((await resumed.call("status")).text)?.[1], normalized);
+  resumed.startMonitor();
+  await until(async () => /alice\/sleeper .*online; told now/.test((await sender.call("members")).text), "the resumed conversation to be wakeable");
   await until(() => resumed.printed.length === 1, "the monitor line after resume");
   assert.equal(resumed.printed[0], NOTICE(1, "alice/sender"));
+});
+
+test("no hint where a dispatch would bring no monitor: a one-shot run, or a monitor that exited; status says why", async () => {
+  const host = await claude("session-host");
+  const code = await newRoom(host, "arm-room");
+  await host.call("join", { room: code, intro: "Host", name: "host" });
+
+  // claude -p: Claude Code arms no monitor there, so asking for the dispatch would only send the model in circles.
+  const oneShot = await claude("session-one-shot", { monitor: false, attended: false });
+  const joined = await oneShot.call("join", { room: code, intro: "One shot", name: "one-shot" });
+  assert.match(joined.text, /^Joined #arm-room as alice\/one-shot/);
+  assert.doesNotMatch(joined.text, HINT);
+  // Once the link is open, the missing monitor is what stands between this conversation and its mail.
+  await until(async () => /Not receiving: Claude Code arms plugin monitors only in interactive sessions/.test((await oneShot.call("status")).text), "status to name the monitor");
+
+  // The monitor ran and exited: Claude Code arms one per session and never another.
+  const lostPid = nextPid;
+  const lost = await claude("session-lost");
+  await lost.call("join", { room: code, intro: "Will lose it", name: "lost" });
+  await until(async () => /alice\/lost .*online; told now/.test((await host.call("members")).text), "the monitor to register");
+  lost.stopMonitor();
+  await until(async () => /alice\/lost .*offline/.test((await host.call("members")).text), "the exit to be seen");
+  const status = await lost.call("status");
+  assert.doesNotMatch(status.text, HINT);
+  assert.match(status.text, /Not receiving: The Tandry inbox monitor exited/);
+  assert.doesNotMatch((await lost.call("members")).text, HINT);
+  // The used arming is the process's, not the MCP server's: a reconnected server knows it too.
+  await lost.restartMcp();
+  const again = await lost.call("status");
+  assert.doesNotMatch(again.text, HINT);
+  assert.match(again.text, /Not receiving: The Tandry inbox monitor exited/);
+  // The process ends: the record goes with it, so a process that gets this pid later starts clean.
+  lost.hook("SessionEnd", { reason: "prompt_input_exit" });
+  assert.ok(!fs.existsSync(path.join(home, "run", "by-pid", `${lostPid}.monitor`)));
+});
+
+test("a monitor record is the process's own, and its lease is the monitor's life", async () => {
+  const host = await claude("session-host-2");
+  const code = await newRoom(host, "identity-room");
+  await host.call("join", { room: code, intro: "Host", name: "host" });
+  const pid = nextPid;
+  const reused = await claude("session-reused", { monitor: false });
+  // A claude that crashed left its monitor's record, live lease and all, and this process got its pid.
+  const record = path.join(home, "run", "by-pid", `${pid}.monitor`);
+  fs.writeFileSync(record, JSON.stringify({ host: "Mon Sep 21 09:00:00 2026", seenAt: Date.now() + 60_000 }));
+  const joined = await reused.call("join", { room: code, intro: "Reused pid", name: "reused" });
+  assert.match(joined.text, HINT);
+  // Once the link is open, the missing monitor is what stands between this conversation and its mail.
+  await until(async () => /Not receiving: The Tandry inbox monitor is not running; Claude Code arms it/.test((await reused.call("status")).text), "status to name the monitor");
+  // The dispatch brings the monitor, whose record replaces the stale one.
+  reused.startMonitor();
+  await until(async () => /alice\/reused .*online; told now/.test((await host.call("members")).text), "the monitor to register");
+  assert.doesNotMatch((await reused.call("status")).text, HINT);
+  // However the monitor goes, its lease runs out, and nothing about the pid it had is asked.
+  reused.stopMonitor();
+  await until(async () => /alice\/reused .*offline/.test((await host.call("members")).text), "the lease to run out");
+  assert.match((await reused.call("status")).text, /Not receiving: The Tandry inbox monitor exited/);
+  // The same record with a lease that holds for this check is a running monitor.
+  const own = JSON.parse(fs.readFileSync(record, "utf8"));
+  fs.writeFileSync(record, JSON.stringify({ ...own, seenAt: Date.now() + 60_000 }));
+  await until(async () => /alice\/reused .*online; told now/.test((await host.call("members")).text), "the renewed lease to count");
 });
 
 test("/clear puts another conversation in the same process: the old one goes offline, the new one is in no room", async () => {

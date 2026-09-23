@@ -234,12 +234,12 @@ test("concurrent roots remain isolated and plugin disposal closes all links", as
   await b.close();
 });
 
-test("non-wakeable mode reports next-turn delivery and leave removes the marker", async () => {
+test("non-wakeable mode is offline to senders and leave removes the marker", async () => {
   const sender = await room();
   const dsh = await host(false);
   const receiver = await dsh.open();
   await receiver.call("join", { room: sender.code, name: "receiver", intro: "One-shot dsh" });
-  await until(async () => /alice\/receiver .*online, seen on next turn/.test(await sender.call("members")), "next-turn link");
+  await until(async () => /alice\/receiver .*offline/.test(await sender.call("members")), "non-wakeable link offline");
   await sender.call("send", { to: ["alice/receiver"], body: "next-turn mail" });
   await new Promise(resolve => setTimeout(resolve, 100));
   assert.equal(receiver.notices().length, 0);

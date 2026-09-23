@@ -57,16 +57,25 @@ export class Links {
     }
   }
 
+  /**
+   * A push member is online while a connected process can start a turn for
+   * it. A process that is connected but cannot wake its conversation (a
+   * resumed session whose host has not re-armed the wake, a one-shot run)
+   * is offline to senders: mail waits, and a boundary hook delivers it when
+   * the owner is next back.
+   */
   presence(member: Pick<MemberRow, "id" | "host" | "last_active_at">, now: number): Presence {
     const tier = tierOf(member.host);
     if (tier === "pull")
-      return { state: now - member.last_active_at < this.pullOnlineMs ? "online" : "offline", tier, wakeable: false, lastActiveAt: member.last_active_at };
+      return { state: now - member.last_active_at < this.pullOnlineMs ? "online" : "offline", tier, lastActiveAt: member.last_active_at, wakeable: false };
     const open = this.sockets(member.id);
+    const online = open.some(({ attachment }) => attachment.wakeable);
     return {
-      state: open.length ? "online" : "offline", tier,
-      wakeable: open.some(({ attachment }) => attachment.wakeable),
+      state: online ? "online" : "offline", tier,
       busy: open.some(({ attachment }) => attachment.busy),
-      lastActiveAt: open.length ? now : member.last_active_at,
+      lastActiveAt: online ? now : member.last_active_at,
+      // Deprecated field, kept for clients that still require it (see Presence).
+      wakeable: online,
     };
   }
 }

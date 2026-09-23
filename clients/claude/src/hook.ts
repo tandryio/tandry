@@ -1,5 +1,5 @@
 import { readMarker, readRun } from "@tandryio/bridge/local";
-import { claudePidOf, readHost, removeSession, sessionIdFrom, writeHost, writeSession } from "./files";
+import { claudePidOf, readHost, removeMonitor, removeSession, sessionIdFrom, writeHost, writeSession } from "./files";
 
 // The hook command. It runs on every tool call, so it is its own small bundle:
 // files only, no network, no SDK.
@@ -20,13 +20,15 @@ function handle(event: HookEvent, input: Record<string, unknown>, claudePid: num
   const joined = () => !!readMarker("claude", sessionId);
 
   if (event === "SessionStart") {
-    writeSession(claudePid, { sessionId, cwd: typeof input.cwd === "string" ? input.cwd : process.cwd(), at: Date.now() });
+    writeSession(claudePid, { sessionId, cwd: typeof input.cwd === "string" ? input.cwd : process.cwd(), at: Date.now(), attended: process.env.CLAUDE_CODE_SESSION_ATTENDED !== "0" });
     // Compaction happens inside a turn; every other source starts between turns.
     if (input.source !== "compact" && joined()) writeHost(sessionId, { ...readHost(sessionId), busy: false });
     return {};
   }
   if (event === "SessionEnd") {
     removeSession(claudePid, sessionId);
+    // /clear and an in-session /resume end the session and keep the process, and with it the monitor and its record.
+    if (input.reason !== "clear" && input.reason !== "resume") removeMonitor(claudePid);
     if (joined()) writeHost(sessionId, { ...readHost(sessionId), busy: false });
     return {};
   }

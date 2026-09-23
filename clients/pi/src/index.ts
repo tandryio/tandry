@@ -14,8 +14,9 @@ export default function tandry(pi: ExtensionAPI): void {
     host: "pi",
     shell: {
       // Print/JSON runs exit after their prompt instead of waiting for mail.
-      wakeable: () => !!context?.model && (context.mode === "tui" || context.mode === "rpc") && !waitingForOwner,
-      idle: () => !!context?.isIdle() && !starting,
+      wakeable: () => !!context?.model && (context.mode === "tui" || context.mode === "rpc"),
+      // A blocking UI prompt is the owner's moment: no wake until it closes, as during a turn.
+      idle: () => !!context?.isIdle() && !starting && !waitingForOwner,
       async wake(notice) {
         pi.sendMessage(message(notice), { triggerTurn: true, deliverAs: "followUp" });
       },

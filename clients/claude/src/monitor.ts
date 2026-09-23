@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readRun } from "@tandryio/bridge/local";
-import { readSession, registerMonitor, unregisterMonitor } from "./files";
+import { processIdentity, readSession, writeMonitor } from "./files";
 
 const POLL_MS = 500;
 /** A wake this recent was meant for whoever is watching now, even if it was signalled just before we looked. */
@@ -20,19 +20,24 @@ function findClaudePid(): number | null {
   return candidates.find((pid): pid is number => !!pid && !!readSession(pid)) ?? null;
 }
 
-/** A dumb pipe: prints the bridge's notice when the bridge says the idle conversation should be woken. No network. */
+/**
+ * A dumb pipe: prints the bridge's notice when the bridge says the idle
+ * conversation should be woken. No network.
+ *
+ * Claude Code arms it the first time the tandry:join skill is dispatched in a
+ * session and keeps it for the session's lifetime; it is never re-armed, so it
+ * stays through leave and a later join, silent while there is nothing to say.
+ */
 export function monitor(): void {
   let claudePid: number | null = null;
   let sessionId: string | null = null;
   let seen = 0;
+  let host: string | null = null;
 
-  const stop = () => { if (claudePid) unregisterMonitor(claudePid); process.exit(0); };
-  process.on("SIGTERM", stop);
-  process.on("SIGINT", stop);
-  process.on("SIGHUP", stop);
-  process.stdout.on("error", stop);
+  // Signals end this process as they end any other; the record then stops being renewed, which is how it says so.
+  process.stdout.on("error", () => process.exit(0));
 
-  setInterval(() => {
+  const tick = () => {
     if (!claudePid) {
       claudePid = findClaudePid();
       if (!claudePid) return;
@@ -44,12 +49,17 @@ export function monitor(): void {
       sessionId = session.sessionId;
       const fresh = !!run && run.wake > 0 && Date.now() - run.wakeAt < FRESH_MS;
       seen = (run?.wake ?? 0) - (fresh ? 1 : 0);
-      // Registered only once the baseline is taken, so no wake can fall between the two.
-      registerMonitor(claudePid);
+      // Recorded only once the baseline is taken, so no wake can fall between the two.
+      host ??= processIdentity(claudePid);
     }
+    // The lease, renewed every tick while this process lives. The identity may be empty (see processIdentity).
+    if (host !== null) writeMonitor(claudePid, host);
     if (run && run.wake > seen) {
       seen = run.wake;
       if (run.wakeNotice) process.stdout.write(`${run.wakeNotice}\n`);
     }
-  }, POLL_MS);
+  };
+  // Registered at once: the join that armed this monitor is about to check for it.
+  tick();
+  setInterval(tick, POLL_MS);
 }

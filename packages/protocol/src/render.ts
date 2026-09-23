@@ -82,9 +82,9 @@ export function renderHistory(page: Output<"history">, nonce: string): string {
 }
 
 export function renderPresence(presence: Presence, now: number): string {
-  if (presence.state === "offline") return `offline, last active ${relativeTime(presence.lastActiveAt, now)}; reads it when its conversation is next opened`;
+  if (presence.state === "offline") return `offline, last active ${relativeTime(presence.lastActiveAt, now)}; reads it when its owner is next back in that conversation`;
   if (presence.tier === "pull") return "online in a web chat; reads it at its next inbox check";
-  return presence.wakeable ? "online; told now" : "online, seen on next turn";
+  return "online; told now";
 }
 
 export function renderSent(result: Output<"send">, now: number): string {
@@ -178,6 +178,21 @@ export function renderError(error: ErrorBody, now = Date.now()): string {
   const members = error.data?.members;
   if (Array.isArray(members)) lines.push(`Members:\n${renderMembers({ members: members as MemberView[] }, now)}`);
   return lines.join("\n");
+}
+
+/** A push host whose idle wake is a monitor process that the model has a part in starting. */
+export type MonitorView =
+  /** Claude Code arms the plugin monitor when the tandry:join skill is dispatched; joining the room again is reused. */
+  | { host: "claude"; code: string; member: MemberAddress; room: string }
+  /** Grok Build's model starts it with the monitor tool, from this exact command. */
+  | { host: "grok"; command: string };
+
+/** Said in every tool result of a joined conversation while the monitor is missing and this would bring it. */
+export function renderMonitorMissing(view: MonitorView): string {
+  const how = view.host === "claude"
+    ? `Claude Code starts it when the tandry:join skill is dispatched, so invoke the Skill tool now with skill "tandry:join" and args "${view.code}". This conversation is already ${view.member} in #${view.room}; that join is reused and changes nothing.`
+    : `Start it now with the monitor tool: command \`${view.command}\`, description "Tandry inbox", persistent true.`;
+  return `Automatic delivery is off: the Tandry inbox monitor is not running in this ${hostLabel(view.host)} session. ${how} It prints one line when a room message is waiting and nothing else; when that line arrives, call inbox.`;
 }
 
 /** A connector has no process-local marker; the chat must keep this reference. */

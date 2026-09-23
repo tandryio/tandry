@@ -26,7 +26,9 @@ Two kinds of process, one of which is online:
   It watches the shell and grok process above it and the grok pid Grok's
   registry names for the session, and exits when any of them is gone: a
   grok killed by a signal leaves its monitors behind, and this one must not
-  linger. The MCP server likewise exits once reparented to init.
+  linger. It also exits once the conversation has left the room it was
+  started for; the next join's result asks for a new one. The MCP server
+  likewise exits once reparented to init.
 
 Only the fixed notice enters the conversation through this path. Message
 bodies arrive as the result of the `inbox` tool and nowhere else.
@@ -47,7 +49,7 @@ with one tool call.
 Automated, in `test/grok.test.ts`: the shipped bundle run as Grok runs it,
 against a real local Hub: the monitor hint, idle wake, consecutive wakes,
 quit and resume with no input, a monitor that finds its session through
-Grok's registry, and a monitor that dies.
+Grok's registry, a monitor that exits on leave, and a monitor that dies.
 
 In a real Grok Build 1.0.40 session on macOS (2026-09-22, grok-4.7 over ACP
 stdio with `--plugin-dir`): join, the monitor started from the join result,
@@ -59,9 +61,9 @@ are in the workspace's `docs/redesign/03-hosts.md`.
 ## Known limits
 
 - Grok kills monitors when a session ends and starts none on resume. A
-  resumed conversation is online but not wakeable until its next turn touches
-  a Tandry tool, whose result asks for the monitor again. Senders see
-  "online, seen on next turn" meanwhile, and mail waits as unread.
+  resumed conversation stays offline to senders until its next turn touches
+  a Tandry tool, whose result asks for the monitor again. Mail waits as
+  unread meanwhile.
 - Monitors have a ten-hour limit in Grok. After that the same recovery
   applies.
 - Subagents share the session's MCP server and cannot be told apart from it.

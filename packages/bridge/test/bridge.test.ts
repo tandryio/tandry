@@ -238,6 +238,7 @@ test("a shell that cannot wake is reported as such, and hooks still carry the no
   await settle();
   assert.equal(shell.attempts, 0);
   assert.ok(made.notice());
+  assert.equal(made.inactive(), "This conversation cannot be woken while idle right now; mail waits for its next turn.");
 });
 
 test("a failing wake is retried three times, then stops and shows in status", async () => {

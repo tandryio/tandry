@@ -110,7 +110,7 @@ test("join tells the model to start the monitor; once it runs, the member is wak
   const hint = HINT.exec(joined.text);
   assert.ok(hint, joined.text);
   assert.equal(hint[1], `node '${main}' monitor --session 'session-two'`);
-  await until(async () => /alice\/two .*online, seen on next turn/.test((await one.call("members")).text), "session two to be online but not wakeable");
+  assert.match((await one.call("members")).text, /alice\/two .*offline/);
   assert.match((await two.call("status")).text, HINT);
 
   two.startMonitor();
@@ -152,11 +152,12 @@ test("acceptance: join, quit, resume the same session with no input; mail waits 
   await until(async () => /alice\/sleeper .*offline/.test((await sender.call("members")).text), "the quit conversation to go offline");
 
   // Grok resumes the session: a new MCP server with the same session ID, no prompt, and no monitor (Grok killed it).
+  // Connected but unable to wake, the member stays offline to senders.
   const resumed = await grok("session-resumed");
-  await until(async () => /alice\/sleeper .*online, seen on next turn/.test((await sender.call("members")).text), "the resumed conversation to be online");
   await sender.call("send", { to: ["alice/sleeper"], body: "WAKE-UP" });
   await pause(1_000);
   assert.deepEqual(resumed.printed, []);
+  assert.match((await sender.call("members")).text, /alice\/sleeper .*offline/);
   // The owner's next turn touches a Tandry tool, whose result says to start the monitor.
   assert.match((await resumed.call("status")).text, HINT);
   resumed.startMonitor();
@@ -192,7 +193,22 @@ test("a monitor whose grok process died exits on its own instead of lingering as
   await until(async () => /alice\/two .*online; told now/.test((await one.call("members")).text), "session two to be wakeable");
   fakeGrok.kill("SIGKILL");
   assert.equal(await exited, 0);
-  await until(async () => /alice\/two .*online, seen on next turn/.test((await one.call("members")).text), "session two to stop being wakeable");
+  await until(async () => /alice\/two .*offline/.test((await one.call("members")).text), "session two to go offline");
+});
+
+test("leave: the monitor exits on its own, and a later join asks for a new one", async () => {
+  const one = await grok("session-leave-one", { monitor: true });
+  const two = await grok("session-leave-two");
+  const code = await newRoom(one, "leave-room");
+  await one.call("join", { room: code, intro: "First", name: "one" });
+  assert.match((await two.call("join", { room: code, intro: "Second", name: "two" })).text, HINT);
+  const monitor = two.startMonitor();
+  const exited = new Promise<number | null>((resolve) => monitor.once("exit", resolve));
+  await until(async () => /alice\/two .*online; told now/.test((await one.call("members")).text), "session two to be wakeable");
+  assert.doesNotMatch((await two.call("status")).text, HINT);
+  await two.call("leave");
+  assert.equal(await exited, 0);
+  assert.match((await two.call("join", { room: code, intro: "Back", name: "two" })).text, HINT);
 });
 
 test("when the monitor dies, senders see the member as not wakeable and the next tool result asks for it again", async () => {
@@ -203,6 +219,6 @@ test("when the monitor dies, senders see the member as not wakeable and the next
   await two.call("join", { room: code, intro: "Second", name: "two" });
   await until(async () => /alice\/two .*online; told now/.test((await one.call("members")).text), "session two to be wakeable");
   two.stopMonitor();
-  await until(async () => /alice\/two .*online, seen on next turn/.test((await one.call("members")).text), "session two to stop being wakeable");
+  await until(async () => /alice\/two .*offline/.test((await one.call("members")).text), "session two to go offline");
   assert.match((await two.call("members")).text, HINT);
 });

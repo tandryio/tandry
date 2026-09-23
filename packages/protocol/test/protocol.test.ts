@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   CLOSE_CODES, contextHeaders, decodeResult, encodeCall, isOperationName, newId, operations, readContext,
-  renderEnvelope, renderError, renderInbox, renderNotice, renderRenamed, renderRoomUpdated, renderSent, terminalClose, tierOf, toMemberName,
+  renderEnvelope, renderError, renderInbox, renderMonitorMissing, renderNotice, renderRenamed, renderRoomUpdated, renderSent, terminalClose, tierOf, toMemberName,
   toolInputSchema, tools, MessageId, RoomId, TandryError, type MessageView,
 } from "../src/index";
 
@@ -54,14 +54,12 @@ test("the notice is built from headers only", () => {
 test("send reports who sees it now and who waits", () => {
   const now = Date.UTC(2026, 8, 17, 10, 0, 0);
   const text = renderSent({ id: "m_01hzy3v9k8abcdefgh", seq: 1, recipients: [
-    { address: "alice/api-review", state: "online", tier: "push", wakeable: true, lastActiveAt: now },
-    { address: "bob/website", state: "online", tier: "push", wakeable: false, lastActiveAt: now },
-    { address: "carol/planning", state: "offline", tier: "push", wakeable: false, lastActiveAt: now - 2 * 3600_000 },
-    { address: "dave/research", state: "online", tier: "pull", wakeable: false, lastActiveAt: now },
+    { address: "alice/api-review", state: "online", tier: "push", lastActiveAt: now },
+    { address: "carol/planning", state: "offline", tier: "push", lastActiveAt: now - 2 * 3600_000 },
+    { address: "dave/research", state: "online", tier: "pull", lastActiveAt: now },
   ] }, now);
   assert.match(text, /alice\/api-review: online; told now/);
-  assert.match(text, /bob\/website: online, seen on next turn/);
-  assert.match(text, /carol\/planning: offline, last active 2h ago/);
+  assert.match(text, /carol\/planning: offline, last active 2h ago; reads it when its owner is next back/);
   assert.match(text, /dave\/research: online in a web chat/);
   assert.match(renderSent({ id: "m_01hzy3v9k8abcdefgh", seq: 1, recipients: [] }, now), /nobody was told/);
 });
@@ -147,6 +145,13 @@ test("room and member administration say what changed, and withhold what they ca
   // therefore never speaks of an "old name" that stopped resolving; it states
   // the rule instead.
   assert.ok(!/old name/.test(renderRenamed({ member: "max/tandry-dev" })));
+});
+
+test("the monitor hint names the host's own way of starting it", () => {
+  const claude = renderMonitorMissing({ host: "claude", code: "UZGFQ5RM", member: "alice/sleeper", room: "resume-room" });
+  assert.match(claude, /^Automatic delivery is off: the Tandry inbox monitor is not running in this Claude Code session\. Claude Code starts it when the tandry:join skill is dispatched, so invoke the Skill tool now with skill "tandry:join" and args "UZGFQ5RM"\. This conversation is already alice\/sleeper in #resume-room; that join is reused and changes nothing\. It prints one line/);
+  const grok = renderMonitorMissing({ host: "grok", command: "node 'main.cjs' monitor --session 's1'" });
+  assert.match(grok, /this Grok Build session\. Start it now with the monitor tool: command `node 'main.cjs' monitor --session 's1'`, description "Tandry inbox", persistent true\. It prints one line when a room message is waiting and nothing else; when that line arrives, call inbox\.$/);
 });
 
 test("small helpers", () => {

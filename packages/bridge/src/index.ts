@@ -17,6 +17,8 @@ export interface Shell {
   idle(): boolean;
   /** Start or queue a turn whose content is only this notice. Reject on failure. Never interrupt a running turn. */
   wake(notice: string): Promise<void>;
+  /** Why wakeable() is false right now, in one sentence for the agent; asked only then. A shell that cannot say leaves it out. */
+  unwakeable?(): string | null;
 }
 
 export interface Bridge {
@@ -201,7 +203,10 @@ export function createBridge(options: BridgeOptions): Bridge {
 
     inactive() {
       // Asked only by the status tool and by shells, never at startup, so reading credentials here is fine.
-      return inactive({ loggedIn: !!readCredentials(hub), bound: !!conversation, joined: !!marker, ended, connected: !!link?.connected });
+      return inactive({
+        loggedIn: !!readCredentials(hub), bound: !!conversation, joined: !!marker, ended, connected: !!link?.connected,
+        wakeable: options.shell.wakeable(), unwakeable: options.shell.unwakeable?.() ?? null,
+      });
     },
 
     dispose() {
@@ -216,5 +221,7 @@ export function createBridge(options: BridgeOptions): Bridge {
   return bridge;
 }
 
-export type { ConversationRef, HostKind } from "@tandryio/protocol";
+export type { ConversationRef, HostKind, MonitorView } from "@tandryio/protocol";
+// Hosts whose monitor the model helps start append this to tool results; a client imports the protocol only through here.
+export { renderMonitorMissing } from "@tandryio/protocol";
 export type { Tool } from "./tools";

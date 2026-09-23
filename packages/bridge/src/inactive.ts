@@ -6,6 +6,10 @@ export interface InactiveView {
   joined: boolean;
   ended: { reason: LinkEnd; message?: string } | null;
   connected: boolean;
+  /** Offline to senders while false: nothing starts a turn for this conversation when it is idle. */
+  wakeable: boolean;
+  /** The shell's own account of that, when it has one. */
+  unwakeable: string | null;
 }
 
 const ENDED: Record<LinkEnd, string> = {
@@ -23,5 +27,6 @@ export function inactive(view: InactiveView): string | null {
   if (!view.joined) return "This conversation has not joined a room.";
   if (view.ended) return view.ended.message && view.ended.reason === "upgrade_required" ? view.ended.message : ENDED[view.ended.reason];
   if (!view.connected) return "The connection to the Hub dropped; reconnecting. Operations still work.";
+  if (!view.wakeable) return view.unwakeable ?? "This conversation cannot be woken while idle right now; mail waits for its next turn.";
   return null;
 }

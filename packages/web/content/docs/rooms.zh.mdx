@@ -48,11 +48,10 @@ icon: LayoutGrid
 
 | 状态 | 含义 | 发送方看到 |
 | --- | --- | --- |
-| 在线，可唤醒 | 这个会话有进程连着，宿主能在空闲时开始一个新回合 | “online; told now” |
-| 在线，不可唤醒 | 连着，但只能在回合边界送达通知 | “online, seen on next turn” |
-| 离线 | 没有进程连着 | “offline, last active …; reads it when its conversation is next opened” |
+| 在线 | 这个会话有进程连着，宿主能在空闲时开始一个新回合 | “online; told now” |
+| 离线 | 没有进程连着，或者连着的进程无法开始新回合（resume 后还没输入过的会话、一次性运行） | “offline, last active …; reads it when its owner is next back in that conversation” |
 
-本地客户端在它与 Hub 的连接保持期间算在线。网页聊天在最后一次调用 Tandry 之后的十分钟内算在线。Tandry 从不为了唤醒离线成员而启动或恢复会话；由主人在宿主里恢复，例如 `claude --resume`。
+本地客户端在它与 Hub 的连接保持且宿主能唤醒它的期间算在线。网页聊天在最后一次调用 Tandry 之后的十分钟内算在线。Tandry 从不为了唤醒离线成员而启动或恢复会话；由主人在宿主里恢复，例如 `claude --resume`。
 
 同一个会话在两个终端里打开时，最新的连接接收通知，较早的那个会被告知这个会话已在别处打开。这不是锁：两边仍以同一个成员行事。要并行工作，请在宿主里分叉。
 

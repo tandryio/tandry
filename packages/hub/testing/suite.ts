@@ -346,7 +346,7 @@ export function runHubSuite(start: () => Promise<HubUnderTest>): void {
 
   // ---- links ---------------------------------------------------------------
 
-  test("a link makes a member online, carries only notices, and reports wakeable", async () => {
+  test("a link makes a member online once it reports wakeable, and carries only notices", async () => {
     const room = await newRoom();
     const alice = await joined(hub.accounts.alice, room.code, "a");
     const bob = await joined(hub.accounts.bob, room.code, "b");
@@ -355,12 +355,23 @@ export function runHubSuite(start: () => Promise<HubUnderTest>): void {
     await bobLink.opened;
     // Reconnecting replays the notice for what is unread.
     assert.deepEqual(await bobLink.notify(1), { t: "notify", unread: 1, upTo: (await call(bob, "inbox", {})).upTo, from: ["alice/a"] });
+    // Connected but unable to wake: offline to senders. The deprecated wakeable field only repeats the state.
+    await quiet();
+    const early = (await call(alice, "members", {})).members.find((member) => member.address === "bob/b")!;
+    assert.deepEqual([early.state, early.wakeable], ["offline", false]);
     bobLink.state(true);
     await quiet();
     const sent = await text(alice, ["bob/b"], "SECRET BODY");
-    assert.deepEqual(sent.recipients.map((recipient) => [recipient.state, recipient.wakeable]), [["online", true]]);
+    assert.deepEqual(sent.recipients.map((recipient) => recipient.state), ["online"]);
     assert.equal((await bobLink.notify(2)).unread, 2);
     assert.ok(!JSON.stringify(bobLink.frames).includes("SECRET BODY"));
+    // Losing the wake is when the member was last active: the stored time moves with it, so senders never see an older one.
+    const before = Date.now();
+    bobLink.state(false);
+    await quiet();
+    const lost = (await call(alice, "members", {})).members.find((member) => member.address === "bob/b")!;
+    assert.equal(lost.state, "offline");
+    assert.ok(lost.lastActiveAt >= before, "last active moved to the moment the wake was lost");
     bobLink.close();
     await bobLink.closed;
     await quiet();
@@ -382,7 +393,7 @@ export function runHubSuite(start: () => Promise<HubUnderTest>): void {
     await bobLink.ping();
     assert.deepEqual(bobLink.frames, []);
     const sent = await text(alice, ["bob/b"], "still there?");
-    assert.deepEqual(sent.recipients.map((recipient) => [recipient.state, recipient.wakeable]), [["online", true]]);
+    assert.deepEqual(sent.recipients.map((recipient) => recipient.state), ["online"]);
     await bobLink.notify(1);
     bobLink.close();
     await bobLink.closed;

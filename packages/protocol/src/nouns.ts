@@ -106,15 +106,24 @@ export type ConversationRef = ConversationKey & { workspace: Workspace };
 export const MemberState = z.enum(["online", "offline"]);
 export type MemberState = z.infer<typeof MemberState>;
 
-/** What a sender can know about a recipient's ability to receive right now. */
+/**
+ * What a sender can know about a recipient's ability to receive right now.
+ * An online push member is told now: a connected process whose host cannot
+ * start a turn for it reports itself offline, and reads the mail when its
+ * owner is next back.
+ */
 export const Presence = z.object({
   state: MemberState,
   tier: Tier,
-  /** Only meaningful for an online push member. */
-  wakeable: z.boolean(),
   /** Reported by a connected push host; absent for pull hosts. */
   busy: z.boolean().optional(),
   lastActiveAt: z.number(),
+  /**
+   * Deprecated. Clients up to 0.1.0-alpha.3 require it; it now equals
+   * `state === "online"` for push members and is false for pull members.
+   * Nothing new reads it. Remove once those clients are gone.
+   */
+  wakeable: z.boolean().optional(),
 });
 export type Presence = z.infer<typeof Presence>;
 

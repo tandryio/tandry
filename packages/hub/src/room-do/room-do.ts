@@ -246,12 +246,14 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
       let json: unknown;
       try { json = JSON.parse(data); } catch { return; }
       const frame = Frame.safeParse(json);
-      if (frame.success && frame.data.t === "state") this.links.report(socket, frame.data);
+      if (frame.success && frame.data.t === "state") {
+        this.links.report(socket, frame.data);
+        this.touch(this.links.memberOf(socket));
+      }
     }
 
     webSocketClose(socket: WebSocket, code: number): void {
-      const memberId = this.links.memberOf(socket);
-      if (memberId && this.meta && !this.deleted()) this.ctx.storage.sql.exec("UPDATE member SET last_active_at=? WHERE id=? AND left_at IS NULL", Date.now(), memberId);
+      this.touch(this.links.memberOf(socket));
       // Complete the closing handshake. 1005 and 1006 mean "no code" and cannot be sent back.
       if (this.links.closedByHub(socket)) return;
       try { socket.close(code === 1005 || code === 1006 ? 1000 : code); } catch { /* already closed */ }
@@ -259,6 +261,15 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
 
     webSocketError(socket: WebSocket): void {
       this.webSocketClose(socket, 1011);
+    }
+
+    /**
+     * A link event is the member being active. Presence answers "now" while
+     * the member is online and the stored time once it is not, so every step
+     * that can take it offline, a state frame or the close, records the time.
+     */
+    private touch(memberId: string | null): void {
+      if (memberId && this.meta && !this.deleted()) this.ctx.storage.sql.exec("UPDATE member SET last_active_at=? WHERE id=? AND left_at IS NULL", Date.now(), memberId);
     }
 
     /**

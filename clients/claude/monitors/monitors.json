@@ -1,7 +1,7 @@
 [
   {
     "name": "tandry-inbox",
-    "when": "always",
+    "when": "on-skill-invoke:tandry:join",
     "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/main.cjs\" monitor",
     "description": "Tandry: tells this conversation when a room message is waiting"
   }

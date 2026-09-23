@@ -28,6 +28,13 @@ export class GrokShell implements Shell {
     if (!this.sessionId || !monitorAlive(this.sessionId)) throw new Error("the Tandry inbox monitor is not running in this Grok Build session");
   }
 
+  unwakeable(): string | null {
+    if (this.monitor) return null;
+    return this.sessionId
+      ? "The Tandry inbox monitor is not running in this Grok Build session; every tool result says how to start it."
+      : "Grok Build did not name this session, so no monitor can be started for it.";
+  }
+
   /** Re-reads the monitor's registration. Returns whether wakeable() changed. */
   refresh(): boolean {
     const monitor = !!this.sessionId && monitorAlive(this.sessionId);
