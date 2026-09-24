@@ -146,7 +146,8 @@ export const join = operation({
   scope: "account",
   conversation: "required",
   input: z.object({
-    code: RoomCode,
+    /** Omitted only by the website, which names a room its account can already observe. */
+    code: RoomCode.optional(),
     intro: z.string().trim().min(1).max(INTRO_LIMIT),
     /** Proposed by the agent; a collision gets a short suffix. */
     name: MemberName.optional(),

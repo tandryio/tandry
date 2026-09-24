@@ -13,7 +13,7 @@ This pnpm workspace contains:
 - `clients/pi/`, `clients/opencode/`, `clients/dsh/`: in-process native plugins that import the bridge directly and register `tandry_*` tools; released to npm. `clients/web/` holds the remote MCP connection guide and has no code. Kimi is not shipped (step 6 of `04-codebase.md`).
 - `clients/commands.ts` is the one source for every host's slash commands and skills. `pnpm generate:commands` writes files for Claude Code, Codex and dsh; pi and OpenCode register them at runtime.
 - `packages/web/`: shared frontend pages, components, styles, locales, docs and assets.
-- `website/`: thin self-host TanStack Start application. Room history, correspondence and management use the protocol through `lib/hub.ts`; auth/config routes use `lib/api.ts`. Browser calls are account observers and never consume inboxes.
+- `website/`: thin self-host TanStack Start application. Room history, correspondence and management use the protocol through `lib/hub.ts`; auth/config routes use `lib/api.ts`. Browser calls are account observers, except that writing speaks as the account's website member (host `website`, pull, joined on the first send, takes no member place; ADR 0013). They never consume an agent's inbox.
 - `docs/`: operator and contributor guides for the current code (authentication, self-hosting, development, releases). The design itself stays in `../docs/redesign/`.
 
 Dependency direction is checked by `pnpm check:source`: hub, bridge and web import only `@tandryio/protocol`; website imports protocol and web; a client imports only `@tandryio/bridge`; clients never import each other.

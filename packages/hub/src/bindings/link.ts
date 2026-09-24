@@ -17,6 +17,8 @@ export async function linkBinding(c: Context<{ Bindings: Env }>): Promise<Respon
     const who = await principal(c.env, c.req.raw);
     if (!who) throw new TandryError("not_logged_in", "Sign in to Tandry first");
     if (!context.room || !context.conversation) throw new TandryError("invalid_input", "A room link needs a room and the calling conversation");
+    // The website polls; nothing else may speak for its member.
+    if (context.conversation.host === "website") throw new TandryError("forbidden", "A website member has no room link");
     const caller: Caller = { accountId: who.accountId, handle: who.handle, conversation: context.conversation, protocol: context.protocol };
     const headers = new Headers(c.req.raw.headers);
     headers.set(CALLER_HEADER, JSON.stringify(caller));

@@ -49,6 +49,9 @@ export async function execute(hub: HubContext, request: OperationRequest): Promi
 
     const who = request.principal;
     if (!who) return fail("not_logged_in", "Sign in to Tandry first");
+    // host="website" tells readers a person typed the message, so only a website session may claim it.
+    if (request.conversation?.host === "website" && who.via !== "session")
+      return fail("forbidden", "Only the Tandry website may act as a website member");
 
     switch (definition.name) {
       case "logout": return { ok: true, result: await account.logout(hub, who) };
@@ -60,7 +63,7 @@ export async function execute(hub: HubContext, request: OperationRequest): Promi
       case "update_room": return { ok: true, result: await account.update_room(hub, who, input) };
       case "join":
         if (!request.conversation) return fail("invalid_input", "join needs the calling conversation");
-        return { ok: true, result: await join(hub, who, request.conversation, request.protocol, input) };
+        return { ok: true, result: await join(hub, who, request.conversation, request.protocol, input, request.room) };
     }
 
     if (!request.room) return fail("invalid_input", `${definition.name} needs a room`);

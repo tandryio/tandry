@@ -3,13 +3,13 @@ import WebSocket from "ws";
 import { createHmac } from "node:crypto";
 import { after, before, test } from "node:test";
 import {
-  TandryError, contextHeaders, decodeResult, encodeCall, newId,
+  TandryError, WEBSITE_CONVERSATION, contextHeaders, decodeResult, encodeCall, newId,
   type CallContext, type Input, type OperationName, type Output,
 } from "@tandryio/protocol";
 import { startLocalHub, type HubUnderTest, type TestAccount } from "../testing/start";
 
 let hub: HubUnderTest;
-before(async () => { hub = await startLocalHub({ vars: { SEND_BUCKET_SIZE: "1000" } }); });
+before(async () => { hub = await startLocalHub({ vars: { SEND_BUCKET_SIZE: "1000", MEMBERS_PER_ROOM: "3" } }); });
 after(async () => { await hub?.stop(); });
 const fails = (code: string) => (error: unknown) => error instanceof TandryError && error.code === code;
 function cookie(account: TestAccount) {
@@ -53,8 +53,45 @@ test("cookie observers see public history and their own correspondence without c
   assert.deepEqual((await call(alice, "members", {}, context)).members.map((m) => m.owned), [true, false, false]);
   assert.equal((await call(bob, "inbox", {}, b)).messages.filter((m) => m.id === own.id).length, 1);
   assert.ok((await call(alice, "history", {}, a)).messages.every((m) => m.owned === undefined && m.recipients === undefined));
-  await assert.rejects(call(alice, "send", { id: newId("m"), to: [], body: "No website chat" }, context), fails("invalid_input"));
+  await assert.rejects(call(alice, "send", { id: newId("m"), to: [], body: "An observer cannot send" }, context), fails("invalid_input"));
   await assert.rejects(call(hub.accounts.nohandle, "history", {}, context), fails("forbidden"));
+});
+
+test("the website takes part as its own pull member: joins by room, sends, is replied to, reads", async () => {
+  const { alice, bob, room, context, b } = await fixture();
+  const site = { ...context, conversation: WEBSITE_CONVERSATION };
+  const intro = { intro: "In person, from the website", workspace: { repo: "", branch: "" } };
+  // The fixture's three conversations fill the room; the owner in person takes no member place.
+  const joined = await call(alice, "join", intro, site);
+  assert.deepEqual([joined.member, joined.outcome, joined.room.id], ["alice/website", "joined", room.id]);
+  assert.equal((await call(alice, "join", intro, site)).outcome, "reused");
+  const fourth = { ...context, conversation: { host: "pi" as const, hostConversationId: crypto.randomUUID() } };
+  await assert.rejects(call(bob, "join", { ...intro, code: room.code }, fourth), fails("limit_reached"));
+  await call(bob, "leave", { member: "bob/private" }, context);
+  await call(bob, "join", { ...intro, code: room.code, name: "third" }, fourth);
+
+  const question = await call(alice, "send", { id: newId("m"), to: ["bob/main"], body: "Status?" }, site);
+  const delivered = (await call(bob, "inbox", {}, b)).messages.find((m) => m.id === question.id)!;
+  assert.deepEqual([delivered.from, delivered.fromHost], ["alice/website", "website"]);
+  const answer = await call(bob, "send", { id: newId("m"), to: [], body: "Green", replyTo: question.id }, b);
+  assert.ok((await call(alice, "history", {}, context)).messages.some((m) => m.id === answer.id && m.to.includes("alice/website")));
+  const me = (await call(alice, "members", {}, context)).members.find((m) => m.address === "alice/website")!;
+  assert.deepEqual([me.host, me.tier, me.state, me.owned], ["website", "pull", "online", true]);
+  await call(alice, "read", { upTo: answer.seq }, site);
+  assert.equal((await call(bob, "members", {}, b)).members.find((m) => m.address === "alice/website")!.unreadFromMe, 0);
+
+  // Only a website session speaks for the website member, and only for a room its account can see.
+  const device = { ...site, token: alice.token };
+  await assert.rejects(call(alice, "send", { id: newId("m"), to: [], body: "Forged" }, device), fails("forbidden"));
+  await assert.rejects(call(alice, "join", intro, device), fails("forbidden"));
+  await assert.rejects(call(hub.accounts.nohandle, "join", intro, site), fails("handle_required"));
+  const other = await call(bob, "new_room", { id: newId("r"), name: "Bob only", description: "" });
+  await assert.rejects(call(alice, "join", intro, { ...site, room: other.id }), fails("forbidden"));
+  await assert.rejects(call(alice, "join", intro, b), fails("invalid_input"));
+  const fresh = { ...context, conversation: { host: "codex" as const, hostConversationId: crypto.randomUUID() } };
+  await assert.rejects(call(alice, "join", { ...intro, code: room.code, as: "website" }, fresh), fails("no_such_member"));
+  const socket = await fetch(hub.baseUrl + "/v1/link", { headers: contextHeaders({ ...site, token: alice.token }) });
+  assert.equal(socket.status, 403);
 });
 
 test("recipient state follows exact member stays, reads and replies; observing never advances read position", async () => {

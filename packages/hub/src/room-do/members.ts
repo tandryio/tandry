@@ -10,6 +10,13 @@ export function addressOf(member: Pick<MemberRow, "account_handle" | "name">): M
   return formatAddress(member.account_handle, member.name);
 }
 
+/**
+ * The owner in person is not a conversation: a website member takes no member
+ * place and is never metered. Every count against a limit, and every choice of
+ * whom a limit keeps, filters with this.
+ */
+export const TAKES_PLACE = "host!='website'";
+
 export function present(room: RoomContext): MemberRow[] {
   return room.sql.exec<MemberRow>("SELECT * FROM member WHERE left_at IS NULL ORDER BY joined_at, id").toArray();
 }
@@ -84,13 +91,19 @@ export function join(room: RoomContext, caller: Caller, input: ParsedInput<"join
   const effects: Handled<unknown>["effects"] = {};
   let member = byConversation(room, caller);
   let outcome: Output<"join">["outcome"] = "reused";
+  // Without a code, only an account that owns the room or has a member in it may add one.
+  if (!input.code) resolveCaller(room, { ...caller, conversation: undefined });
 
   if (member && input.as && input.as !== member.name)
     throw new TandryError("already_in_room", `This conversation already backs ${addressOf(member)} here. Leave first to continue another member.`);
 
   if (!member && input.as) {
-    // Continuation: only a member that is still in the room, owned by the same account.
-    member = room.sql.exec<MemberRow>("SELECT * FROM member WHERE account_id=? AND name=? AND left_at IS NULL", caller.accountId, input.as).toArray()[0] ?? null;
+    // Continuation: only a member that is still in the room, owned by the same account. A message's
+    // host is read from its sender's current row, so a website member is never handed to an agent,
+    // nor an agent's member to the website.
+    member = conversation.host === "website" ? null : room.sql.exec<MemberRow>(
+      "SELECT * FROM member WHERE account_id=? AND name=? AND host!='website' AND left_at IS NULL", caller.accountId, input.as,
+    ).toArray()[0] ?? null;
     if (!member)
       throw new TandryError("no_such_member", `This account has no member named ${input.as} in the room`, {
         members: present(room).filter((row) => row.account_id === caller.accountId).map((row) => memberView(room, row, { kind: "observer", accountId: caller.accountId, ownsRoom: false })),
@@ -103,7 +116,8 @@ export function join(room: RoomContext, caller: Caller, input: ParsedInput<"join
     outcome = "continued";
   } else if (!member) {
     const admissionLimit = room.admission?.newMemberLimit ?? room.limits.membersPerRoom;
-    if (present(room).length >= admissionLimit)
+    const seated = room.sql.exec<{ n: number }>(`SELECT count(*) AS n FROM member WHERE left_at IS NULL AND ${TAKES_PLACE}`).one().n;
+    if (conversation.host !== "website" && seated >= admissionLimit)
       throw new TandryError("limit_reached", `The room is full (${room.limits.membersPerRoom} members)`);
     const id = newId("mb", room.now);
     const name = freeName(room, handle, input.name ?? toMemberName(input.workspace.repo) ?? conversation.host);
@@ -121,7 +135,7 @@ export function join(room: RoomContext, caller: Caller, input: ParsedInput<"join
       "INSERT INTO message (id, from_member, visibility, to_members, to_room, reply_to, kind, body, meta, created_at) VALUES (?,?,'room','',0,NULL,'intro',?,NULL,?)",
       newId("m", room.now), id, input.intro, room.now,
     );
-    effects.usage = [{ type: "member_joined", account: caller.accountId, room: room.meta.roomId }];
+    if (conversation.host !== "website") effects.usage = [{ type: "member_joined", account: caller.accountId, room: room.meta.roomId }];
     outcome = "joined";
   }
 

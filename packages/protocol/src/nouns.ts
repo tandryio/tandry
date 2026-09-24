@@ -64,13 +64,13 @@ export function toMemberName(raw: string): MemberName | null {
 
 // ---- hosts ---------------------------------------------------------------
 
-export const HostKind = z.enum(["claude", "codex", "grok", "kimi", "pi", "opencode", "dsh", "claude-web", "chatgpt-web", "web"]);
+export const HostKind = z.enum(["claude", "codex", "grok", "kimi", "pi", "opencode", "dsh", "claude-web", "chatgpt-web", "web", "website"]);
 export type HostKind = z.infer<typeof HostKind>;
 
 export const Tier = z.enum(["push", "pull"]);
 export type Tier = z.infer<typeof Tier>;
 
-const PULL_HOSTS: ReadonlySet<HostKind> = new Set(["claude-web", "chatgpt-web", "web"]);
+const PULL_HOSTS: ReadonlySet<HostKind> = new Set(["claude-web", "chatgpt-web", "web", "website"]);
 
 /** The tier is a property of the host kind, never reported by a client. */
 export function tierOf(host: HostKind): Tier {
@@ -79,7 +79,7 @@ export function tierOf(host: HostKind): Tier {
 
 const HOST_LABELS: Record<HostKind, string> = {
   claude: "Claude Code", codex: "Codex", grok: "Grok Build", kimi: "Kimi Code", pi: "pi", opencode: "opencode", dsh: "dsh",
-  "claude-web": "Claude web", "chatgpt-web": "ChatGPT web", web: "web chat",
+  "claude-web": "Claude web", "chatgpt-web": "ChatGPT web", web: "web chat", website: "Tandry website",
 };
 export function hostLabel(host: HostKind): string {
   return HOST_LABELS[host];
@@ -94,6 +94,13 @@ export type HostConversationId = z.infer<typeof HostConversationId>;
 /** Identifies the calling conversation. Travels in headers, never in operation input. */
 export const ConversationKey = z.object({ host: HostKind, hostConversationId: HostConversationId });
 export type ConversationKey = z.infer<typeof ConversationKey>;
+
+/**
+ * The owner in person, on the Tandry website. Members are located by account,
+ * host and conversation, so this fixed key is one website member per account
+ * per room. The Hub accepts the `website` host only from a website session.
+ */
+export const WEBSITE_CONVERSATION: ConversationKey = { host: "website", hostConversationId: "site" };
 
 /** Read from the environment by the bridge; attested, never supplied by the agent. */
 export const Workspace = z.object({ repo: z.string().max(200), branch: z.string().max(200) });

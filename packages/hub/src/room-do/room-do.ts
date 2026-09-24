@@ -8,7 +8,7 @@ import type { Limits, Policy, PolicyFactory, RoomAccess } from "../policy/policy
 import type { Caller, Handled, ResolvedCaller, RoomContext } from "./context";
 import { Links } from "./links";
 import { delete_message, history, inbox, read, send, unreadFor } from "./mail";
-import { join, leave, members, rename, resolveCaller } from "./members";
+import { join, leave, members, rename, resolveCaller, TAKES_PLACE } from "./members";
 import { migrate, type MemberRow, type RoomMeta } from "./schema";
 
 export const CALLER_HEADER = "X-Tandry-Caller";
@@ -126,7 +126,7 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
         sql.exec("INSERT INTO policy_revision VALUES (1,?) ON CONFLICT(singleton) DO UPDATE SET revision=excluded.revision", access.revision);
         const transition = access.transition;
         if (transition && transition.effectiveAt <= Date.now() && !sql.exec("SELECT 1 FROM policy_transition WHERE id=?", transition.id).toArray().length) {
-          const rows = sql.exec<MemberRow>("SELECT * FROM member WHERE left_at IS NULL AND joined_at<=? ORDER BY last_active_at DESC,id", transition.effectiveAt).toArray();
+          const rows = sql.exec<MemberRow>(`SELECT * FROM member WHERE left_at IS NULL AND joined_at<=? AND ${TAKES_PLACE} ORDER BY last_active_at DESC,id`, transition.effectiveAt).toArray();
           const eligible = new Set(rows.map(row => row.id));
           const selected = [...new Set([...transition.preferred.filter(id => eligible.has(id)), ...rows.map(row => row.id)])].slice(0, transition.limit);
           for (const row of rows) if (!selected.includes(row.id)) {
@@ -153,7 +153,7 @@ export function createRoomDO<E extends Env = Env>(policyFor: PolicyFactory<E>) {
     async memberCandidates(owner: AccountId) {
       if (!this.meta || this.meta.ownerAccountId !== owner) throw new TandryError("forbidden", "Only the room owner may select members");
       await this.context(this.meta);
-      return this.ctx.storage.sql.exec<MemberRow>("SELECT * FROM member WHERE left_at IS NULL ORDER BY last_active_at DESC,id").toArray()
+      return this.ctx.storage.sql.exec<MemberRow>(`SELECT * FROM member WHERE left_at IS NULL AND ${TAKES_PLACE} ORDER BY last_active_at DESC,id`).toArray()
         .map(row => ({ id: row.id, name: `${row.account_handle}/${row.name}`, host: row.host, lastActive: row.last_active_at }));
     }
 
