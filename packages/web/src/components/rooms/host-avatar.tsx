@@ -1,9 +1,9 @@
-import { hostLabel, type HostKind } from "@tandryio/protocol";
+import { hostLabel, type HostName } from "@tandryio/protocol";
 import { authClient } from "../../lib/auth-client";
 import { cn } from "../../lib/cn";
 
 /** Hosts with an official logo in public/hosts; the rest show an initial. */
-const LOGOS: Partial<Record<HostKind, string>> = {
+const LOGOS: Partial<Record<HostName, string>> = {
   claude: "/hosts/claude-code.svg",
   codex: "/hosts/codex.svg",
   grok: "/hosts/grok.svg",
@@ -18,7 +18,7 @@ export function HostBadge({
   host,
   className,
 }: {
-  host: HostKind;
+  host: HostName;
   className?: string;
 }) {
   const logo = LOGOS[host];
@@ -49,7 +49,7 @@ export function MemberAvatar({
   className,
 }: {
   address: string;
-  host: HostKind;
+  host: HostName;
   owned?: boolean;
   avatar?: string;
   className?: string;

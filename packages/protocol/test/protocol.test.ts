@@ -3,7 +3,7 @@ import { test } from "node:test";
 import {
   CLOSE_CODES, contextHeaders, decodeResult, encodeCall, isOperationName, newId, operations, readContext,
   renderEnvelope, renderError, renderInbox, renderMonitorMissing, renderNotice, renderRenamed, renderRoomUpdated, renderSent, terminalClose, tierOf, toMemberName,
-  toolInputSchema, tools, MessageId, RoomId, TandryError, type MessageView,
+  toolInputSchema, tools, hostLabel, MessageId, RoomId, TandryError, type MessageView,
 } from "../src/index";
 
 const message = (over: Partial<MessageView> = {}): MessageView => ({
@@ -91,6 +91,14 @@ test("calls encode to POST /v1/<operation> and results decode or throw", () => {
   assert.throws(() => decodeResult("read", 409, { ok: false, error: { code: "not_in_room", message: "gone" } }), { code: "not_in_room" });
   assert.throws(() => decodeResult("read", 502, "<html>"), { code: "unavailable" });
   assert.throws(() => decodeResult("read", 200, { ok: true, result: { nope: 1 } }), { code: "unavailable" });
+});
+
+test("a host this version does not know still reads, by its name; a caller cannot claim one", () => {
+  const inbox = decodeResult("inbox", 200, { ok: true, result: { messages: [message({ fromHost: "future-host" as never })], upTo: 41, remaining: null } });
+  assert.equal(inbox.messages[0]!.fromHost, "future-host");
+  assert.equal(hostLabel("future-host"), "future-host");
+  assert.equal(hostLabel("website"), "Tandry website");
+  assert.throws(() => readContext((name) => ({ "Tandry-Host": "future-host", "Tandry-Conversation": "c" } as Record<string, string>)[name] ?? null), { code: "invalid_input" });
 });
 
 test("the operation table is consistent", () => {

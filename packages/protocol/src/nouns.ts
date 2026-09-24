@@ -67,6 +67,14 @@ export function toMemberName(raw: string): MemberName | null {
 export const HostKind = z.enum(["claude", "codex", "grok", "kimi", "pi", "opencode", "dsh", "claude-web", "chatgpt-web", "web", "website"]);
 export type HostKind = z.infer<typeof HostKind>;
 
+/**
+ * Another member's host, as a view reports it. A reader only shows it, so a
+ * client that predates a host still reads the view; the strict HostKind stays
+ * for what a caller claims and what the Hub stores.
+ */
+export const HostName = z.string().regex(/^[a-z0-9-]{1,40}$/);
+export type HostName = z.infer<typeof HostName>;
+
 export const Tier = z.enum(["push", "pull"]);
 export type Tier = z.infer<typeof Tier>;
 
@@ -81,8 +89,9 @@ const HOST_LABELS: Record<HostKind, string> = {
   claude: "Claude Code", codex: "Codex", grok: "Grok Build", kimi: "Kimi Code", pi: "pi", opencode: "opencode", dsh: "dsh",
   "claude-web": "Claude web", "chatgpt-web": "ChatGPT web", web: "web chat", website: "Tandry website",
 };
-export function hostLabel(host: HostKind): string {
-  return HOST_LABELS[host];
+/** A host this version does not know is shown by its name. */
+export function hostLabel(host: HostName): string {
+  return HOST_LABELS[host as HostKind] ?? host;
 }
 
 // ---- conversations -------------------------------------------------------
@@ -145,7 +154,7 @@ export const MessageView = z.object({
   id: MessageId,
   seq: z.number().int().positive(),
   from: MemberAddress,
-  fromHost: HostKind,
+  fromHost: HostName,
   visibility: Visibility,
   /** The recipients fixed at send time. */
   to: z.array(MemberAddress),
@@ -173,7 +182,7 @@ export type HistoryMessage = z.infer<typeof HistoryMessage>;
 
 export const MemberView = Presence.extend({
   address: MemberAddress,
-  host: HostKind,
+  host: HostName,
   workspace: Workspace,
   intro: z.string(),
   joinedAt: z.number(),
