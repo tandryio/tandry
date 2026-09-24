@@ -10,6 +10,7 @@ const LOGOS: Partial<Record<HostKind, string>> = {
   pi: "/hosts/pi.svg",
   opencode: "/hosts/opencode.svg",
   dsh: "/hosts/deepseek-harness.svg",
+  website: "/logo.svg",
 };
 
 /** The coding agent's host as a small logo. */

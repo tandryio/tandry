@@ -1,6 +1,11 @@
-import type { HistoryMessage, RoomId } from "@tandryio/protocol";
+import type {
+  HistoryMessage,
+  MemberAddress,
+  MemberView,
+  RoomId,
+} from "@tandryio/protocol";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { m } from "../../paraglide/messages";
 import { getLocale } from "../../paraglide/runtime";
 import { call } from "../../lib/hub";
@@ -9,6 +14,7 @@ import { useAction } from "../../lib/action";
 import { errorText } from "../../lib/i18n";
 import { ConfirmAction } from "../confirm-action";
 import { Badge, Button, Icon, Status } from "../ui";
+import { Composer } from "./composer";
 import { MemberAvatar } from "./host-avatar";
 import { MessagesSkeleton } from "./room-skeleton";
 import { MarkdownBody } from "./markdown";
@@ -18,21 +24,30 @@ const GROUP_GAP_MS = 5 * 60_000;
 
 /**
  * A room read as a chat: oldest at the top, newest at the bottom, messages
- * grouped by sender. The website is an observer and cannot post, so the
- * place a composer would take explains where messages come from instead.
+ * grouped by sender. The website reads as an observer and writes as the
+ * account's website member, whose mail it marks read once it is shown.
  */
 export function MessageHistory({
   roomId,
   userId,
   view,
+  onShowCorrespondence,
   avatars,
+  self,
+  members,
 }: {
   roomId: RoomId;
   userId: string;
   view: "room" | "correspondence";
+  onShowCorrespondence: () => void;
   /** The picture of each owner in the room, by handle. */
   avatars: Map<string, string>;
+  /** The account's website member here, once it has joined. */
+  self?: MemberAddress;
+  /** Absent until the member list has loaded. */
+  members?: MemberView[];
 }) {
+  const [replyTo, setReplyTo] = useState<HistoryMessage>();
   const history = useInfiniteQuery({
     queryKey: ["room", userId, roomId, "history", view],
     queryFn: ({ pageParam }) =>
@@ -56,6 +71,16 @@ export function MessageHistory({
   const heightBeforeOlder = useRef<number | null>(null);
   const first = messages[0]?.id;
   const last = messages.at(-1)?.id;
+  const lastSeq = messages.at(-1)?.seq ?? 0;
+  // Shown is read: the owner has seen what reached the website member.
+  const readUpTo = useRef(0);
+  useEffect(() => {
+    if (!self || lastSeq <= readUpTo.current) return;
+    readUpTo.current = lastSeq;
+    call("read", { upTo: lastSeq }, roomId, true).catch(() => {
+      readUpTo.current = 0;
+    });
+  }, [self, lastSeq, roomId]);
   useLayoutEffect(() => {
     const element = scroller.current;
     if (!element || history.isPending) return;
@@ -66,6 +91,16 @@ export function MessageHistory({
       element.scrollTop = element.scrollHeight;
     }
   }, [first, last, history.isPending]);
+  // The composer arrives after the history and changes the view's height.
+  useEffect(() => {
+    const element = scroller.current;
+    if (!element) return;
+    const observer = new ResizeObserver(() => {
+      if (following.current) element.scrollTop = element.scrollHeight;
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [history.isPending]);
 
   const locale = getLocale();
   const today = new Date().toDateString();
@@ -154,6 +189,11 @@ export function MessageHistory({
                       roomId={roomId}
                       userId={userId}
                       avatar={avatars.get(message.from.split("/")[0]!)}
+                      onReply={
+                        canReply(message, self)
+                          ? () => setReplyTo(message)
+                          : undefined
+                      }
                     />
                   </li>
                 );
@@ -170,7 +210,34 @@ export function MessageHistory({
             : m.rooms_correspondence_hint()}
         </p>
       </footer>
+      {members && (
+        <Composer
+          roomId={roomId}
+          userId={userId}
+          self={self}
+          members={members}
+          replyTo={replyTo}
+          onCancelReply={() => setReplyTo(undefined)}
+          // A dm is not in the public history, so say where it went.
+          onShowCorrespondence={
+            view === "room" ? onShowCorrespondence : undefined
+          }
+        />
+      )}
     </section>
+  );
+}
+
+/**
+ * The Hub lets a member answer a room message, or a dm it took part in. Before
+ * the first message there is no website member yet, so only room messages.
+ */
+function canReply(message: HistoryMessage, self?: MemberAddress): boolean {
+  return (
+    message.kind === "text" &&
+    message.deletedAt === undefined &&
+    (message.visibility === "room" ||
+      (!!self && (message.from === self || message.to.includes(self))))
   );
 }
 
@@ -181,6 +248,7 @@ function ChatMessage({
   roomId,
   userId,
   avatar,
+  onReply,
 }: {
   message: HistoryMessage;
   quoted?: HistoryMessage;
@@ -188,6 +256,7 @@ function ChatMessage({
   roomId: RoomId;
   userId: string;
   avatar?: string;
+  onReply?: () => void;
 }) {
   const client = useQueryClient();
   const remove = useAction(
@@ -318,14 +387,21 @@ function ChatMessage({
             <MarkdownBody className="chat-body" body={message.body} />
           )}
         </div>
-        {message.owned && !deleted && (
+        {(onReply || (message.owned && !deleted)) && (
           <span className="chat-actions">
-            <ConfirmAction
-              label={m.rooms_delete_message()}
-              description={m.rooms_delete_confirm()}
-              busy={remove.busy}
-              onConfirm={() => remove.run()}
-            />
+            {onReply && (
+              <Button variant="ghost" size="sm" onClick={onReply}>
+                {m.rooms_reply()}
+              </Button>
+            )}
+            {message.owned && !deleted && (
+              <ConfirmAction
+                label={m.rooms_delete_message()}
+                description={m.rooms_delete_confirm()}
+                busy={remove.busy}
+                onConfirm={() => remove.run()}
+              />
+            )}
           </span>
         )}
         {remove.error && <Status error>{remove.error}</Status>}

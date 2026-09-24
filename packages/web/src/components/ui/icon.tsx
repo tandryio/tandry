@@ -4,7 +4,9 @@ import {
   RefreshCw,
   Trash2,
   X,
+  ArrowUp,
   ArrowUpRight,
+  AtSign,
   BookOpen,
   Camera,
   Check,
@@ -15,7 +17,9 @@ import {
   Globe,
   Info,
   Link2,
+  Lock,
   LogOut,
+  CornerUpLeft,
   MessagesSquare,
   Maximize2,
   Minimize2,
@@ -55,6 +59,10 @@ const icons = {
   camera: Camera,
   maximize: Maximize2,
   minimize: Minimize2,
+  send: ArrowUp,
+  mention: AtSign,
+  lock: Lock,
+  reply: CornerUpLeft,
 } as const;
 
 export type IconName = keyof typeof icons;

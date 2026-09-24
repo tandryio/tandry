@@ -87,6 +87,10 @@ export function RoomDetail({
     refetchInterval: 5_000,
   });
   const count = members.data?.members.length;
+  // The owner in person: the account's member that the website speaks for.
+  const self = members.data?.members.find(
+    (member) => member.owned && member.host === "website",
+  )?.address;
   // History names senders by address; their pictures come with the member list.
   const avatars = new Map(
     (members.data?.members ?? []).flatMap((member) =>
@@ -200,7 +204,10 @@ export function RoomDetail({
           roomId={room.id}
           userId={userId}
           view={view}
+          onShowCorrespondence={() => setView("correspondence")}
           avatars={avatars}
+          self={self}
+          members={members.data?.members}
         />
       </div>
     </div>
