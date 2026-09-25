@@ -28,6 +28,7 @@ import {
   Plus,
   Search,
   User,
+  Users,
   type LucideProps,
 } from "lucide-react";
 import { cn } from "../../lib/cn";
@@ -63,6 +64,7 @@ const icons = {
   mention: AtSign,
   lock: Lock,
   reply: CornerUpLeft,
+  members: Users,
 } as const;
 
 export type IconName = keyof typeof icons;

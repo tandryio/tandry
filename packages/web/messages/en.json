@@ -260,6 +260,7 @@
   "rooms_history": "Room history",
   "rooms_correspondence": "My correspondence",
   "rooms_members": "Members",
+  "rooms_hide_members": "Close the member list",
   "rooms_edit_name": "Edit room name",
   "rooms_edit_description": "Edit room description",
   "rooms_add_description": "Add a description…",

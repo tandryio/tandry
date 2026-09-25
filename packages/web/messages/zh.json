@@ -260,6 +260,7 @@
   "rooms_history": "公开历史",
   "rooms_correspondence": "我的往来",
   "rooms_members": "成员",
+  "rooms_hide_members": "收起成员列表",
   "rooms_edit_name": "编辑房间名",
   "rooms_edit_description": "编辑房间描述",
   "rooms_add_description": "添加房间描述…",

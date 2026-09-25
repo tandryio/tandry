@@ -80,6 +80,14 @@ export function RoomDetail({
     };
   }, [fullscreen]);
   const [view, setView] = useState<"room" | "correspondence">("room");
+  // On a narrow screen the member list is a drawer over the chat.
+  const [membersOpen, setMembersOpen] = useState(false);
+  const membersButton = useRef<HTMLButtonElement>(null);
+  const membersClose = useRef<HTMLButtonElement>(null);
+  const closeMembers = () => {
+    setMembersOpen(false);
+    membersButton.current?.focus();
+  };
   const [copied, setCopied] = useState<"" | "done" | "failed">("");
   const members = useQuery({
     queryKey: ["room", userId, room.id, "members"],
@@ -139,6 +147,22 @@ export function RoomDetail({
               </Button>
             ))}
           </div>
+          <Button
+            ref={membersButton}
+            variant="ghost"
+            size="sm"
+            className="room-members-toggle"
+            aria-expanded={membersOpen}
+            aria-controls={`room-members-${room.id}`}
+            onClick={() => {
+              setMembersOpen(true);
+              requestAnimationFrame(() => membersClose.current?.focus());
+            }}
+          >
+            <Icon name="members" />
+            {m.rooms_members()}
+            {count !== undefined && <span className="count">{count}</span>}
+          </Button>
           {room.code && (
             <button
               type="button"
@@ -179,10 +203,40 @@ export function RoomDetail({
       </header>
       {copied === "failed" && <Status error>{m.rooms_copy_failed()}</Status>}
       <div className="room-chat-body">
-        <aside className="room-chat-side">
+        {membersOpen && (
+          <button
+            type="button"
+            className="room-chat-scrim"
+            tabIndex={-1}
+            aria-label={m.rooms_hide_members()}
+            onClick={closeMembers}
+          />
+        )}
+        <aside
+          id={`room-members-${room.id}`}
+          className={`room-chat-side${membersOpen ? " is-open" : ""}`}
+          aria-label={m.rooms_members()}
+          onKeyDown={(event) => {
+            if (membersOpen && event.key === "Escape") {
+              event.preventDefault();
+              closeMembers();
+            }
+          }}
+        >
           <h3 className="room-chat-side-title">
             {m.rooms_members()}
             {count !== undefined && <span className="count">{count}</span>}
+            <Button
+              ref={membersClose}
+              variant="ghost"
+              size="sm"
+              className="room-members-close"
+              aria-label={m.rooms_hide_members()}
+              title={m.rooms_hide_members()}
+              onClick={closeMembers}
+            >
+              <Icon name="close" />
+            </Button>
           </h3>
           {members.isPending ? (
             <MembersSkeleton />
